@@ -207,7 +207,10 @@ namespace Eggverse
             UIKit.Place(dexPortrait.rectTransform, new Vector2(0f, 1f), new Vector2(0f, 1f), new Vector2(1280f, -92f), new Vector2(150f, 150f));
 
             dexDetail = UIKit.Label(collectionPanel, "DexDetail", "", 19, UIKit.Ink, TextAnchor.UpperLeft);
-            UIKit.Place(dexDetail.rectTransform, new Vector2(0f, 1f), new Vector2(0f, 1f), new Vector2(1450f, -92f), new Vector2(280f, 160f));
+            // 300, not 280: a twelve-character nickname at font 26 beside the longest species
+            // name at 17 comes to 287px. The panel has room to 1750 of its 1760, so this only
+            // ever cost a margin nobody was using.
+            UIKit.Place(dexDetail.rectTransform, new Vector2(0f, 1f), new Vector2(0f, 1f), new Vector2(1450f, -92f), new Vector2(300f, 160f));
 
             dexLore = UIKit.Label(collectionPanel, "DexLore", "", 19, UIKit.Ink, TextAnchor.UpperLeft);
             UIKit.Place(dexLore.rectTransform, new Vector2(0f, 1f), new Vector2(0f, 1f), new Vector2(1280f, -262f), new Vector2(450f, 600f));

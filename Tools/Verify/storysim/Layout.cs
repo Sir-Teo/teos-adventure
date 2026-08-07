@@ -91,7 +91,7 @@ static class Layout
             ("Dex",     800f, 420f,  84f, 780f),
             ("Divider2",1236f,  2f,  82f, 786f),
             ("Portrait",1280f,150f,  92f, 150f),
-            ("Detail",  1450f,280f,  92f, 160f),
+            ("Detail",  1450f,300f,  92f, 160f),
             ("Lore",    1280f,450f, 262f, 600f),
         };
         foreach (var c in inner)

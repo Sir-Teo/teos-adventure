@@ -499,7 +499,8 @@ namespace Eggverse
                 foreach (var sp in SpeciesDatabase.All)
                 {
                     var egg = EggInstance.Wild(sp.Id, 30);
-                    egg.Nickname = "Marmalade";                 // a long nickname
+                    // The real maximum the name entry screen allows, not a shorter stand-in.
+                    egg.Nickname = new string('W', NameEntryView.MaxLength);
                     string header = egg.Name + "  " + sp.Name + "\n" +
                                     TypeChart.Name(egg.Type) + "   Lv " + egg.Level + "   ELDER\n\n" +
                                     TypeChart.TraitName(egg.Trait) + "\n" + TypeChart.TraitBlurb(egg.Trait);
@@ -881,6 +882,47 @@ namespace Eggverse
                           byBody.ToString("0.00") + ", rim " + byRim.ToString("0.00") +
                           ", halo " + byHalo.ToString("0.00") + ")");
                 }
+            }
+
+            // ---- a nickname at full length, everywhere a name is shown ----
+            // The entry screen allows twelve characters. Nothing had ever put twelve of them
+            // through the places a name is drawn - the checks used a nine-letter stand-in.
+            {
+                string fullName = new string('W', NameEntryView.MaxLength);
+
+                check(lines(fullName + "  Lv 30", 440f, 30) == 1,
+                      "a full-length nickname fits the battle card's name line");
+                check(lines(HudView.Shorten(fullName, 14) + "  Lv 30  VOI  OUT", 300f, 18) == 1,
+                      "a full-length nickname fits the party strip");
+                check(lines(fullName + "  Lv 30  VERDANT   91/91", 720f, 20) == 1,
+                      "a full-length nickname fits a collection row");
+                // Measured at the sizes it is actually drawn at: the nickname at 26, the species
+                // name beside it at 17. Measuring the whole string at 26 overstates it by 50px,
+                // which is the sort of wrong that reports a problem that is not there - though
+                // in this case it happened to be pointing at one that was.
+                string widestSpecies = "";
+                foreach (var sp2 in SpeciesDatabase.All)
+                    if (sp2.Name.Length > widestSpecies.Length) widestSpecies = sp2.Name;
+                float headerPx = (NameEntryView.MaxLength + 2) * 26f * 0.52f
+                               + widestSpecies.Length * 17f * 0.52f;
+                check(headerPx <= 300f,
+                      "a full-length nickname beside " + widestSpecies +
+                      " fits the egg panel header (" + headerPx.ToString("0") + "px of 300)");
+
+                // And in the sentences the game builds around a name.
+                foreach (var line in new[]
+                {
+                    fullName + " joined your party.",
+                    "An Elder! " + fullName + " is waiting at the nest.  New to the record.",
+                    fullName + " grew to level 30!",
+                    "Not a scratch on " + fullName + ".",
+                    "That was close. " + fullName + " is still standing, just.",
+                })
+                    check(lines(line, 1000f - 40f, 24) <= capacity(76f, 24),
+                          "a full-length nickname fits: \"" + line + "\"");
+
+                check(lines("What will " + fullName + " do?", 1016f, 30) == 1,
+                      "a full-length nickname fits the battle prompt");
             }
 
             // ---- data that is wrong without ever complaining ----
