@@ -213,22 +213,22 @@ namespace Eggverse
             Add(new SpeciesDef("wavelet", "Wavelet", EggType.Tidal,
                 66, 52, 74, 40, 100, C(0x6FC3E8), C(0x0B4A70), 33,
                 "Rolls in with the surf and refuses, politely but firmly, to roll back out.",
-                L(E(1, "bubblepop"), E(1, "harden"), E(9, "fortify"), E(15, "drizzledrain"), E(21, "tidalcrack"), E(27, "restshell"))));
+                L(E(1, "bubblepop"), E(1, "harden"), E(9, "fortify"), E(15, "drizzledrain"), E(21, "tidalcrack"), E(27, "deluge"))));
 
             Add(new SpeciesDef("bloomolk", "Bloomolk", EggType.Verdant,
                 68, 70, 58, 44, 95, C(0x8FD46F), C(0x2A6B24), 13,
                 "Flowers once a year, for about an hour. Hatchers plan whole trips around it.",
-                L(E(1, "vinewhisk"), E(1, "harden"), E(10, "sproutslam"), E(16, "photorest"), E(22, "scramble"), E(28, "sproutslam"))));
+                L(E(1, "vinewhisk"), E(1, "harden"), E(10, "sproutslam"), E(16, "photorest"), E(22, "scramble"), E(28, "overgrowth"))));
 
             Add(new SpeciesDef("sparkshell", "Sparkshell", EggType.Volt,
                 58, 66, 54, 64, 90, C(0xFFD84A), C(0x8A5E00), 43,
                 "Hums near power lines. Nest Stations keep a padded box just for this one.",
-                L(E(1, "staticsnap"), E(1, "chargeup"), E(10, "rollout"), E(16, "voltcrack"), E(22, "scramble"), E(28, "voltcrack"))));
+                L(E(1, "staticsnap"), E(1, "chargeup"), E(10, "rollout"), E(16, "voltcrack"), E(22, "scramble"), E(28, "thunderyolk"))));
 
             Add(new SpeciesDef("snowpoach", "Snowpoach", EggType.Frost,
                 52, 62, 50, 68, 95, C(0xDFF4FB), C(0x3E7E9C), 53,
                 "Skates rather than rolls. Enormously pleased with itself about this.",
-                L(E(1, "chillshell"), E(1, "coldsnap"), E(10, "rollout"), E(16, "frostcrack"), E(22, "scramble"), E(28, "frostcrack"))));
+                L(E(1, "chillshell"), E(1, "coldsnap"), E(10, "rollout"), E(16, "frostcrack"), E(22, "scramble"), E(28, "whiteout"))));
 
             Add(new SpeciesDef("boulderoo", "Boulderoo", EggType.Stone,
                 76, 68, 84, 28, 75, C(0x8C7359), C(0x2E2216), 63,

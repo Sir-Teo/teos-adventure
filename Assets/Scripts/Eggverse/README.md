@@ -115,7 +115,7 @@ stages last the whole battle, Garrow that Elders resist the carton twice as hard
 
 - **28 species** across 9 types, in **8 three-stage evolution families** (one per element)
 - **17 planets** in three sectors plus Amaranth Prime
-- **35 moves** with a type chart, STAB, crits, PP, stat stages and status effects
+- **39 moves** with a type chart, STAB, crits, PP, stat stages and lingering conditions — every element has a finisher
 - **8 shell patterns** (speckled, mottled, banded, striped, swirled, starry, cracked, glossy)
 - **8 passive traits**, one per element — learn it once and it holds for every egg of that type
 - **2 supplies**: 12 egg cartons and 4 yolk salves, both restocked at any Nest Station

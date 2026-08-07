@@ -165,6 +165,18 @@ namespace Eggverse
             Add(new MoveDef("eventhorizon", "Event Horizon", EggType.Void, 95, 95, 8, MoveEffect.Lifesteal50, "Swallows all light."));
             Add(new MoveDef("omegashell", "Omega Shell", EggType.Aether, 105, 90, 6, MoveEffect.None, "A perfect, final shell."));
             Add(new MoveDef("tectonic", "Tectonic", EggType.Stone, 100, 85, 8, MoveEffect.None, "Splits the crust open."));
+
+            // Four elements had a hundred-power finisher and four stopped at seventy-five, so
+            // half the roster's late game was strictly weaker than the other half's. These are
+            // the missing four, on the same terms: high power, thinner accuracy, few uses.
+            Add(new MoveDef("deluge", "Deluge", EggType.Tidal, 100, 85, 8, MoveEffect.None,
+                            "Brings the whole shelf down at once."));
+            Add(new MoveDef("overgrowth", "Overgrowth", EggType.Verdant, 95, 90, 8, MoveEffect.Recoil25,
+                            "Everything blooms, including what should not."));
+            Add(new MoveDef("thunderyolk", "Thunderyolk", EggType.Volt, 100, 85, 8, MoveEffect.Daze,
+                            "One strike, straight down."));
+            Add(new MoveDef("whiteout", "Whiteout", EggType.Frost, 100, 85, 8, MoveEffect.Chill,
+                            "The horizon disappears and does not come back."));
         }
     }
 }

@@ -883,6 +883,46 @@ namespace Eggverse
                 }
             }
 
+            // ---- learnsets ----
+            // A learnset entry for a move the egg already knows is skipped, so the level-up it
+            // sits on teaches nothing at all. Three of the four stage-three species had their
+            // level-28 entry repeat a move they learned at 16 - a capstone that silently did
+            // nothing, which no amount of playing would make obvious.
+            foreach (var sp in SpeciesDatabase.All)
+            {
+                var seenMoves = new HashSet<string>();
+                foreach (var e in sp.Learnset)
+                    check(seenMoves.Add(e.MoveId),
+                          sp.Name + " does not learn " + MoveDatabase.Get(e.MoveId).Name +
+                          " twice (level " + e.Level + " teaches nothing)");
+            }
+
+            // Every element should have a finisher, or half the roster's late game is strictly
+            // weaker than the other half's.
+            foreach (EggType t in System.Enum.GetValues(typeof(EggType)))
+            {
+                if (t == EggType.Plain) continue;
+                int best = 0;
+                foreach (var mv in MoveDatabase.All) if (mv.Type == t && mv.Power > best) best = mv.Power;
+                check(best >= 95, TypeChart.Name(t) + " has a high-power move (best is " + best + ")");
+            }
+
+            // ...and somebody has to actually learn it, or it is data nobody meets.
+            foreach (var mv in MoveDatabase.All)
+            {
+                if (mv.Power < 95) continue;
+                bool taught = false;
+                int atLevel = 0;
+                foreach (var sp in SpeciesDatabase.All)
+                    foreach (var e in sp.Learnset)
+                        if (e.MoveId == mv.Id) { taught = true; atLevel = e.Level; }
+                check(taught, mv.Name + " is learned by somebody");
+                if (taught)
+                    check(atLevel <= EggInstance.MaxLevel,
+                          mv.Name + " is learned at a level an egg can reach (" + atLevel +
+                          " of " + EggInstance.MaxLevel + ")");
+            }
+
             // ---- every background an egg is drawn on ----
             // Six contrast defects came from asking, one screen at a time, what a sprite is
             // actually drawn over. Rather than keep discovering the next one, this enumerates
