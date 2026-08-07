@@ -741,21 +741,55 @@ namespace Eggverse
 
                 // It sits under the objective in a 524x150 box at font 20, and the worst case is
                 // a beat waiting on two people at once.
-                var probe = new StoryState();
-                var st10 = new GameState();
+                // Two states, because the blocker is longest in neither of the obvious ones.
+                // A fresh save is missing seven elements, which is too many to list, so it gets
+                // a bare number - and this check used only a fresh save, which meant the longest
+                // form of the text it exists to measure was never measured at all.
+                var fresh10 = new GameState();
+                var threeTypes = new GameState(false);
+                foreach (var id in new[] { "sprouteg", "yolkano", "tidepoach" })
+                    threeTypes.Party.Add(EggInstance.Wild(id, 10));
+
+                int panelsMeasured = 0;
                 for (int i = 0; i < StoryDatabase.Beats.Length; i++)
+                    foreach (var st in new[] { fresh10, threeTypes })
+                    {
+                        var walk = new StoryState();
+                        walk.RestoreFrom(new string[0], i);
+                        string blocker = walk.CurrentBlockerText(st);
+                        if (blocker == null) continue;
+
+                        panelsMeasured++;
+                        string full = StoryDatabase.Beats[i].Chapter + "\n" +
+                                      StoryDatabase.Beats[i].Objective + "\nStill needed: " + blocker;
+                        check(lines(full, 524f, 20) <= capacity(150f, 20),
+                              "beat '" + StoryDatabase.Beats[i].Id + "' objective and blocker fit the panel (" +
+                              lines(full, 524f, 20) + " of " + capacity(150f, 20) + " lines)");
+                    }
+
+                check(panelsMeasured > 0,
+                      "some beat does block, so the objective panel was measured (" +
+                      panelsMeasured + " states)");
+
+                // And the widest the hint itself can get: five element names at once.
                 {
-                    var walk = new StoryState();
-                    walk.RestoreFrom(new string[0], i);
-                    string blocker = walk.CurrentBlockerText(st10);
-                    if (blocker == null) continue;
-                    string full = StoryDatabase.Beats[i].Chapter + "\n" +
-                                  StoryDatabase.Beats[i].Objective + "\nStill needed: " + blocker;
-                    check(lines(full, 524f, 20) <= capacity(150f, 20),
-                          "beat '" + StoryDatabase.Beats[i].Id + "' objective and blocker fit the panel (" +
-                          lines(full, 524f, 20) + " of " + capacity(150f, 20) + " lines)");
+                    var five = new GameState(false);
+                    foreach (var id in new[] { "sprouteg", "yolkano", "tidepoach" })
+                        five.Party.Add(EggInstance.Wild(id, 10));
+                    check(five.TypesMissing.Count == 5,
+                          "a three-type party is missing five elements (" + five.TypesMissing.Count + ")");
+
+                    var gate = new StoryState();
+                    gate.RestoreFrom(new string[0], StoryDatabase.Beats.Length - 3);
+                    string widest = gate.CurrentBlockerText(five);
+                    check(widest != null && widest.Contains("nothing yet from"),
+                          "the gate beat does block a three-type party, and names the elements: " + widest);
+                    // No separate width assertion on the hint alone. Planting a hint three times
+                    // longer did not overflow anything, because the panel holds six lines and a
+                    // blocker is three - so the check would have been another one that cannot
+                    // fail. What does the measuring is the combined objective-and-blocker check
+                    // above, which now runs against a three-type party as well as a fresh save.
                 }
-                _ = probe;
             }
 
             // ---- record milestones ----
