@@ -283,6 +283,27 @@ guarantees every element has exactly two targets and two counters, so strict dom
 impossible — an earlier hand-written chart had Stone beating five other elements outright. If you
 edit the chart, keep the ring or the dominance check in the harness will tell you what broke.
 
+### How long is it
+
+The story suite proves the beats can be walked, but it *forces* each gate — when a beat wants
+level 22 it awards experience until the number appears. A separate pacing pass plays instead:
+real catch odds, experience shared the way the battle screen shares it, and a party that only
+fights worlds within about three levels of itself, because a level-7 team does not clear the
+Belt.
+
+Played that way, the mandatory path is **54 encounters** — roughly half an hour of actual
+battling, on top of the travel, talking and exploring. The gate lands almost exactly where it
+was aimed: a played run arrives at Amaranth with six eggs, six elements and a top level of 22
+against a requirement of six, four and 22.
+
+The record is the long tail, not the critical path. Twenty-four catchable species is the thing
+that keeps you flying after the story runs out.
+
+A first version of this asserted the run should take at least 60 encounters and failed at 54.
+The threshold was what was wrong — it was invented before there was a measurement to base it
+on. The band is now wide and exists to catch drift: a gate that goes trivial, or a curve that
+turns into a grind.
+
 ## Saving
 
 One slot at `Application.persistentDataPath/eggverse_save.json`. Autosaves on landing, story

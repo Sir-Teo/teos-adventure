@@ -10,6 +10,8 @@ class Sim {
         StoryWalk();
         SaveRoundTrip();
         HostileSave();
+        Console.WriteLine("== pacing (playing it, not forcing it) ==");
+        Pacing.Run_(Check);
         Console.WriteLine("== authored prose ==");
         Prose.Run(Check);
         XpCurve();
