@@ -53,10 +53,30 @@ About one wild egg in twelve is an **Elder** — three levels older, visibly lar
 of its own element, worth 1.7× the experience, and far harder to keep (14% at full health
 against an ordinary egg's 33%, and 40% even at 1 HP). They are trophies, not obstacles.
 
+## The worlds
+
+Three sectors ring Yolkhaven, and Amaranth Prime sits beyond all of them.
+
+| Sector | Worlds | Levels |
+|---|---|---|
+| The Hatchery Reach | Yolkhaven, Cinderoost, Brineholt, Mosswell | 5-11 |
+| The Long Drift | Shimmerfen, Tidewrack, Voltacrest, Arcmoor, Emberfall, Cobblestead, Glacierim | 10-18 |
+| The Shattered Belt | Umbralux, Aetherwake, Nullreach, Vesper, Cairnhold | 16-23 |
+| Amaranth | Amaranth Prime | boss |
+
+Every element has at least two worlds of its own. **Shimmerfen** (Aether), **Arcmoor** (Volt)
+and **Cairnhold** (Stone) exist because those three were served by a single planet each, which
+made them the elements you were least likely to have raised by the time Amy is reachable.
+
+Each of the sixteen landable worlds has a resident, and each resident quietly teaches one
+thing the game never states outright — Nell that you weaken an egg before throwing, Moth that
+elements carry passive traits, Lune that a salve is only worth it mid-fight, Tilda that stat
+stages last the whole battle, Garrow that Elders resist the carton twice as hard.
+
 ## Content
 
 - **28 species** across 9 types, in **8 three-stage evolution families** (one per element)
-- **14 planets** in three sectors plus Amaranth Prime
+- **17 planets** in three sectors plus Amaranth Prime
 - **35 moves** with a type chart, STAB, crits, PP, stat stages and status effects
 - **8 shell patterns** (speckled, mottled, banded, striped, swirled, starry, cracked, glossy)
 - **8 passive traits**, one per element — learn it once and it holds for every egg of that type
@@ -106,7 +126,7 @@ screen shows each species' matchups in place, so the ring never has to be memori
 ## Layout
 
 ```
-Data/     types + chart, moves, 28 species, 14 planets, runtime EggInstance
+Data/     types + chart, moves, 28 species, 17 planets, runtime EggInstance
 Core/     GameBootstrap (entry), GameDirector (modes/camera/story), GameState, SaveSystem, EggInput
 Story/    StoryDatabase (beats, cast, dialogue, trainers), StoryState (flags + progression)
 Art/      ProcArt — every sprite, from noise and ellipse maths

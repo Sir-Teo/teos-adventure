@@ -197,6 +197,20 @@ namespace Eggverse
                 S(W("snowpoach", 4), W("glacegg", 3), W("chillet", 2), W("craggle", 1)),
                 "Ice sheets over old stone. Sound carries far out here."));
 
+            Add(new PlanetDef("shimmerfen", "Shimmerfen", EggType.Aether, Sector.LongDrift,
+                new Vector2(-2f, 54f), 5.5f, 34f,
+                C(0x2E2358), C(0xB49BE8), C(0xE8DCFF),
+                10, 14,
+                S(W("nebulegg", 4), W("cosmolette", 2), W("chillet", 2), W("bubblenog", 1)),
+                "A fen of standing light. Nothing casts a shadow here, including you."));
+
+            Add(new PlanetDef("arcmoor", "Arcmoor", EggType.Volt, Sector.LongDrift,
+                new Vector2(-58f, 66f), 5f, 34f,
+                C(0x2B2E14), C(0xBFD13A), C(0xEEFFA8),
+                13, 17,
+                S(W("sparkshell", 4), W("frizzlebolt", 3), W("yolty", 2), W("nebulegg", 1)),
+                "Heather to the horizon, and every stem of it humming."));
+
             // ===================== Sector III — The Shattered Belt =====================
 
             Add(new PlanetDef("umbralux", "Umbralux", EggType.Void, Sector.ShatteredBelt,
@@ -228,6 +242,13 @@ namespace Eggverse
                 "A cold, quiet waystation. Vess grew up here, and does not like to say so."));
 
             // ===================== Final =====================
+
+            Add(new PlanetDef("cairnhold", "Cairnhold", EggType.Stone, Sector.ShatteredBelt,
+                new Vector2(-82f, 132f), 5.5f, 34f,
+                C(0x2A2A33), C(0x8A8794), C(0xC6C3D4),
+                19, 23,
+                S(W("boulderoo", 4), W("craggle", 3), W("shadowhisk", 2), W("cobblet", 1)),
+                "The Belt's largest surviving piece. Someone stacked the rest into cairns."));
 
             Add(new PlanetDef("amaranth", "Amaranth Prime", EggType.Aether, Sector.Amaranth,
                 new Vector2(0f, 168f), 12f, 42f,

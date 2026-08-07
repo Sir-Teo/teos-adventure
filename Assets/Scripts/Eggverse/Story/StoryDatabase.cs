@@ -158,6 +158,9 @@ namespace Eggverse
             new NpcDef("quill", "Quill", "emberfall",   new Vector2(-7f, 7f),   C(0xF2A86B)),
             new NpcDef("moth",  "Moth",  "umbralux",    new Vector2(6f, 8f),    C(0x9B8BD6)),
             new NpcDef("wren",  "Wren",  "nullreach",   new Vector2(-5f, -8f),  C(0x8C82C0)),
+            new NpcDef("lune",  "Lune",  "shimmerfen",  new Vector2(7f, -6f),   C(0xC9B4F0)),
+            new NpcDef("tilda", "Tilda", "arcmoor",     new Vector2(-8f, -5f),  C(0xCFDD5E)),
+            new NpcDef("garrow","Garrow","cairnhold",   new Vector2(6f, 7f),    C(0xA9A6B4)),
         };
 
         // ------------------------------------------------------------------
@@ -278,6 +281,30 @@ namespace Eggverse
                     "Here's a thing worth knowing: every egg carries a knack from its element. Void ones can't be rattled — you can't lower what they've got.",
                     "The green ones mend themselves as they fight. The stone ones will not go down from full health, not for anything.",
                     "Learn the eight and you'll never be surprised twice.",
+                }, true);
+
+                case "lune": return Resident("Lune", new[]
+                {
+                    "You came over the fen without a lamp. Brave, or you didn't know it was a fen.",
+                    "Here — take a salve while you're standing still. Nobody thinks to use one mid-fight, and that's the only time it counts.",
+                    "It costs you the turn, mind. You'll take a hit for it. But an egg that's still standing is worth more than a turn.",
+                    "Four in a stack, same as your cartons. Any Nest Station will fill both.",
+                }, true);
+
+                case "tilda": return Resident("Tilda", new[]
+                {
+                    "Mind the heather. It's not the ground that's charged, it's the air above it.",
+                    "You'll have seen the little arrows on an egg's card — the up ones and the down ones. Those aren't decoration.",
+                    "A move that drops the other one's speed sticks for the whole fight. Two of those and you're going first every round, whatever it was born with.",
+                    "Half of winning up here is deciding who moves first. The other half is remembering you decided it.",
+                }, true);
+
+                case "garrow": return Resident("Garrow", new[]
+                {
+                    "Every cairn out there is somebody's rock. I stack them; I don't ask whose.",
+                    "You'll meet a big one eventually. Older, three levels past its neighbours, and lit up round the shell.",
+                    "Don't throw early at those. They sit in the carton twice as hard as an ordinary egg — get it right down first or you'll spend the whole stack.",
+                    "Worth it, though. They come up faster than anything you'll raise from a hatchling.",
                 }, true);
 
                 case "wren": return Resident("Wren", new[]
