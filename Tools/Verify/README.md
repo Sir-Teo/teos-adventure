@@ -81,6 +81,26 @@ before it checks, so a planted run leaves the fault compiled into `Eggverse.dll`
 links that DLL. A render will then show a defect that exists in no source file — which happened,
 and looked exactly like a real layout bug in the game.
 
+### Checks that assert nothing
+
+Three checks in this suite turned out to be passing without testing anything, and all three had
+the same shape: an assertion that could be *skipped* rather than fail.
+
+- The landmark dialogue check measured lines against a box that holds five of them, so no
+  inscription could ever overflow it.
+- The party-row check built its worst case from a long nickname — but nicknames are capped at
+  twelve, so widening the truncation limit changed nothing.
+- The gate-hint check ran only `if` the blocker text mentioned types, so switching the hint off
+  entirely left it silent. Worse, the party it built to be "one type short" was not short at all,
+  because the gate wants four types and the test assumed six.
+
+Each was found by planting a fault and watching nothing happen. Where a check only fires under a
+condition, count how many times it fired and assert that number is not zero — `verify.sh` now
+reports coverage for the guarded blocks that could legitimately run zero times.
+
+Build test data from the game's own constants, never from a number you remember. The gate-hint
+check was wrong precisely because six was a plausible thing to remember.
+
 A check that has never failed is a check nobody has verified.
 
 Landmarks are the clearest case for rendering. All seventeen were drawn as one identical grey

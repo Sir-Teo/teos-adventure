@@ -655,8 +655,16 @@ namespace Eggverse
                       "(it is " + GameState.PartySize + ")");
 
                 // And the objectives, which do spell themselves, must actually agree with the gate.
+                // Counted, not assumed. Each of these only fires on beats that have the
+                // requirement at all, so removing every requirement would leave them silently
+                // passing - which is how three checks in this file came to assert nothing.
+                int statedEggs = 0, statedLevel = 0, statedTypes = 0;
                 foreach (var beat in StoryDatabase.Beats)
                 {
+                    if (beat.RequiredEggs > 0) statedEggs++;
+                    if (beat.RequiredLevel > 0) statedLevel++;
+                    if (beat.RequiredTypes > 0) statedTypes++;
+
                     if (beat.RequiredEggs > 0)
                         check(beat.Objective.Contains(Words.Spell(beat.RequiredEggs)) ||
                               beat.Objective.Contains(beat.RequiredEggs.ToString()),
@@ -669,6 +677,10 @@ namespace Eggverse
                               beat.Objective.Contains(beat.RequiredTypes.ToString()),
                               "beat '" + beat.Id + "' states the type count it requires");
                 }
+
+                check(statedEggs > 0 && statedLevel > 0 && statedTypes > 0,
+                      "the beat-requirement checks actually ran (" + statedEggs + " egg, " +
+                      statedLevel + " level, " + statedTypes + " type gates)");
 
                 // The move descriptions spell their duration rather than stating it, so the only
                 // thing worth asserting is that it still reads as a word in a sentence - pinning
@@ -1048,6 +1060,10 @@ namespace Eggverse
 
             // ---- the chart never asks for what you already have ----
             {
+                // Counted: if no remainder ever names anybody, this whole section asserts
+                // nothing and says so.
+                int namedInRemainder = 0;
+
                 // The sealed-route panel used to print the whole objective and then the
                 // outstanding list under it, so a player who had found one of two keepers read
                 // "Find Marn on Voltacrest and Sable on Glacierim" directly above "Still
@@ -1069,11 +1085,18 @@ namespace Eggverse
                         // Nothing named in the remainder may also be named above it.
                         foreach (var npc in StoryDatabase.Npcs)
                             if (asked.Contains(npc.Name))
+                            {
+                                namedInRemainder++;
                                 check(!before.Contains(npc.Name),
                                       "the chart does not ask twice for " + npc.Name +
                                       " at beat '" + StoryDatabase.Beats[i].Id + "'");
+                            }
                     }
                 }
+
+                check(namedInRemainder > 0,
+                      "some sealed route does name a person in its remainder (" +
+                      namedInRemainder + " of them)");
             }
 
             // ---- what the boss world tells you before you go down ----
@@ -2314,6 +2337,7 @@ namespace Eggverse
 
             // ---- move buttons ----
             // Name, accuracy and rider share one 330px line; the sub-line carries the rest.
+            int ridersSeen = 0;
             foreach (var mv in MoveDatabase.All)
             {
                 string acc = mv.Accuracy >= 100 ? "" : "  " + mv.Accuracy + "%";
@@ -2329,13 +2353,20 @@ namespace Eggverse
                              " · PP " + mv.MaxPP + "/" + mv.MaxPP;
                 check(lines(sub, 330f - 44f, 17) == 1, "move button sub-line fits: \"" + sub + "\"");
                 if (rider.Length > 0)
+                {
+                    ridersSeen++;
                     check(lines(rider, 330f - 44f, 17) == 1, "move button rider line fits: \"" + rider + "\"");
+                }
 
                 // Name at 24 plus one or two lines at 17, inside a 74px button.
                 float used = 24f * 1.16f + 17f * 1.16f * (rider.Length > 0 ? 2 : 1);
                 check(used <= 74f,
                       mv.Name + "'s button is tall enough (" + used.ToString("0") + " of 74px)");
             }
+
+            check(ridersSeen > 0,
+                  "some move does leave a condition behind, so the rider line was measured (" +
+                  ridersSeen + " moves)");
 
             // ---- lingering conditions ----
             {
@@ -2456,7 +2487,7 @@ namespace Eggverse
             foreach (var sp in SpeciesDatabase.All)
             {
                 var homes = PlanetDatabase.WorldsWith(sp.Id);
-                if (sp.CatchRate >= 20)
+                if (sp.CatchRate >= SpeciesDatabase.CatchableThreshold)
                     check(homes.Count > 0, sp.Name + " is catchable but spawns on no world");
 
                 // The dex lists their names in a 450px box; the longest roster must still fit.
