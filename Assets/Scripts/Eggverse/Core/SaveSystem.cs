@@ -28,6 +28,7 @@ namespace Eggverse
         public string[] caught;
         public string[] visited;
         public string[] flags;
+        public string[] caches;
         public int cartons;
         // Defaulted, not zero: a save written before salves existed has no key for them, and
         // JsonUtility leaves the field initializer in place — so those runs load fully stocked.
@@ -73,6 +74,7 @@ namespace Eggverse
                     visited = ToArray(state.Visited),
                     flags = story.FlagsSnapshot(),
                     cartons = state.Cartons,
+                    caches = ToArray(state.Caches),
                     salves = state.Salves,
                     beatIndex = story.BeatIndex,
                     planet = planetId,
@@ -186,8 +188,10 @@ namespace Eggverse
                 stale += AddKnown(state.Seen, data.seen, SpeciesDatabase.Exists);
                 stale += AddKnown(state.Caught, data.caught, SpeciesDatabase.Exists);
                 stale += AddKnown(state.Visited, data.visited, PlanetDatabase.Exists);
+                // Caches before cartons: carton capacity is derived from them.
+                stale += AddKnown(state.Caches, data.caches, PlanetDatabase.HasCache);
                 StaleEntriesDropped = stale;
-                state.Cartons = Mathf.Clamp(data.cartons, 0, GameState.MaxCartons);
+                state.Cartons = Mathf.Clamp(data.cartons, 0, state.MaxCartons);
                 state.Salves = Mathf.Clamp(data.salves, 0, GameState.MaxSalves);
                 state.AmyDefeated = data.amyDefeated;
 

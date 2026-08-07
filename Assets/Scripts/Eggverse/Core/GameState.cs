@@ -8,7 +8,7 @@ namespace Eggverse
     public class GameState
     {
         public const int PartySize = 6;
-        public const int MaxCartons = 12;
+        public const int BaseMaxCartons = 12;
         public const int MaxSalves = 4;
 
         public readonly List<EggInstance> Party = new List<EggInstance>();
@@ -16,8 +16,22 @@ namespace Eggverse
         public readonly HashSet<string> Seen = new HashSet<string>();
         public readonly HashSet<string> Caught = new HashSet<string>();
         public readonly HashSet<string> Visited = new HashSet<string>();
+        /// <summary>Ids of worlds whose hidden cache has been dug up. One each, for good.</summary>
+        public readonly HashSet<string> Caches = new HashSet<string>();
 
-        public int Cartons = MaxCartons;
+        /// <summary>Twelve, plus one for every cache dug up.</summary>
+        public int MaxCartons
+        {
+            get
+            {
+                int extra = 0;
+                foreach (var id in Caches)
+                    if (PlanetDatabase.CacheWorlds.TryGetValue(id, out int n)) extra += n;
+                return BaseMaxCartons + extra;
+            }
+        }
+
+        public int Cartons = BaseMaxCartons;
         public int Salves = MaxSalves;
         public string CurrentPlanetId = PlanetDatabase.Home.Id;
         public bool AmyDefeated;

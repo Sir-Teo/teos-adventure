@@ -349,7 +349,7 @@ namespace Eggverse
                 (blocker != null ? "\n<color=#A8B2C4>Still needed: " + blocker + "</color>" : "");
 
             // Terse on purpose: this is a fixed 524px strip that cannot wrap.
-            cartonText.text = "Cartons " + state.Cartons + "/" + GameState.MaxCartons +
+            cartonText.text = "Cartons " + state.Cartons + "/" + state.MaxCartons +
                               " · Salves " + state.Salves + "/" + GameState.MaxSalves + "\n" +
                               "Nest " + state.TotalCollected +
                               " · Types " + state.DistinctTypesHeld + "/8" +

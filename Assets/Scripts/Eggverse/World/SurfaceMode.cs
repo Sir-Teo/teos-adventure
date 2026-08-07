@@ -51,6 +51,8 @@ namespace Eggverse
         readonly List<NpcView> npcs = new List<NpcView>();
 
         Transform nestStation;
+        Transform cache;
+        Vector2 cachePos;
         Transform amyFigure;
 
         float fieldDistance;
@@ -95,6 +97,7 @@ namespace Eggverse
             BuildGround(planet, rng, R);
             if (!planet.IsBossWorld) BuildShellFields(planet, rng, R);
             BuildNestStation(planet);
+            BuildCache(planet, R);
             if (planet.IsBossWorld) BuildAmy(planet);
             else BuildRoamers(planet, rng, R);
             BuildNpcs(planet);
@@ -116,6 +119,7 @@ namespace Eggverse
             npcs.Clear();
             nestStation = null;
             amyFigure = null;
+            cache = null;
         }
 
         SpriteRenderer Spawn(string name, Sprite sprite, Vector2 pos, float diameter, Color tint, int order, Transform parent = null)
@@ -379,6 +383,57 @@ namespace Eggverse
                      "<b>NEST STATION</b>\n<size=18><color=#A8B2C4>press E to rest</color></size>", 22);
         }
 
+        /// <summary>
+        /// The hidden cache, if this world has one and it has not been dug up yet.
+        ///
+        /// Placed from the planet's own seed, so it is in the same spot every time you land, and
+        /// out past two thirds of the radius so it is never on the way to anything. It is drawn
+        /// faintly: findable by walking, not by glancing.
+        /// </summary>
+        void BuildCache(PlanetDef planet, float R)
+        {
+            if (!PlanetDatabase.HasCache(planet.Id)) return;
+            if (dir.State.Caches.Contains(planet.Id)) return;
+
+            var rng = new System.Random(planet.Seed ^ 0x5EED);
+            float angle = (float)rng.NextDouble() * Mathf.PI * 2f;
+            float dist = R * (0.68f + 0.22f * (float)rng.NextDouble());
+            cachePos = new Vector2(Mathf.Cos(angle) * dist, Mathf.Sin(angle) * dist);
+
+            var go = new GameObject("Cache");
+            go.transform.SetParent(root, false);
+            go.transform.localPosition = cachePos;
+            cache = go.transform;
+
+            var ground = Color.Lerp(planet.Land, Color.black, 0.30f);
+            Spawn("mound", ProcArt.Blob("cachemound", Color.white, 21), Vector2.zero, 2.4f,
+                  new Color(ground.r, ground.g, ground.b, 0.85f), -28, go.transform);
+            Spawn("glint", ProcArt.Disc("cacheglint", new Color(1f, 0.92f, 0.68f, 1f),
+                                        new Color(1f, 0.8f, 0.3f, 0f), 1.5f, 64, 64f),
+                  new Vector2(0f, 0.2f), 1.5f, new Color(1f, 1f, 1f, 0.40f), -27, go.transform);
+        }
+
+        const float CacheRange = 1.6f;
+
+        /// <summary>Walking over the cache digs it up. No prompt: finding it is the point.</summary>
+        void TickCache()
+        {
+            if (cache == null || dir.Mode != GameMode.Surface) return;
+            if (Vector2.Distance(dir.Teo.transform.position, cache.position) > CacheRange) return;
+
+            var planet = current;
+            dir.State.Caches.Add(planet.Id);
+            int gained = PlanetDatabase.CacheWorlds[planet.Id];
+            dir.State.Cartons = Mathf.Min(dir.State.MaxCartons, dir.State.Cartons + gained);
+            dir.State.RaiseChanged();
+
+            Destroy(cache.gameObject);
+            cache = null;
+
+            dir.Audio.Play(Sfx.CatchSuccess);
+            dir.Hud.Toast("A buried supply cache! You can carry " + dir.State.MaxCartons + " cartons now.");
+        }
+
         void BuildRoamers(PlanetDef planet, System.Random rng, float R)
         {
             // Busier worlds feel different to walk; 3 on a quiet rock, up to 6 on a crowded one.
@@ -536,6 +591,7 @@ namespace Eggverse
             TickNpcs(dt);
             TickRoamers(dt);
             TickInteractions();
+            TickCache();
             if (!current.IsBossWorld) TickFieldEncounters(dt);
         }
 

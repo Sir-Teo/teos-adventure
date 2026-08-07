@@ -399,6 +399,7 @@ class Sim {
                 new EggSave { species = "",         level = 9, hp = 30 },          // blank id
                 new EggSave { species = "removed_species", level = 12, hp = 40 },
             },
+            caches  = new[] { "mosswell", "atlantis", "yolkhaven" },   // real, fake, and one with no cache
             seen    = new[] { "sprouteg", "glacegg", "removed_species" },
             caught  = new[] { "sprouteg", "glacegg", "removed_species", "another_ghost" },
             visited = new[] { "yolkhaven", "shimmerfen", "atlantis" },
@@ -430,9 +431,15 @@ class Sim {
         Check(!st.Visited.Contains("atlantis"), "a world that does not exist is not marked visited");
         Check(st.Visited.Contains("shimmerfen"), "a world that does exist survives");
 
+        Check(st.Caches.Contains("mosswell"), "a real cache survives the load");
+        Check(!st.Caches.Contains("atlantis"), "a cache on a world that does not exist is dropped");
+        Check(!st.Caches.Contains("yolkhaven"), "a cache on a world that has none is dropped");
+        Check(st.MaxCartons == GameState.BaseMaxCartons + 1,
+              $"carton capacity follows the caches that survived (got {st.MaxCartons})");
+
         Check(planet == PlanetDatabase.Home.Id,
               $"an unknown current world falls back to home, and is not carried forward (got '{planet}')");
-        Check(st.Cartons <= GameState.MaxCartons && st.Cartons >= 0, $"cartons clamped (got {st.Cartons})");
+        Check(st.Cartons <= st.MaxCartons && st.Cartons >= 0, $"cartons clamped (got {st.Cartons})");
         Check(st.Salves  <= GameState.MaxSalves  && st.Salves  >= 0, $"salves clamped (got {st.Salves})");
 
         Console.WriteLine($"  survived: {st.Party.Count} in party, {st.Nest.Count} in nest, " +

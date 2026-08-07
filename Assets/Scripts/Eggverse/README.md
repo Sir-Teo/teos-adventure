@@ -198,6 +198,21 @@ UI/       UIKit, HudView, DialogueView, GalaxyMapView, TransitionView
 - Sound design and music → `Audio/ProcAudio.cs`
 - Carton and salve counts, salve strength → `Core/GameState.cs`, `Battle/BattleMode.cs`
 
+## Buried caches
+
+Four of the seventeen worlds hide a supply cache — **Mosswell**, **Tidewrack**, **Arcmoor** and
+**Nullreach**, one per sector plus one off the usual route. Each sits between two-thirds and
+nine-tenths of the way out from the Nest Station, in the same place every time you land, drawn
+faintly enough that you find it by walking rather than by glancing.
+
+Digging one up raises how many cartons you can carry, permanently: twelve to sixteen over a
+whole run. Capacity rather than a refill, because a refill is worth nothing standing next to the
+station that gives you one free. It eases the trip back without touching the per-throw odds the
+catch rates are tuned around.
+
+They are the only reason to walk a planet out to its horizon instead of going shell field to
+shell field, and they are recorded in the save, so a world gives up its cache once.
+
 ## Filling the record
 
 **24 of the 28 species are catchable** — Amy's trio and Vess's ace have catch rates low enough

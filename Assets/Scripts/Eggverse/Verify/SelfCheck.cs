@@ -198,11 +198,11 @@ namespace Eggverse
             // ---- supplies ----
             {
                 var st = new GameState();
-                check(st.Cartons == GameState.MaxCartons, "a new run starts with a full carton stack");
+                check(st.Cartons == st.MaxCartons, "a new run starts with a full carton stack");
                 check(st.Salves == GameState.MaxSalves, "a new run starts with a full salve stack");
                 st.Cartons = 0; st.Salves = 0;
                 st.RestockSupplies();
-                check(st.Cartons == GameState.MaxCartons && st.Salves == GameState.MaxSalves,
+                check(st.Cartons == st.MaxCartons && st.Salves == GameState.MaxSalves,
                       "a Nest Station restocks both cartons and salves");
 
                 // A salve has to be worth a turn: it must out-heal a typical hit but never
@@ -446,6 +446,37 @@ namespace Eggverse
             // count is the one that grows without bound, so measure it at three digits.
             check(lines("Cartons 12/12 · Salves 4/4", 524f, 19) == 1, "the HUD supply line wraps");
             check(lines("Nest 240 · Types 8/8 · Record 24/24", 524f, 19) == 1, "the HUD collection line wraps");
+
+            // ---- hidden caches ----
+            {
+                var st2 = new GameState();
+                check(st2.MaxCartons == GameState.BaseMaxCartons,
+                      "a fresh run carries the base carton stack (" + st2.MaxCartons + ")");
+
+                foreach (var kv in PlanetDatabase.CacheWorlds)
+                {
+                    check(PlanetDatabase.Exists(kv.Key), "cache world " + kv.Key + " is a real world");
+                    var world = PlanetDatabase.Get(kv.Key);
+                    check(!world.IsBossWorld, kv.Key + " is not the boss world");
+                    check(kv.Value > 0, kv.Key + "'s cache is worth something");
+                }
+
+                // Digging all of them up must stay a modest upgrade, not a new game.
+                foreach (var kv in PlanetDatabase.CacheWorlds) st2.Caches.Add(kv.Key);
+                int full = st2.MaxCartons;
+                check(full > GameState.BaseMaxCartons, "caches actually raise the cap (" + full + ")");
+                check(full <= GameState.BaseMaxCartons + 6,
+                      "the cap stays in range even with every cache found (" + full + ")");
+
+                // The strip is a fixed 524px and the number of digits can grow.
+                check(lines("Cartons " + full + "/" + full + " · Salves 4/4", 524f, 19) == 1,
+                      "the supply line still fits at full capacity");
+
+                // Spread: a cache on every world would make them scenery.
+                check(PlanetDatabase.CacheWorlds.Count * 4 <= PlanetDatabase.All.Count,
+                      "caches stay rare relative to the number of worlds (" +
+                      PlanetDatabase.CacheWorlds.Count + " of " + PlanetDatabase.All.Count + ")");
+            }
 
             // ---- move buttons ----
             // Name, accuracy and rider share one 330px line; the sub-line carries the rest.

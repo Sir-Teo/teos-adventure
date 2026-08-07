@@ -96,6 +96,25 @@ namespace Eggverse
 
         /// <summary>Whether this id names a real world. Get() falls back to Yolkhaven, which
         /// is right for a lookup and wrong for validating a save file.</summary>
+        /// <summary>
+        /// Worlds that hide a supply cache, and how many cartons finding it adds for good.
+        ///
+        /// Four of the seventeen, one per sector plus Amaranth's approach, so there is a reason
+        /// to walk a planet out to its horizon rather than beeline between the shell fields.
+        /// Capacity, not a refill: a refill is worth nothing at a Nest Station, and this is a
+        /// thing you keep. Twelve cartons to sixteen over a whole run - it eases the trip back
+        /// without touching the per-throw odds the catch rates are tuned around.
+        /// </summary>
+        public static readonly Dictionary<string, int> CacheWorlds = new Dictionary<string, int>
+        {
+            { "mosswell",   1 },   // Hatchery Reach
+            { "tidewrack",  1 },   // The Long Drift
+            { "arcmoor",    1 },   // The Long Drift, off the usual route
+            { "nullreach",  1 },   // The Shattered Belt
+        };
+
+        public static bool HasCache(string planetId) => CacheWorlds.ContainsKey(planetId);
+
         public static bool Exists(string id) => !string.IsNullOrEmpty(id) && byId.ContainsKey(id);
 
         public static PlanetDef Home => ordered[0];

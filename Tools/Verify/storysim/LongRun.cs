@@ -13,7 +13,7 @@ static class LongRun
     {
         check(st.Party.Count <= GameState.PartySize, $"[{where}] party never exceeds {GameState.PartySize} (was {st.Party.Count})");
         check(st.Party.Count >= 1, $"[{where}] party is never empty");
-        check(st.Cartons >= 0 && st.Cartons <= GameState.MaxCartons, $"[{where}] cartons in range (was {st.Cartons})");
+        check(st.Cartons >= 0 && st.Cartons <= st.MaxCartons, $"[{where}] cartons in range (was {st.Cartons})");
         check(story.BeatIndex >= 0 && story.BeatIndex < StoryDatabase.Beats.Length, $"[{where}] beat index in range");
 
         foreach (var e in st.Party)
