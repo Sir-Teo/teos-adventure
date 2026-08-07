@@ -269,6 +269,12 @@ class Sim {
                 Console.WriteLine($"  neither keeper found: \"{both}\"");
                 Console.WriteLine($"  Marn found:           \"{one}\"");
                 Check(both != one, "the objective panel notices half-finished progress");
+
+                // And the chart says the same when it refuses to plot a course.
+                string sealedNow = half.SectorBlockerText(Sector.ShatteredBelt, stX);
+                Console.WriteLine($"  chart, route sealed:  \"{(sealedNow ?? "").Replace("\n", " / ")}\"");
+                Check(sealedNow != null && sealedNow.Contains("Sable"),
+                      "the sealed-route message names what is outstanding");
                 Check(one != null && !one.Contains("Marn"), "and stops asking for the one already found");
             }
 

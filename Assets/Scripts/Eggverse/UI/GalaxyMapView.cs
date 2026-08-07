@@ -342,7 +342,7 @@ namespace Eggverse
             if (!sectorOpen)
             {
                 sb.Append("<color=#E55555>ROUTE SEALED</color>\n\n");
-                sb.Append(story.SectorBlockerText(m.Def.Sector)).Append("\n\n");
+                sb.Append(story.SectorBlockerText(m.Def.Sector, state)).Append("\n\n");
             }
             else
             {

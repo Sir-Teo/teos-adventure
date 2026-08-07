@@ -693,6 +693,23 @@ namespace Eggverse
                               "for the Still needed line");
                 }
 
+                // The chart says the same thing when it refuses to plot a course, in a 900px
+                // detail panel. That panel carries the tagline and spawn list too, so the sealed
+                // message has to leave room for them.
+                for (int i = 0; i < StoryDatabase.Beats.Length; i++)
+                {
+                    var walk2 = new StoryState();
+                    walk2.RestoreFrom(new string[0], i);
+                    foreach (Sector sec in new[] { Sector.LongDrift, Sector.ShatteredBelt, Sector.Amaranth })
+                    {
+                        string sealed_ = walk2.SectorBlockerText(sec, new GameState());
+                        if (sealed_ == null) continue;
+                        check(lines(sealed_, 848f, 22) <= 8,
+                              "sealed-route text stays short at beat '" + StoryDatabase.Beats[i].Id +
+                              "' (" + lines(sealed_, 848f, 22) + " lines)");
+                    }
+                }
+
                 // It sits under the objective in a 524x150 box at font 20, and the worst case is
                 // a beat waiting on two people at once.
                 var probe = new StoryState();

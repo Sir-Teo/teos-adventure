@@ -45,10 +45,20 @@ namespace Eggverse
         public bool CanEnter(Sector sector) => (int)sector <= (int)MaxSector;
 
         /// <summary>Why a sector is closed, in words the HUD can show.</summary>
-        public string SectorBlockerText(Sector sector)
+        /// <summary>
+        /// Why the chart will not plot a course there. Takes the state so it can say what is
+        /// outstanding rather than only restating the objective - this is read at the moment a
+        /// player is stopped, which is when the specifics matter most.
+        /// </summary>
+        public string SectorBlockerText(Sector sector, GameState state = null)
         {
             if (CanEnter(sector)) return null;
-            return "The route to " + PlanetDatabase.SectorName(sector) + " opens later. " + Current.Objective;
+
+            string text = "The route to " + PlanetDatabase.SectorName(sector) + " opens later. " +
+                          Current.Objective;
+            string outstanding = state != null ? CurrentBlockerText(state) : null;
+            if (outstanding != null) text += "\n\nStill needed: " + outstanding;
+            return text;
         }
 
         // ------------------------------------------------------------------
