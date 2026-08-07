@@ -1626,6 +1626,39 @@ namespace Eggverse
                 check(elder.Elder && !ordinary.Elder, "and knows it");
             }
 
+            // ---- one number, one format ----
+            {
+                // An egg's health appeared on four screens in three forms: "45 / 135" on the
+                // battle plate and the egg panel, "45/135" in the collection list, "45/135 HP"
+                // on the swap row. The same number about the same egg, spaced three ways.
+                var egg = EggInstance.Wild("sprouteg", 20);
+                egg.CurrentHP = egg.MaxHP / 3;
+                string want = UiCopy.Health(egg.CurrentHP, egg.MaxHP);
+
+                check(!want.Contains(" "), "health is written without spaces: " + want);
+                check(want.Contains("/"), "and as a fraction");
+
+                var st = new GameState(false);
+                foreach (var sp0 in SpeciesDatabase.All) { st.Seen.Add(sp0.Id); st.Caught.Add(sp0.Id); }
+
+                check(HudView.DescribeStoredEgg(egg).Contains(want),
+                      "the collection list writes it that way: " + HudView.DescribeStoredEgg(egg));
+                check(HudView.EggLoreText(egg, st).Contains(want),
+                      "the egg panel writes it that way");
+                check(BattleMode.SwapRow(egg, EggInstance.Wild("yolkano", 20), false).Contains(want),
+                      "the swap row writes it that way");
+
+                // A full-health egg and a fainted one, since those are the two a player looks
+                // at hardest.
+                var full = EggInstance.Wild("cobblet", 20);
+                check(UiCopy.Health(full.CurrentHP, full.MaxHP) == full.MaxHP + "/" + full.MaxHP,
+                      "a full egg reads as its own maximum twice");
+                var down = EggInstance.Wild("cobblet", 20);
+                down.CurrentHP = 0;
+                check(UiCopy.Health(down.CurrentHP, down.MaxHP).StartsWith("0/"),
+                      "and a fainted one starts at zero");
+            }
+
             // ---- both screens point at the same egg ----
             {
                 // The surface HUD marks the egg that is actually going out first. The

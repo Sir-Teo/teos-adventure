@@ -1202,7 +1202,7 @@ namespace Eggverse
             myTypeChip.color = TypeChart.ColorOf(mine.Type);
             myHpBar.SetFraction(mine.HPFraction);
             myHpBar.SetFillColor(UIKit.HealthColor(mine.HPFraction));
-            myHpText.text = mine.CurrentHP + " / " + mine.MaxHP;
+            myHpText.text = UiCopy.Health(mine.CurrentHP, mine.MaxHP);
             myXpBar.SetFraction(mine.XpToNext <= 0 ? 1f : mine.Xp / (float)mine.XpToNext);
 
             if (resetSprites)
@@ -1325,7 +1325,7 @@ namespace Eggverse
         {
             string hex = ColorUtility.ToHtmlStringRGB(TypeChart.ColorOf(egg.Type));
             string status = egg.IsFainted ? "<color=#E55555>OUT COLD</color>"
-                                          : egg.CurrentHP + "/" + egg.MaxHP + " HP";
+                                          : UiCopy.Health(egg.CurrentHP, egg.MaxHP) + " HP";
 
             string facing = "";
             if (foe != null && !egg.IsFainted && !unavailable)

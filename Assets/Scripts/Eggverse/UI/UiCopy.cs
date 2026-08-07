@@ -42,6 +42,18 @@ namespace Eggverse
         public const string ChartFooter = "Arrows select  ·  Enter to set course  ·  M or Esc to close";
         public const string BattleFooter = "Arrows/WASD move · Enter or Space select · Esc back";
 
+        /// <summary>
+        /// An egg's health, written the same way everywhere.
+        ///
+        /// It appeared on four screens in three forms: "45 / 135" on the battle plate and the
+        /// egg panel, "45/135" in the collection list, "45/135 HP" on the swap row. The same
+        /// number about the same egg, spaced three ways.
+        ///
+        /// The label is the caller's business - a list has no room for it and a stat line reads
+        /// badly without it - but the figure itself is one format.
+        /// </summary>
+        public static string Health(int current, int max) => current + "/" + max;
+
         // ---- what the battle says ----
         //
         // Written inline in BattleMode, every one of them, and so outside the prose pass -

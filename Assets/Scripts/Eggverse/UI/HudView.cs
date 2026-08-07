@@ -839,7 +839,7 @@ namespace Eggverse
             sb.Append("<color=#FFC24D>CONDITION</color>\n");
             sb.Append(egg.IsFainted
                 ? "<color=#E55555>Out cold. Rest at a Nest Station.</color>\n"
-                : "<color=#A8B2C4>HP</color>  " + egg.CurrentHP + " / " + egg.MaxHP + "\n");
+                : "<color=#A8B2C4>HP</color>  " + UiCopy.Health(egg.CurrentHP, egg.MaxHP) + "\n");
             sb.Append("<color=#A8B2C4>XP</color>  ")
               .Append(egg.Level >= EggInstance.MaxLevel
                       ? "fully grown"
@@ -985,7 +985,7 @@ namespace Eggverse
             string hex = ColorUtility.ToHtmlStringRGB(TypeChart.ColorOf(egg.Type));
             return "<color=#" + hex + ">●</color> " + egg.Name + "  Lv " + egg.Level +
                    "  <color=#A8B2C4>" + TypeChart.Abbrev(egg.Type) + "  " +
-                   egg.CurrentHP + "/" + egg.MaxHP + "</color>";
+                   UiCopy.Health(egg.CurrentHP, egg.MaxHP) + "</color>";
         }
 
         public static string DescribeEgg(EggInstance egg)
@@ -1000,7 +1000,7 @@ namespace Eggverse
             string evo = egg.EvolutionHint();
             return "<color=#" + hex + ">●</color> <b>" + egg.Name + "</b>  Lv " + egg.Level +
                    "  <color=#A8B2C4>" + TypeChart.Name(egg.Type) + "  " +
-                   egg.CurrentHP + "/" + egg.MaxHP + " HP</color>" +
+                   UiCopy.Health(egg.CurrentHP, egg.MaxHP) + " HP</color>" +
                    "  <color=#FFC24D>" + TypeChart.TraitName(egg.Trait) + "</color>" +
                    (evo != null ? "  <color=#62C8F5>→ " + evo + "</color>" : "") +
                    "\n      <color=#7A8090>" + moves + "  ·  " + TypeChart.TraitBlurb(egg.Trait) + "</color>";
