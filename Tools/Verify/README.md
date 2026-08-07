@@ -168,7 +168,21 @@ strip, which sat inside four percent of wrapping on every row it had. That panel
 screen; the width was free and it now has it. Two more — the collection footer and the battle
 card's name — were widened for the same reason.
 
-Re-run it after adding anything to a fixed-width panel:
+The other half of the model is line height, assumed at 1.16x the font size. Stressed the same
+way:
+
+| line height | failures |
+|---|---|
+| 1.16x (the model) | 0 |
+| 1.20x (+3%) | 0 |
+| 1.25x (+8%) | 22 |
+
+Left alone deliberately. Unity's built-in font sits around 1.15-1.2x, so 1.25 is outside the range
+the model could plausibly be wrong by — and the 22 are almost all one panel, the record's detail
+box, which has a line of slack rather than none. The font-width case was worth fixing because it
+failed at +4%, which is an error the model could actually make.
+
+Re-run both after adding anything to a fixed panel:
 
 ```bash
 # temporarily change 0.52f in SelfCheck's `lines` helper, run, change it back
