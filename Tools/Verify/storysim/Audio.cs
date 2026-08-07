@@ -315,6 +315,125 @@ static class AudioCheck
                       $"the worst stack leaves headroom ({worst:0.000}: {worstWhat} at {worstSpeed})");
             }
 
+            // ---- every species has a voice, and no two share one ----
+            //
+            // Twenty-eight creatures that look distinct - own shell colour, own pattern, own
+            // silhouette - and every one of them arrived on the same three-note sting. Exactly
+            // the fault the portraits had, one sense over.
+            {
+                var cryMethod = t.GetMethod("BuildCry", BindingFlags.NonPublic | BindingFlags.Static);
+                check(cryMethod != null, "BuildCry is reachable");
+                if (cryMethod != null)
+                {
+                    var cries = new List<(string name, float[] buf)>();
+                    var cryPrints = new List<(string name, EggType type, float[] fp)>();
+
+                    foreach (var sp in SpeciesDatabase.All)
+                    {
+                        var buf = (float[])cryMethod.Invoke(null, new object[] { sp });
+                        check(buf != null && buf.Length > 0, sp.Name + " has a cry");
+                        if (buf == null || buf.Length == 0) continue;
+
+                        float peak = 0f;
+                        foreach (var v in buf) peak = Math.Max(peak, Math.Abs(v));
+                        check(peak > 0.02f, sp.Name + "'s cry is audible (peak " + peak.ToString("0.000") + ")");
+                        check(peak <= 1.0f, sp.Name + "'s cry does not clip (peak " + peak.ToString("0.000") + ")");
+                        check(Math.Abs(buf[buf.Length - 1]) < 0.12f, sp.Name + "'s cry decays before it ends");
+
+                        float secs = buf.Length / (float)SR;
+                        // Long enough to be a voice, short enough that it is over before the
+                        // battle screen has finished arriving.
+                        check(secs > 0.15f && secs < 1.30f,
+                              sp.Name + "'s cry is the length of a cry (" + secs.ToString("0.00") + "s)");
+
+                        cries.Add((sp.Name, buf));
+                        cryPrints.Add((sp.Name, sp.Type, Fingerprint(buf)));
+                        WriteWav(Path.Combine(outDir, "cry-" + sp.Id + ".wav"), buf);
+                    }
+                    WritePalette(Path.Combine(outDir, "cry-palette.wav"), cries);
+
+                    // No two creatures share a voice.
+                    float near = 999f; string na = "", nb = "";
+                    for (int i = 0; i < cryPrints.Count; i++)
+                        for (int j = i + 1; j < cryPrints.Count; j++)
+                        {
+                            float d = Apart(cryPrints[i].fp, cryPrints[j].fp);
+                            if (d < near) { near = d; na = cryPrints[i].name; nb = cryPrints[j].name; }
+                        }
+                    Console.WriteLine($"  {cryPrints.Count} cries, closest pair {na}/{nb} at {near:0.000}");
+                    check(near > 0.05f, $"no two species share a cry ({na}/{nb} at {near:0.000})");
+
+                    // An element has to be a family. Two eggs of one element should be closer to
+                    // each other than the roster average, or the element is doing nothing and
+                    // the cry is just noise keyed on an id.
+                    float sameSum = 0f; int samePairs = 0, crossPairs = 0; float crossSum = 0f;
+                    for (int i = 0; i < cryPrints.Count; i++)
+                        for (int j = i + 1; j < cryPrints.Count; j++)
+                        {
+                            float d = Apart(cryPrints[i].fp, cryPrints[j].fp);
+                            if (cryPrints[i].type == cryPrints[j].type) { sameSum += d; samePairs++; }
+                            else { crossSum += d; crossPairs++; }
+                        }
+                    float same = sameSum / Math.Max(1, samePairs);
+                    float cross = crossSum / Math.Max(1, crossPairs);
+                    Console.WriteLine($"    within an element {same:0.000}, across elements {cross:0.000}");
+                    check(samePairs > 0, "some element has more than one species in it");
+                    check(same < cross,
+                          $"an element sounds like a family ({same:0.000} within against {cross:0.000} across)");
+
+                    // Every voice has to be worn by somebody, and every one has to be reachable:
+                    // a shape written and never heard is the same fault as a portrait mark
+                    // nobody wears.
+                    // Plain is a move type, not a creature one - it is the neutral element the
+                    // desperation move Flail is written in, and five other places in the code
+                    // already say "if (t != EggType.Plain)". The first version of this check
+                    // asserted every enum value was spoken by somebody and duly failed on it.
+                    // The content was right. Saying which one is deliberately unspoken is worth
+                    // more than quietly skipping it.
+                    foreach (EggType et in Enum.GetValues(typeof(EggType)))
+                    {
+                        bool used = false;
+                        foreach (var sp in SpeciesDatabase.All) if (sp.Type == et) used = true;
+                        if (et == EggType.Plain)
+                            check(!used, "Plain stays a move type - nothing hatches with that voice");
+                        else
+                            check(used, "some species actually speaks with the " + et + " voice");
+                    }
+
+                    // And the pitch rule has to mean something: the heaviest egg in the game must
+                    // sit below the lightest.
+                    SpeciesDef heavy = null, light = null;
+                    foreach (var sp in SpeciesDatabase.All)
+                    {
+                        if (heavy == null || sp.BaseHP + sp.BaseDef > heavy.BaseHP + heavy.BaseDef) heavy = sp;
+                        if (light == null || sp.BaseHP + sp.BaseDef < light.BaseHP + light.BaseDef) light = sp;
+                    }
+                    Console.WriteLine($"    heaviest {heavy.Name} at {CryForm.RootHz(heavy):0}Hz, " +
+                                      $"lightest {light.Name} at {CryForm.RootHz(light):0}Hz");
+                    check(CryForm.RootHz(heavy) < CryForm.RootHz(light),
+                          $"a heavier egg has a lower voice ({heavy.Name} {CryForm.RootHz(heavy):0}Hz " +
+                          $"against {light.Name} {CryForm.RootHz(light):0}Hz)");
+
+                    // The cry lands a third of a second into the encounter sting, so they overlap.
+                    var sting = (float[])sfxMethod.Invoke(null, new object[] { Sfx.Encounter });
+                    int at = (int)(SR * 0.34f);
+                    float worstCry = 0f; string worstName = "";
+                    foreach (var cry in cries)
+                    {
+                        var mix = new float[Math.Max(sting.Length, at + cry.buf.Length)];
+                        for (int i = 0; i < sting.Length; i++) mix[i] += sting[i];
+                        for (int i = 0; i < cry.buf.Length; i++) mix[at + i] += cry.buf[i] * 0.85f;
+                        float p = 0f;
+                        foreach (var v in mix) p = Math.Max(p, Math.Abs(v));
+                        if (p > worstCry) { worstCry = p; worstName = cry.name; }
+                        check(p <= 1.0f, cry.name + "'s cry does not clip against the encounter sting");
+                    }
+                    Console.WriteLine($"    worst cry over the sting: {worstName} at {worstCry:0.000}");
+                    check(worstCry <= 0.97f,
+                          $"cries and the sting together leave headroom ({worstCry:0.000}, {worstName})");
+                }
+            }
+
             // Nothing was ever comparing one effect against another. A sound is not just
             // audible or clipping - it is loud or quiet *relative to the ones around it*, and a
             // single effect several times the loudness of its neighbours is the one that makes a

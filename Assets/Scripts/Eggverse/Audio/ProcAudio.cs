@@ -117,6 +117,28 @@ namespace Eggverse
             return Make(key, BuildSfx(id));
         }
 
+        /// <summary>
+        /// One species' cry. Cached like everything else, and built from CryForm - which has all
+        /// of the shape in it, so the checks and the synth cannot drift.
+        /// </summary>
+        public static AudioClip Cry(SpeciesDef sp)
+        {
+            string key = "cry_" + sp.Id;
+            AudioClip cached;
+            if (cache.TryGetValue(key, out cached) && cached != null) return cached;
+            return Make(key, BuildCry(sp));
+        }
+
+        /// <summary>Synthesises one cry's samples. Pure maths, so it is testable offline.</summary>
+        static float[] BuildCry(SpeciesDef sp)
+        {
+            var notes = CryForm.Notes(sp);
+            var buf = Buffer(CryForm.Seconds(sp) + 0.05f);
+            foreach (var n in notes)
+                AddNote(buf, n.At, n.Length, n.From, n.To, n.Gain, n.Shape, n.Power);
+            return buf;
+        }
+
         /// <summary>Synthesises one effect's samples. Pure maths, so it is testable offline.</summary>
         static float[] BuildSfx(Sfx id)
         {

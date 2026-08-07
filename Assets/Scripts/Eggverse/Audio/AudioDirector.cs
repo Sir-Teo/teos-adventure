@@ -62,6 +62,16 @@ namespace Eggverse
         }
 
         /// <summary>Plays the right hit sound for how effective the move was.</summary>
+        /// <summary>
+        /// A species' own voice. Twenty-eight creatures arrived on the same three-note sting for
+        /// the whole of the game's life; the sting says something is here, and this says what.
+        /// </summary>
+        public void PlayCry(SpeciesDef sp, float volumeScale = 1f)
+        {
+            if (Muted || sfx == null || sp == null) return;
+            sfx.PlayOneShot(ProcAudio.Cry(sp), SfxVolume * volumeScale);
+        }
+
         public void PlayHit(float typeMultiplier, bool critical)
         {
             if (critical) Play(Sfx.Crit);

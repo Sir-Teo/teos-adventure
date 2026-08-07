@@ -174,6 +174,39 @@ The lesson is the same one as transcription, one level down: if the render reimp
 function the game already has, copy it to the letter or call it. `Cast.Ell` is now
 `ProcArt.FillEllipse` line for line, and it says so.
 
+## Every species has a voice
+
+Twenty-eight creatures that look distinct — their own shell colour, their own pattern, their own
+silhouette — and every one of them arrived on the same three-note encounter sting. The sting says
+something is here and nothing about what. Exactly the fault the portraits had, one sense over.
+
+`CryForm` is built the way `PortraitForm` is: the **element** decides the shape it makes — Molten
+falls away, Aether climbs and hangs, Volt chatters, Stone says one low thing — and the creature's
+own numbers decide where it sits. Bulk pulls the pitch down, speed pushes it up and quickens the
+beat, so the sound agrees with the stats on the record page instead of being sprinkled over them.
+
+| measure | value |
+|---|---|
+| closest pair of cries | Craggle / Obsidyolk at 0.065 (floor 0.05) |
+| average distance within an element | 0.854 |
+| average distance across elements | 1.631 |
+| heaviest / lightest voice | Obsidyolk 336Hz, Yolty 532Hz |
+
+An element being **twice as tight internally as across** is the design working: a family that is
+recognisable without its members being interchangeable.
+
+Getting there took two corrections. A per-species pitch jitter made the closest pair *worse*
+(0.061 → 0.053) — a random offset moves a pair together as readily as apart, and pitch was the
+only axis in play. Craggle and Obsidyolk are both Stone, whose voice is a single note, and their
+bulk and speed put them 0.9 semitones apart to begin with. The fix was a quiet **overtone** at one
+of three intervals, chosen by a stable hash: timbre is a different axis, and it is what makes two
+rocks sound like two rocks.
+
+And the check that every voice is spoken by somebody failed on `Plain` — which is a *move* type,
+the neutral element `Flail` is written in, already excluded from species logic in five other
+places. The content was right. It now asserts that Plain is deliberately unspoken, which says more
+than skipping it would.
+
 ## What only listening finds
 
 Every sound in the game is synthesised from pure `Mathf`, so the harness builds all of them and

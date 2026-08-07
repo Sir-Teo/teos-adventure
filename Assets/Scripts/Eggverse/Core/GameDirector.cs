@@ -520,9 +520,20 @@ namespace Eggverse
             Map.Close();
             Hud.SetHudVisible(false);
             Audio.Play(Sfx.Encounter);
+            // And then whatever it is says so. The sting is the same for a Craggle and a
+            // Wavelet; this is not. Under the sting rather than over it, and after a beat, so
+            // the two read as one event rather than two.
+            if (team != null && team.Count > 0 && team[0] != null)
+                StartCoroutine(CryAfter(team[0].Species, 0.34f));
             Transition.FlashDark(0.45f);
             UpdateMusic();
             Battle.Begin(team, opponentName);
+        }
+
+        System.Collections.IEnumerator CryAfter(SpeciesDef sp, float delay)
+        {
+            yield return new WaitForSeconds(delay);
+            Audio.PlayCry(sp, 0.85f);
         }
 
         public void OnBattleFinished(BattleOutcome outcome)
