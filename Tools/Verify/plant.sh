@@ -17,7 +17,15 @@ FILE="$1"; FIND="$2"; REPL="$3"; EXPECT="${4:-}"
 [ -f "$FILE" ] || { echo "no such file: $FILE"; exit 2; }
 
 BACKUP="$(mktemp)"; cp "$FILE" "$BACKUP"
-restore() { cp "$BACKUP" "$FILE"; rm -f "$BACKUP"; }
+
+# Restoring the source is not enough. verify.sh builds before it checks, so a planted run
+# leaves a DLL with the fault compiled into it, and artcheck links that DLL - it will happily
+# render a defect that no longer exists in any source file. That cost real time to chase once.
+# Put the source back, then rebuild so nothing downstream is looking at the plant.
+restore() {
+  cp "$BACKUP" "$FILE"; rm -f "$BACKUP"
+  "$ROOT/Tools/Verify/check.sh" >/dev/null 2>&1 || echo "  WARNING: could not rebuild after restoring."
+}
 trap restore EXIT
 
 # --- plant, and prove it landed ---

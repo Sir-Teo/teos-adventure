@@ -947,6 +947,42 @@ namespace Eggverse
                       "the widest distance line fits (" + worstPx.ToString("0") + "px, " + worstPair + ")");
             }
 
+            // ---- the chart's detail panel, in its fullest state ----
+            {
+                // 900px wide with 26px padding either side, 660px tall at font 22. Everything
+                // competes for the same 25 lines: tagline, spawn list, distance, cache, landmark,
+                // boss note and the course line. Nothing measured this until a landmark line was
+                // added to it, which is the wrong order to find out.
+                var full = new GameState();
+                var late = new StoryState();
+                late.RestoreFrom(new string[0], StoryDatabase.Beats.Length - 1);
+
+                foreach (var w in PlanetDatabase.All)
+                {
+                    full.Visited.Add(w.Id);
+                    if (PlanetDatabase.HasCache(w.Id)) full.Caches.Add(w.Id);
+                    if (LandmarkDatabase.For(w.Id) != null) full.Landmarks.Add(w.Id);
+                }
+                foreach (var sp in SpeciesDatabase.All) { full.Seen.Add(sp.Id); full.Caught.Add(sp.Id); }
+
+                var farthest = PlanetDatabase.Get("yolkhaven");
+                foreach (var w in PlanetDatabase.All)
+                    foreach (GalaxyMapView.Presence pres in
+                             new[] { GalaxyMapView.Presence.Elsewhere, GalaxyMapView.Presence.InOrbit })
+                    {
+                        // The body box lost its bottom 100px to the course footer and its rule.
+                        string text = GalaxyMapView.DetailBody(w, full, late, farthest, pres);
+                        int used = lines(text, 848f, 22);
+                        check(used <= capacity(560f, 22),
+                              "chart detail fits for " + w.Name + " (" + used + " of " +
+                              capacity(560f, 22) + " lines)");
+
+                        string course = GalaxyMapView.CourseLine(w, full, late, pres);
+                        check(lines(course, 848f, 22) == 1,
+                              "chart course line is one line for " + w.Name + ": " + course);
+                    }
+            }
+
             // ---- landmarks ----
             {
                 check(LandmarkDatabase.Count == PlanetDatabase.All.Count,

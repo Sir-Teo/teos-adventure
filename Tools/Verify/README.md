@@ -72,6 +72,11 @@ It distinguishes three outcomes, which is the whole point:
 - `NOT CAUGHT` — the fault landed and the suite still passed. The check is missing or toothless.
 - `caught:` — with the failures listed, and a note if the expected one is among them.
 
+It also rebuilds after restoring the file. Restoring the source is not enough: the suite builds
+before it checks, so a planted run leaves the fault compiled into `Eggverse.dll`, and `artcheck`
+links that DLL. A render will then show a defect that exists in no source file — which happened,
+and looked exactly like a real layout bug in the game.
+
 A check that has never failed is a check nobody has verified.
 
 Landmarks are the clearest case for rendering. All seventeen were drawn as one identical grey

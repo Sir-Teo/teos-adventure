@@ -66,26 +66,72 @@ static class Map
                               seen ? Battle.Ink : Battle.InkDim);
         }
 
-        // detail panel content
-        Battle.Text(c, "GLACIERIM", dx0 + 26, cy1 - 26, 30, Battle.Ink);
-        string[] body =
+        // Detail panel: the game's own text, not a plausible-looking imitation of it.
+        //
+        // This panel used to be ten invented lines - "RECORDED HERE", "NEST STATION  YES",
+        // "TRAVEL  1.5S FROM BRINEHOLT" - none of which the game has ever produced. It looked
+        // entirely convincing, which is exactly the problem: the render was reassuring me about
+        // a screen that did not exist.
         {
-            "THE LONG DRIFT  ·  LEVELS 16-18  ·  FROST",
-            "",
-            "A shelf world. The ice sings when you walk on it,",
-            "which Pim insists is only the shell fields settling.",
-            "",
-            "RECORDED HERE   SNOWPOACH, GLACEGG, CHILLET",
-            "STILL MISSING   FROSTMALLOW",
-            "",
-            "NEST STATION    YES",
-            "TRAVEL          1.5S FROM BRINEHOLT",
-        };
-        for (int i = 0; i < body.Length; i++)
-            Battle.Text(c, body[i], dx0 + 26, cy1 - 112 - i * 34, 22,
-                        i == 0 ? Battle.Accent : Battle.InkDim);
+            var def = Eggverse.PlanetDatabase.Get("glacierim");
+            var state = new Eggverse.GameState();
+            var story = new Eggverse.StoryState();
+            story.RestoreFrom(new string[0], Eggverse.StoryDatabase.Beats.Length - 1);
+            foreach (var w in Eggverse.PlanetDatabase.All) state.Visited.Add(w.Id);
+            foreach (var sp in Eggverse.SpeciesDatabase.All) state.Seen.Add(sp.Id);
+            state.Caught.Add("snowpoach");
+            state.Landmarks.Add("glacierim");
+
+            Battle.Text(c, def.Name.ToUpperInvariant(), dx0 + 26, cy1 - 26, 30, Battle.Ink);
+
+            string text = Eggverse.GalaxyMapView.DetailBody(
+                def, state, story, Eggverse.PlanetDatabase.Get("brineholt"),
+                Eggverse.GalaxyMapView.Presence.Elsewhere);
+
+            int row = 0;
+            foreach (var raw in text.Split('\n'))
+            {
+                foreach (var line in Wrap(Strip(raw), 848f, 22))
+                {
+                    Battle.Text(c, line, dx0 + 26, cy1 - 112 - row * 26, 22, Battle.InkDim);
+                    row++;
+                }
+            }
+
+            // The course footer, pinned to the panel floor above its rule.
+            Battle.Rect(c, dx0 + 26, cy0 + 86, dx0 + 26 + 848, cy0 + 88, new Col(0.17f, 0.20f, 0.31f, 1f));
+            Battle.TextCentre(c, Strip(Eggverse.GalaxyMapView.CourseLine(
+                                  def, state, story, Eggverse.GalaxyMapView.Presence.Elsewhere)),
+                              dx0 + 26 + 424, cy0 + 48, 22, Battle.Ink);
+        }
 
         Battle.TextCentre(c, "ARROWS SELECT  ·  ENTER TO SET COURSE  ·  M OR ESC TO CLOSE", 960, 64, 20, Battle.InkDim);
         return c.Px;
+    }
+
+    static string Strip(string t)
+    {
+        return System.Text.RegularExpressions.Regex.Replace(t, "<[^>]+>", "");
+    }
+
+    /// The same greedy wrap uGUI does, measured with the harness's own font model.
+    static System.Collections.Generic.List<string> Wrap(string t, float width, int font)
+    {
+        var outp = new System.Collections.Generic.List<string>();
+        if (t.Length == 0) { outp.Add(""); return outp; }
+        var sb = new System.Text.StringBuilder();
+        foreach (var word in t.Split(' '))
+        {
+            string trial = sb.Length == 0 ? word : sb + " " + word;
+            if (Battle.TextWidth(trial, font) > width && sb.Length > 0)
+            {
+                outp.Add(sb.ToString());
+                sb.Clear();
+                sb.Append(word);
+            }
+            else { sb.Clear(); sb.Append(trial); }
+        }
+        outp.Add(sb.ToString());
+        return outp;
     }
 }

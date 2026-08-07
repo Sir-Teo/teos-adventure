@@ -24,7 +24,7 @@ namespace Eggverse
         readonly List<Marker> markers = new List<Marker>();
         readonly List<Text> sectorLabels = new List<Text>();
         Image teoMarker;
-        Text detailTitle, detailBody, footer;
+        Text detailTitle, detailBody, detailCourse, footer;
         int selected;
 
         public bool IsOpen { get { return canvas != null && canvas.gameObject.activeSelf; } }
@@ -75,7 +75,19 @@ namespace Eggverse
             UIKit.Place(detailTitle.rectTransform, new Vector2(0f, 1f), new Vector2(0f, 1f), new Vector2(26f, -26f), new Vector2(DetailWidth - 52f, 76f));
 
             detailBody = UIKit.Label(detail, "Body", "", 22, UIKit.Ink, TextAnchor.UpperLeft);
-            UIKit.Place(detailBody.rectTransform, new Vector2(0f, 1f), new Vector2(0f, 1f), new Vector2(26f, -112f), new Vector2(DetailWidth - 52f, 660f));
+            // 560, not 660: the body ran to 48px off the panel floor, which is straight through
+            // the course footer's rule at 86.
+            UIKit.Place(detailBody.rectTransform, new Vector2(0f, 1f), new Vector2(0f, 1f), new Vector2(26f, -112f), new Vector2(DetailWidth - 52f, 560f));
+
+            // Pinned to the bottom of the panel, above a rule, so it reads as the panel's own
+            // footer and sits at the same height whatever the world above it says.
+            var courseRule = UIKit.Panel(detail, "CourseRule", new Color32(0x2C, 0x32, 0x50, 0xFF));
+            UIKit.Place(courseRule.rectTransform, new Vector2(0.5f, 0f), new Vector2(0.5f, 0f),
+                        new Vector2(0f, 86f), new Vector2(DetailWidth - 52f, 2f));
+
+            detailCourse = UIKit.Label(detail, "Course", "", 22, UIKit.Ink, TextAnchor.MiddleCenter);
+            UIKit.Place(detailCourse.rectTransform, new Vector2(0.5f, 0f), new Vector2(0.5f, 0f),
+                        new Vector2(0f, 48f), new Vector2(DetailWidth - 52f, 52f));
 
             footer = UIKit.Label(root, "Footer",
                 "Arrows select  ·  Enter to set course  ·  M or Esc to close",
@@ -252,7 +264,7 @@ namespace Eggverse
         /// travel only puts you in orbit — so the chart has to distinguish the two, or it
         /// claims you are still standing on the world you just left.
         /// </summary>
-        enum Presence { Elsewhere, Landed, InOrbit }
+        public enum Presence { Elsewhere, Landed, InOrbit }
 
         Presence PresenceAt(PlanetDef def)
         {
@@ -331,27 +343,41 @@ namespace Eggverse
             var state = dir.State;
             var story = dir.Story;
             bool sectorOpen = story.CanEnter(m.Def.Sector);
-            bool visited = state.Visited.Contains(m.Def.Id);
 
             detailTitle.text = m.Def.Name + "\n<size=19><color=#A8B2C4>" +
                                PlanetDatabase.SectorName(m.Def.Sector) + " · " + TypeChart.Name(m.Def.Theme) + "</color></size>";
             detailTitle.color = sectorOpen ? UIKit.Ink : UIKit.InkDim;
+
+            detailBody.text = DetailBody(m.Def, state, story, dir.CurrentPlanet, PresenceAt(m.Def));
+            detailCourse.text = CourseLine(m.Def, state, story, PresenceAt(m.Def));
+        }
+
+        /// <summary>
+        /// The chart's detail column, as text. Split out of RefreshDetail so the checks can
+        /// measure what the panel will actually hold rather than a reconstruction of it - the
+        /// panel is 660px at font 22 and everything below competes for the same 25 lines.
+        /// </summary>
+        public static string DetailBody(PlanetDef def, GameState state, StoryState story,
+                                        PlanetDef from, Presence presence)
+        {
+            bool sectorOpen = story.CanEnter(def.Sector);
+            bool visited = state.Visited.Contains(def.Id);
 
             var sb = new System.Text.StringBuilder();
 
             if (!sectorOpen)
             {
                 sb.Append("<color=#E55555>ROUTE SEALED</color>\n\n");
-                sb.Append(story.SectorBlockerText(m.Def.Sector, state)).Append("\n\n");
+                sb.Append(story.SectorBlockerText(def.Sector, state)).Append("\n\n");
             }
             else
             {
-                sb.Append("<i><color=#A8B2C4>").Append(m.Def.Tagline).Append("</color></i>\n\n");
-                sb.Append("<b>Wild eggs</b>  <color=#A8B2C4>Lv ").Append(m.Def.MinLevel).Append("-").Append(m.Def.MaxLevel).Append("</color>\n");
+                sb.Append("<i><color=#A8B2C4>").Append(def.Tagline).Append("</color></i>\n\n");
+                sb.Append("<b>Wild eggs</b>  <color=#A8B2C4>Lv ").Append(def.MinLevel).Append("-").Append(def.MaxLevel).Append("</color>\n");
 
-                for (int i = 0; i < m.Def.Spawns.Length; i++)
+                for (int i = 0; i < def.Spawns.Length; i++)
                 {
-                    var species = SpeciesDatabase.Get(m.Def.Spawns[i].SpeciesId);
+                    var species = SpeciesDatabase.Get(def.Spawns[i].SpeciesId);
                     bool known = state.Seen.Contains(species.Id);
                     string hex = ColorUtility.ToHtmlStringRGB(TypeChart.ColorOf(species.Type));
                     string mark = state.Caught.Contains(species.Id) ? "<color=#5FD068>●</color>"
@@ -362,11 +388,10 @@ namespace Eggverse
 
                 // How far it is, from wherever you are standing. The chart is where a course is
                 // chosen and it has never said what choosing one costs.
-                var from = dir.CurrentPlanet;
-                if (from != null && from.Id != m.Def.Id)
+                if (from != null && from.Id != def.Id)
                 {
-                    float gap = Vector2.Distance(from.SpacePosition, m.Def.SpacePosition)
-                                - from.SpaceRadius - m.Def.SpaceRadius;
+                    float gap = Vector2.Distance(from.SpacePosition, def.SpacePosition)
+                                - from.SpaceRadius - def.SpaceRadius;
                     sb.Append("<color=#A8B2C4>").Append(Mathf.RoundToInt(Mathf.Max(0f, gap)))
                       .Append(" units from ").Append(from.Name)
                       .Append("  ·  about ").Append(TeoController.FlightSeconds(Mathf.Max(0f, gap)).ToString("0.0"))
@@ -375,21 +400,39 @@ namespace Eggverse
 
                 // A recovered cache, as a record of what you have done here. Not announced
                 // before you find it - the whole point is that it is buried.
-                if (PlanetDatabase.HasCache(m.Def.Id) && state.Caches.Contains(m.Def.Id))
+                if (PlanetDatabase.HasCache(def.Id) && state.Caches.Contains(def.Id))
                     sb.Append("<color=#5FD068>Supply cache recovered.</color>\n");
 
-                sb.Append("\n");
-                if (m.Def.IsBossWorld) sb.Append("<color=#FFC24D>Amy is here.</color>\n\n");
+                // Landmarks follow the cache's rule: nothing is announced before it is found.
+                // The one exception is a world you have already walked - once you have read a
+                // single inscription anywhere you know these exist, and the chart's job is to
+                // record where you have been, not to point at where you have not.
+                var lm = LandmarkDatabase.For(def.Id);
+                if (lm != null && state.Landmarks.Contains(def.Id))
+                    sb.Append("<color=#5FD068>Read: </color><color=#A8B2C4>").Append(lm.Name).Append("</color>\n");
+                else if (lm != null && visited && state.Landmarks.Count > 0)
+                    sb.Append("<color=#7A8090>Something stands out past the fields.</color>\n");
+
+                if (def.IsBossWorld) sb.Append("\n<color=#FFC24D>Amy is here.</color>\n");
             }
 
-            var presence = PresenceAt(m.Def);
-            if (presence == Presence.Landed) sb.Append("<color=#FFC24D>You are here.</color>");
-            else if (presence == Presence.InOrbit) sb.Append("<color=#FFC24D>You are in orbit. Land with E.</color>");
-            else if (!sectorOpen) sb.Append("<color=#5A6072>No course can be plotted.</color>");
-            else if (!visited) sb.Append("<color=#8A90A2>Uncharted. Fly there once to add it to the chart.</color>");
-            else sb.Append("<color=#5FD068>Press Enter to set course.</color>");
+            return sb.ToString().TrimEnd('\n');
+        }
 
-            detailBody.text = sb.ToString();
+        /// <summary>
+        /// What you can do about the world you have selected. It used to trail the detail text,
+        /// so it landed at a different height on every planet - halfway up a 660px panel with
+        /// 380px of nothing under it. It is the one line here that is an instruction rather than
+        /// a description, and it belongs at the bottom where instructions live.
+        /// </summary>
+        public static string CourseLine(PlanetDef def, GameState state, StoryState story, Presence presence)
+        {
+            if (presence == Presence.Landed) return "<color=#FFC24D>You are here.</color>";
+            if (presence == Presence.InOrbit) return "<color=#FFC24D>You are in orbit. Land with E.</color>";
+            if (!story.CanEnter(def.Sector)) return "<color=#5A6072>No course can be plotted.</color>";
+            if (!state.Visited.Contains(def.Id))
+                return "<color=#8A90A2>Uncharted. Fly there once to add it to the chart.</color>";
+            return "<color=#5FD068>Press Enter to set course.</color>";
         }
 
         // ------------------------------------------------------------------
