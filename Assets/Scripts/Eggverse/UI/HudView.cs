@@ -676,7 +676,13 @@ namespace Eggverse
             for (int i = 0; i < state.Party.Count; i++)
             {
                 sb.Append(focus && cursor == i ? "<color=#FFC24D>\u25b8</color>" : " ");
-                sb.Append(i == 0 ? "<color=#FFC24D>1</color>" : "<color=#7A8090>" + (i + 1) + "</color>").Append(' ');
+                // The one actually going out first, not slot one. Leader is the first egg that
+                // is not fainted, so a player whose favourite was knocked out had this screen
+                // highlighting it while the party strip on the surface pointed at the next one
+                // along. Two screens, same six eggs, different answers.
+                bool leads = ReferenceEquals(state.Party[i], state.Leader);
+                sb.Append(leads ? "<color=#FFC24D>" + (i + 1) + "</color>"
+                                : "<color=#7A8090>" + (i + 1) + "</color>").Append(' ');
                 sb.Append(DescribeStoredEgg(state.Party[i])).Append('\n');
             }
             if (state.Party.Count == 0) sb.Append("<color=#A8B2C4>empty</color>\n");

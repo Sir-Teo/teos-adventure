@@ -1626,6 +1626,35 @@ namespace Eggverse
                 check(elder.Elder && !ordinary.Elder, "and knows it");
             }
 
+            // ---- both screens point at the same egg ----
+            {
+                // The surface HUD marks the egg that is actually going out first. The
+                // collection highlighted slot one. Those are the same egg right up until a
+                // player's favourite gets knocked out, and then they are not.
+                var st = new GameState(false);
+                st.Party.Add(EggInstance.Wild("sprouteg", 12));
+                st.Party.Add(EggInstance.Wild("cobblet", 12));
+                st.Party.Add(EggInstance.Wild("yolkano", 12));
+                st.Party[0].CurrentHP = 0;
+
+                int scroll = 0;
+                string column = HudView.CollectionBodyText(st, 0, true, ref scroll);
+
+                // The leader's slot number is in the accent colour; the others are not.
+                int leaderSlot = st.Party.IndexOf(st.Leader) + 1;
+                check(leaderSlot == 2, "the leader really is the second egg here (" + leaderSlot + ")");
+                check(column.Contains("<color=#FFC24D>2</color>"),
+                      "the collection marks the egg that is going out first");
+                check(!column.Contains("<color=#FFC24D>1</color>"),
+                      "and does not mark the fainted one at the top");
+
+                // And it agrees with the strip, which is the whole point.
+                check(HudView.PartyRow(st.Party[1], true).Contains("\u25b8"),
+                      "the party strip marks the same egg");
+                check(!HudView.PartyRow(st.Party[0], false).Contains("\u25b8"),
+                      "and not the fainted one either");
+            }
+
             // ---- the chart and the sky agree ----
             {
                 // Two screens describing the same seventeen worlds, disagreeing about what a
