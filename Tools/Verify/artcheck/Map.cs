@@ -56,6 +56,19 @@ static class Map
             {
                 Battle.Disc(c, px, py, dot * 0.90f, atmo, 1.3f);
                 Battle.Disc(c, px, py, dot * 0.52f, land, 0.08f);
+
+            // The first egg's seam. The chart is where a player looks at Amaranth for the whole
+            // game, and it was one more coloured dot on it.
+            if (def.IsBossWorld)
+                for (int k = -20; k <= 20; k++)
+                {
+                    float nx = k / 20f;
+                    float along = Math.Max(0f, 1f - Math.Abs(nx) * 0.9f);
+                    if (along <= 0f) continue;
+                    float wander = 0.06f * (float)Math.Sin(nx * 6.1f) + 0.03f * (float)Math.Sin(nx * 13.7f);
+                    Battle.Disc(c, px + nx * dot * 0.26f, py + (nx * 0.42f + wander) * dot * 0.26f,
+                                dot * (0.030f + 0.030f * along), new Col(0.05f, 0.03f, 0.08f, 0.9f), 0.5f);
+                }
             }
             else
                 for (int a = 0; a < 720; a++)

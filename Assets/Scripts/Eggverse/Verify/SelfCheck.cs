@@ -1626,6 +1626,33 @@ namespace Eggverse
                 check(elder.Elder && !ordinary.Elder, "and knows it");
             }
 
+            // ---- the first egg looks like one ----
+            {
+                // The title screen's opening line: every world is a piece of shell, the core of
+                // it is still up there and still whole, and eleven years ago it started to
+                // split. Amaranth is that core, and it was drawn as one more coloured disc on
+                // the screen a player stares at for the whole game.
+                int bosses = 0; string bossName = "";
+                foreach (var w in PlanetDatabase.All)
+                    if (w.IsBossWorld) { bosses++; bossName = w.Name; }
+
+                check(bosses == 1,
+                      "exactly one world is the first egg (" + bosses + ")");
+                check(bossName == "Amaranth Prime",
+                      "and it is the one the story is about: " + bossName);
+
+                // The seam is drawn from IsBossWorld, so the thing that makes it look cracked
+                // and the thing that puts Amy on it are one fact rather than two.
+                var amaranth = PlanetDatabase.Get("amaranth");
+                check(amaranth != null && amaranth.IsBossWorld,
+                      "the world Amy is on is the world drawn with a seam");
+
+                // And its own landmark is the seam, so the picture and the inscription agree.
+                var shellLine = LandmarkDatabase.For("amaranth");
+                check(shellLine != null && shellLine.Form == LandmarkForm.Seam,
+                      "and the landmark you can walk to there is a seam too");
+            }
+
             // ---- eggs gather where the pad is alive ----
             {
                 // Ori's rule is that a Nest Station runs warm off the eggs around it. The game

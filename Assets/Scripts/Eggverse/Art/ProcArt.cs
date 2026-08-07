@@ -310,6 +310,31 @@ namespace Eggverse
                         float lambert = Mathf.Clamp01(Vector3.Dot(n, light));
                         surface = Mul(surface, 0.30f + 0.95f * lambert);
 
+                        // The first egg has a seam across it.
+                        //
+                        // The title screen's opening line is that every world is a piece of
+                        // shell, that the core of it is still up there and still whole, and that
+                        // eleven years ago it started to split. Amaranth is that core - and it
+                        // was drawn as one more coloured disc, on the chart a player stares at
+                        // for the whole game, with the crack mentioned only in dialogue at the
+                        // very end and on a landmark most players will never walk to.
+                        if (planet.IsBossWorld)
+                        {
+                            // A hairline running corner to corner, wandering slightly rather
+                            // than ruled, and widest at the middle where it started.
+                            float wander = 0.06f * Mathf.Sin(nx * 6.1f) + 0.03f * Mathf.Sin(nx * 13.7f);
+                            float along = Mathf.Clamp01(1f - Mathf.Abs(nx) * 0.9f);
+                            float dist = Mathf.Abs(ny - (nx * 0.42f + wander));
+                            float seam = Mathf.SmoothStep(0.035f * along + 0.004f, 0f, dist);
+                            if (seam > 0f)
+                            {
+                                surface = Color.Lerp(surface, new Color(0.05f, 0.03f, 0.08f), seam * 0.85f);
+                                // A little light in it, because it is not empty down there.
+                                surface = Color.Lerp(surface, new Color(1f, 0.86f, 0.55f),
+                                                     seam * seam * 0.35f);
+                            }
+                        }
+
                         // Atmosphere haze hugging the limb.
                         float limb = Mathf.SmoothStep(0.80f, 1.0f, r);
                         surface = Color.Lerp(surface, planet.Atmosphere, limb * 0.42f);

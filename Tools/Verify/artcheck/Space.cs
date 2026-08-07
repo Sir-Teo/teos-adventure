@@ -124,6 +124,20 @@ static class Space
 
             Disc(wx, wy, wr * 2.6f, atmo, 1.6f);
             Disc(wx, wy, wr * 2f, land, 0.04f);
+
+            // The first egg's seam, drawn the way the sprite draws it - corner to corner,
+            // widest at the middle where it started.
+            if (w.IsBossWorld)
+                for (int k = -22; k <= 22; k++)
+                {
+                    float nx = k / 22f;
+                    float along = Math.Max(0f, 1f - Math.Abs(nx) * 0.9f);
+                    if (along <= 0f) continue;
+                    float wander = 0.06f * (float)Math.Sin(nx * 6.1f) + 0.03f * (float)Math.Sin(nx * 13.7f);
+                    float ny = nx * 0.42f + wander;
+                    Disc(wx + nx * wr, wy + ny * wr, wr * (0.10f + 0.10f * along),
+                         new Col(0.05f, 0.03f, 0.08f, 0.85f), 0.5f);
+                }
             // Continent mottling and the shaded limb.
             var rng2 = new Random(w.Seed & 0xFFFF);   // the planet's own stable seed
             for (int i = 0; i < 9; i++)
