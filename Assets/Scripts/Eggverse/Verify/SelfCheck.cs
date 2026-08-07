@@ -635,8 +635,24 @@ namespace Eggverse
                       "the cap stays in range even with every cache found (" + full + ")");
 
                 // The strip is a fixed 524px and the number of digits can grow.
-                check(lines("left/right pick a column  ·  up/down move  ·  Enter swaps a nest egg in  ·  1-6 leads  ·  Tab closes",
-                            1200f, 20) == 1, "the collection hint line fits its 1200px strip");
+                // The footer adapts to what is possible, so every variant has to fit the strip.
+                foreach (var variant in new[]
+                {
+                    "up/down move  ·  Tab closes",
+                    "up/down move  ·  1-6 leads  ·  Tab closes",
+                    "left/right pick a column  ·  up/down move  ·  Enter swaps a nest egg in  ·  Tab closes",
+                    "left/right pick a column  ·  up/down move  ·  Enter swaps a nest egg in  ·  1-6 leads  ·  Tab closes",
+                })
+                    check(lines(variant, 1200f, 20) == 1,
+                          "collection footer fits: \"" + variant + "\"");
+
+                // The empty-nest explanation is two authored lines in a 780px column.
+                foreach (var line in new[]
+                {
+                    "Empty. Once your party is full, anything else you",
+                    "catch waits here — and you can trade it back in.",
+                })
+                    check(lines(line, 720f, 20) == 1, "empty-nest line fits: \"" + line + "\"");
                 check(lines("Cartons " + full + "/" + full + " · Salves 4/4", 524f, 19) == 1,
                       "the supply line still fits at full capacity");
 

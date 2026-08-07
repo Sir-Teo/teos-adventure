@@ -22,6 +22,7 @@ namespace Eggverse
         Text objectiveText, cartonText, promptText, toastText, planetText;
         RectTransform promptPanel, toastPanel, partyStrip, objectivePanel;
         RectTransform titlePanel, collectionPanel, victoryPanel;
+        Text collectionHint;
         Text collectionBody, collectionDex, dexDetail, dexLore, titleHint, titleSaveLine;
         Image dexPortrait;
         int dexCursor;
@@ -182,9 +183,8 @@ namespace Eggverse
             dexLore = UIKit.Label(collectionPanel, "DexLore", "", 19, UIKit.Ink, TextAnchor.UpperLeft);
             UIKit.Place(dexLore.rectTransform, new Vector2(0f, 1f), new Vector2(0f, 1f), new Vector2(1280f, -262f), new Vector2(450f, 600f));
 
-            var hint = UIKit.Label(collectionPanel, "Hint",
-                "left/right pick a column  ·  up/down move  ·  Enter swaps a nest egg in  ·  1-6 leads  ·  Tab closes",
-                20, UIKit.InkDim, TextAnchor.MiddleCenter);
+            collectionHint = UIKit.Label(collectionPanel, "Hint", "", 20, UIKit.InkDim, TextAnchor.MiddleCenter);
+            var hint = collectionHint;
             UIKit.Place(hint.rectTransform, new Vector2(0.5f, 0f), new Vector2(0.5f, 0f), new Vector2(0f, 24f), new Vector2(1200f, 26f));
 
             collectionPanel.gameObject.SetActive(false);
@@ -405,6 +405,22 @@ namespace Eggverse
             RefreshCollection();
         }
 
+        /// <summary>
+        /// The footer only mentions what the player can actually do right now. Offering a swap
+        /// with an empty nest, or a column change before there is a second column worth reading,
+        /// teaches the player to stop reading the footer.
+        /// </summary>
+        static string HintFor(GameState state)
+        {
+            var parts = new List<string>();
+            if (state.Nest.Count > 0) parts.Add("left/right pick a column");
+            parts.Add("up/down move");
+            if (state.Nest.Count > 0) parts.Add("Enter swaps a nest egg in");
+            if (state.Party.Count > 1) parts.Add("1-" + state.Party.Count + " leads");
+            parts.Add("Tab closes");
+            return string.Join("  ·  ", parts.ToArray());
+        }
+
         void RefreshCollection()
         {
             var state = dir.State;
@@ -413,7 +429,14 @@ namespace Eggverse
             int rows = state.Party.Count + Mathf.Min(NestWindow, state.Nest.Count);
             if (rows > 0) nestCursor = Mathf.Clamp(nestCursor, 0, rows - 1);
 
-            sb.Append("<b><color=#FFC24D>PARTY</color></b>   <color=#7A8090>press 1-6 to lead with that egg</color>\n");
+            // Offer 1-6 only once there is more than one egg to choose between. Telling a
+            // player with a single egg to pick which one leads is noise on the first screen
+            // they ever open.
+            sb.Append("<b><color=#FFC24D>PARTY</color></b>");
+            if (state.Party.Count > 1)
+                sb.Append("   <color=#7A8090>press 1-").Append(state.Party.Count)
+                  .Append(" to lead with that egg</color>");
+            sb.Append('\n');
             for (int i = 0; i < state.Party.Count; i++)
             {
                 sb.Append(nestFocus && nestCursor == i ? "<color=#FFC24D>\u25b8</color>" : " ");
@@ -422,7 +445,15 @@ namespace Eggverse
             }
             if (state.Party.Count == 0) sb.Append("<color=#A8B2C4>empty</color>\n");
 
-            if (state.Nest.Count > 0)
+            // The nest used to vanish entirely while empty, so a new player never learned it
+            // was there or what it was for - and then eggs started disappearing into it.
+            if (state.Nest.Count == 0)
+            {
+                sb.Append("\n<b><color=#FFC24D>NEST</color></b>\n")
+                  .Append("<color=#7A8090>Empty. Once your party is full, anything else you\n")
+                  .Append("catch waits here — and you can trade it back in.</color>\n");
+            }
+            else
             {
                 sb.Append("\n<b><color=#FFC24D>NEST</color></b>  <color=#A8B2C4>")
                   .Append(state.Nest.Count).Append(" back home</color>\n");
@@ -442,6 +473,7 @@ namespace Eggverse
             }
 
             collectionBody.text = sb.ToString();
+            collectionHint.text = HintFor(state);
 
             // Middle column: the field record, with a cursor.
             var all = SpeciesDatabase.All;
