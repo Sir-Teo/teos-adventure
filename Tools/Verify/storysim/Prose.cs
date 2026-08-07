@@ -119,6 +119,33 @@ static class Prose
         foreach (var l in lines)
             if (!string.IsNullOrEmpty(l.Value) && seen.Add(l.Key + "" + l.Value)) unique.Add(l);
 
+        // How long the sector has been cold is stated sixteen times across four files and is
+        // never once a constant. Making it one would mean interpolating a number into sixteen
+        // authored lines and reading them all worse, so instead: no new duration may appear.
+        //
+        // Three are legitimate and each is somebody's own span - eleven years is the cold,
+        // forty is how long Ori has been doing this, two is how long Sable has been keeping her
+        // notebook. A fourth turning up means either a typo or a fact somebody changed in one
+        // place, and both are things a player can catch by talking to two characters.
+        {
+            var allowed = new HashSet<string> { "eleven", "forty", "two" };
+            var found = new SortedSet<string>();
+            var rx = new System.Text.RegularExpressions.Regex(
+                @"\b(one|two|three|four|five|six|seven|eight|nine|ten|eleven|twelve|thirteen|twenty|thirty|forty|fifty)\s+years?\b",
+                System.Text.RegularExpressions.RegexOptions.IgnoreCase);
+
+            foreach (var entry in unique)
+                foreach (System.Text.RegularExpressions.Match m in rx.Matches(Plain(entry.Value)))
+                    found.Add(m.Groups[1].Value.ToLowerInvariant());
+
+            foreach (var d in found)
+                check(allowed.Contains(d),
+                      "no unexplained span of years in the writing: \"" + d + " years\"");
+
+            check(found.Contains("eleven"),
+                  "the sector is still eleven years cold somewhere in the writing");
+        }
+
         int curly = 0, straight = 0, uniEllipsis = 0, asciiEllipsis = 0;
         foreach (var entry in unique)
         {

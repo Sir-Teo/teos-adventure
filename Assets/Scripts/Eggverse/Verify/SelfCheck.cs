@@ -983,6 +983,68 @@ namespace Eggverse
                     }
             }
 
+            // ---- the number Ori asks for ----
+            {
+                // The objective line spells FirstCatchEggs from the constant. Ori says "Three"
+                // in plain prose, three times over, and nothing connected the two: moving the
+                // constant to four left him asking for three while the objective under it asked
+                // for four, and the game would have been telling a new player two numbers in
+                // the same breath.
+                string want = Words.Spell(StoryDatabase.FirstCatchEggs);
+
+                var brief = StoryDatabase.GetDialogue("ori", new StoryState(), new GameState());
+                var said = new System.Text.StringBuilder();
+                foreach (var line in brief.Lines) said.Append(line.Text).Append(' ');
+
+                check(said.ToString().ToLowerInvariant().Contains(want.ToLowerInvariant()),
+                      "Ori asks for " + want + " eggs in words, the same as the objective does in numbers");
+
+                // And the nag he gives you for turning up short.
+                var short_ = new StoryState();
+                short_.RestoreFrom(new[] { "met_ori" }, 0);
+                var nag = StoryDatabase.GetDialogue("ori", short_, new GameState());
+                var nagText = new System.Text.StringBuilder();
+                foreach (var line in nag.Lines) nagText.Append(line.Text).Append(' ');
+                check(nagText.ToString().ToLowerInvariant().Contains(want.ToLowerInvariant()),
+                      "Ori's reminder asks for " + want + " too: " + nagText.ToString().Trim());
+            }
+
+            // ---- what characters say a trait does ----
+            {
+                // Three lines in the game explain a trait in a character's own words. They are
+                // right today; they were checked by hand. What they are not is connected to the
+                // traits, so retuning one would leave a resident confidently describing an
+                // effect the game no longer has, and nothing would say so.
+                //
+                // Each entry is: the phrase somebody says, the element it is about, and a word
+                // the real trait blurb has to keep. Both halves have to survive together.
+                var claims = new[]
+                {
+                    ("mend themselves as they fight", EggType.Verdant, "Mends"),
+                    ("will not go down from full health", EggType.Stone, "full health"),
+                    ("can't be rattled", EggType.Void, "lowered"),
+                };
+
+                var everything = new System.Text.StringBuilder();
+                foreach (var npc in StoryDatabase.Npcs)
+                {
+                    var script = StoryDatabase.GetDialogue(npc.Id, new StoryState(), new GameState());
+                    if (script == null) continue;
+                    foreach (var line in script.Lines) everything.Append(line.Text).Append('\n');
+                }
+                string spoken = everything.ToString();
+
+                foreach (var (phrase, type, keyword) in claims)
+                {
+                    check(spoken.Contains(phrase),
+                          "somebody still says \"" + phrase + "\"");
+                    string blurb = TypeChart.TraitBlurb(TypeChart.TraitOf(type));
+                    check(blurb.Contains(keyword),
+                          TypeChart.Name(type) + "'s trait still does what the game says it does: \"" +
+                          blurb + "\" against \"" + phrase + "\"");
+                }
+            }
+
             // ---- what residents claim about their own worlds ----
             {
                 // Every world carries at least one off-element egg. That is deliberate - it is
