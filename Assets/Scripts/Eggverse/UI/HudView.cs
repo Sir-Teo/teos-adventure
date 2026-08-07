@@ -969,6 +969,17 @@ namespace Eggverse
         public static string EggLoreText(EggInstance egg, GameState state)
         {
             var sb = new System.Text.StringBuilder();
+
+            // What being an Elder means. The header prints the word directly above a trait that
+            // gets a name and a line saying what it does, and the word had nothing under it - a
+            // player who catches the rarest thing on the world could not learn it was anything
+            // but gold text. It goes here rather than up there because the header was already
+            // sitting at exactly seven lines of seven, which the layout check said the moment
+            // this was tried.
+            if (egg.Elder)
+                sb.Append("<color=#FFC24D>ELDER</color>\n<color=#A8B2C4>")
+                  .Append(EggInstance.ElderBlurb).Append("</color>\n\n");
+
             sb.Append("<color=#FFC24D>CONDITION</color>\n");
             sb.Append(egg.IsFainted
                 ? "<color=#E55555>Out cold. Rest at a Nest Station.</color>\n"

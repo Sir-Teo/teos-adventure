@@ -155,6 +155,7 @@ static class Prose
         Add("out of cartons", UiCopy.OutOf(true, false));
         Add("out of salves", UiCopy.OutOf(false, true));
         Add("out of both", UiCopy.OutOf(true, true));
+        Add("what an Elder is", EggInstance.ElderBlurb);
         foreach (EggStatus cond in System.Enum.GetValues(typeof(EggStatus)))
         {
             if (cond == EggStatus.None) continue;

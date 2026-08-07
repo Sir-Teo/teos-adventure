@@ -414,6 +414,22 @@ namespace Eggverse
         /// loud on Cairnhold, so it is a constant rather than a literal in two places.</summary>
         public const int ElderLevelBonus = 3;
 
+        /// <summary>
+        /// What being an Elder means, in the same shape a trait is given.
+        ///
+        /// The egg panel printed the word ELDER and stopped, directly above a trait that gets a
+        /// name and a line explaining it. A player who catches one has no way to learn that it
+        /// is anything other than a gold word - and it is the rarest thing on most worlds, three
+        /// levels above everything around it, which is exactly the kind of catch worth knowing
+        /// you have made.
+        ///
+        /// Built from the constant rather than restating it, so the line cannot drift from what
+        /// the roll actually does.
+        /// </summary>
+        public static string ElderBlurb =>
+            "Hatched long before the rest. " + Words.SpellCapitalised(ElderLevelBonus) +
+            " levels above anything else on its world.";
+
         /// <summary>Rebuilds a saved egg exactly, including its remembered moves and PP.</summary>
         public static EggInstance Restore(string speciesId, string nickname, int level, int xp, int currentHP,
                                           string[] moveIds, int[] movePP, bool elder = false, bool fromOri = false, int fought = 0)

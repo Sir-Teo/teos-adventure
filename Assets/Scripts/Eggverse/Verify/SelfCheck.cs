@@ -1671,6 +1671,56 @@ namespace Eggverse
                 check(elder.Elder && !ordinary.Elder, "and knows it");
             }
 
+            // ---- an Elder says what an Elder is ----
+            {
+                // The panel printed the word ELDER and stopped, directly above a trait that
+                // gets a name and a line saying what it does. A player who catches the rarest
+                // thing on the world had no way to learn it was anything but a gold word.
+                // Through WildElder, which is what actually rolls one - Elder is set-private on
+                // purpose, and a check that reached around that would be testing a state the
+                // game cannot produce.
+                var elder = EggInstance.WildElder(SpeciesDatabase.All[0].Id, 20);
+                var plain = EggInstance.Wild(SpeciesDatabase.All[0].Id, 20);
+                check(elder.Elder, "WildElder makes an Elder");
+
+                var st = new GameState(false);
+                check(HudView.EggDetailText(elder).Contains("ELDER"), "an Elder is still marked as one");
+                check(!HudView.EggDetailText(plain).Contains("ELDER"), "and an ordinary egg is not");
+
+                string elderPanel = HudView.EggLoreText(elder, st);
+                string plainPanel = HudView.EggLoreText(plain, st);
+                check(elderPanel.Contains(EggInstance.ElderBlurb),
+                      "and the panel below says what an Elder is");
+                check(!plainPanel.Contains(EggInstance.ElderBlurb),
+                      "only where there is one to explain");
+
+                // Built from the constant, not restating it - the line and the roll cannot
+                // drift apart. Garrow says the same number out loud on Cairnhold.
+                check(EggInstance.ElderBlurb.Contains(Words.SpellCapitalised(EggInstance.ElderLevelBonus)),
+                      "the blurb quotes the real bonus (" + EggInstance.ElderLevelBonus + "): " +
+                      EggInstance.ElderBlurb);
+
+                // And it explains rather than repeats, the same test the conditions get.
+                check(!EggInstance.ElderBlurb.ToUpperInvariant().Contains("ELDER"),
+                      "the blurb does not just say the word again: " + EggInstance.ElderBlurb);
+
+                // The panel is 640px at font 20 and the Elder version is the tallest it gets.
+                foreach (var e in new[] { elder, plain })
+                    check(lines(HudView.EggLoreText(e, st), 640f, 20) <= capacity(700f, 20),
+                          "the egg panel fits with everything it can carry (" +
+                          lines(HudView.EggLoreText(e, st), 640f, 20) + " of " + capacity(700f, 20) + ")");
+
+                // An Elder really is above its world, or the line is a lie. Wild() is what
+                // rolls one, so ask it rather than the constant.
+                for (int lv = 5; lv <= 30; lv += 5)
+                {
+                    var rolled = EggInstance.WildElder(SpeciesDatabase.All[0].Id, lv);
+                    check(rolled.Level == Mathf.Min(EggInstance.MaxLevel, lv + EggInstance.ElderLevelBonus),
+                          "an Elder really is " + EggInstance.ElderLevelBonus + " above its world at Lv " +
+                          lv + " (got " + rolled.Level + ")");
+                }
+            }
+
             // ---- a condition says what it is costing, not just that it is there ----
             {
                 // The card shows SCORCHED, CHILLED or DAZED, and the line that lands each one
