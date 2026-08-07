@@ -122,6 +122,24 @@ namespace Eggverse
         {
             SurfaceRadius = SurfaceEntryRadius(planet);
             GroundTint = SurfaceEntryGround(planet);
+
+            // Arriving on a surface means you have stopped flying, so the thruster trail goes
+            // with it. Only Land() cleared them, so quitting to the title mid-flight staged the
+            // home world with a handful of exhaust still hanging over it.
+            ClearPuffs();
+        }
+
+        /// <summary>
+        /// Puts Teo into flight: how he moves, and a clean slate behind him.
+        ///
+        /// The mirror of EnterSurface, and it exists for the same reason. There are two ways
+        /// into space - lifting off, and coming back out after a fight - and only one of them
+        /// cleared the trail, so walking motes followed the player up into orbit.
+        /// </summary>
+        public void EnterSpace()
+        {
+            Movement = TeoMovement.Flying;
+            ClearPuffs();
         }
 
         // The two facts a world hands the walker, as plain functions. EnterSurface is on a

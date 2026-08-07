@@ -361,7 +361,6 @@ namespace Eggverse
             Teo.EnterSurface(planet);
             Teo.Warp(Surface.LandingPoint());
             Teo.Movement = TeoMovement.Walking;
-            Teo.ClearPuffs();
 
             Mode = GameMode.Surface;
             targetOrthoSize = SurfaceZoom;
@@ -396,7 +395,7 @@ namespace Eggverse
             Space.SetActive(true);
 
             Teo.Warp(Space.DeparturePoint(CurrentPlanet));
-            Teo.Movement = TeoMovement.Flying;
+            Teo.EnterSpace();
 
             Mode = GameMode.Space;
             targetOrthoSize = SpaceZoom;
@@ -416,8 +415,7 @@ namespace Eggverse
 
             CurrentPlanet = planet;
             Teo.Warp(Space.DeparturePoint(planet));
-            Teo.Movement = TeoMovement.Flying;
-            Teo.ClearPuffs();
+            Teo.EnterSpace();
 
             Mode = GameMode.Space;
             targetOrthoSize = SpaceZoom;
