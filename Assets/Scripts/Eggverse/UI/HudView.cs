@@ -713,15 +713,15 @@ namespace Eggverse
             return sb.ToString();
         }
 
-        void RefreshCollection()
+        /// <summary>
+        /// The field record column, as text. Static so the check measures the column the game
+        /// composes rather than counting rows and assuming each is one line - which is exactly
+        /// how the party column came to be asking for fifty-seven lines of thirty-three.
+        /// </summary>
+        public static string CollectionDexText(GameState state, int cursor)
         {
-            var state = dir.State;
-            collectionBody.text = CollectionBodyText(state, nestCursor, nestFocus, ref nestScroll);
-            collectionHint.text = HintFor(state);
-
-            // Middle column: the field record, with a cursor.
             var all = SpeciesDatabase.All;
-            dexCursor = Mathf.Clamp(dexCursor, 0, all.Count - 1);
+            cursor = Mathf.Clamp(cursor, 0, all.Count - 1);
 
             var dex = new System.Text.StringBuilder();
             dex.Append("<b><color=#FFC24D>FIELD RECORD</color></b>   <color=#A8B2C4>")
@@ -737,11 +737,24 @@ namespace Eggverse
                 string hex = ColorUtility.ToHtmlStringRGB(TypeChart.ColorOf(s.Type));
                 string mark = caught ? "<color=#5FD068>●</color>" : seen ? "<color=#FFC24D>◐</color>" : "<color=#3A4052>○</color>";
                 string name = caught || seen ? s.Name : "? ? ?";
-                bool here = i == dexCursor;
+                bool here = i == cursor;
 
                 dex.Append(DexRow(s, caught, seen, i + 1, here)).Append('\n');
             }
-            collectionDex.text = dex.ToString();
+            return dex.ToString();
+        }
+
+        void RefreshCollection()
+        {
+            var state = dir.State;
+            collectionBody.text = CollectionBodyText(state, nestCursor, nestFocus, ref nestScroll);
+            collectionHint.text = HintFor(state);
+
+            // Middle column: the field record, with a cursor.
+            var all = SpeciesDatabase.All;
+            dexCursor = Mathf.Clamp(dexCursor, 0, all.Count - 1);
+
+            collectionDex.text = CollectionDexText(state, dexCursor);
 
             // The right column follows the cursor. Browsing the record it shows the species
             // entry; browsing your own eggs it shows that egg - which is the only place in the

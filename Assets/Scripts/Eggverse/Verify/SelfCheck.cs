@@ -2890,10 +2890,29 @@ namespace Eggverse
 
 
 
-                int dexLines = 2 + SpeciesDatabase.Count;
+                // Measured, not counted. "Two plus the species count" assumes every row is one
+                // drawn line, which is the assumption that let the party column ask for
+                // fifty-seven lines of thirty-three. The record has no window at all, so it is
+                // the column that breaks first as species are added.
+                var recorded = new GameState(false);
+                foreach (var sp in SpeciesDatabase.All) { recorded.Seen.Add(sp.Id); recorded.Caught.Add(sp.Id); }
+
+                int dexLines = 0;
+                foreach (var row in HudView.CollectionDexText(recorded, 0).Split('\n'))
+                    dexLines += lines(row, 420f, 19);
                 check(dexLines <= capacity(ColH, 19),
                       "collection: the field record lists every species without overrunning (" +
                       dexLines + " of " + capacity(ColH, 19) + " lines)");
+
+                // And with nothing recorded, where every row is "? ? ?" and the element is
+                // withheld - a shorter row, but the count is the same and worth pinning.
+                var blank = new GameState(false);
+                int blankLines = 0;
+                foreach (var row in HudView.CollectionDexText(blank, 0).Split('\n'))
+                    blankLines += lines(row, 420f, 19);
+                check(blankLines <= capacity(ColH, 19),
+                      "collection: and lists them all before you have met any (" + blankLines +
+                      " of " + capacity(ColH, 19) + ")");
 
                 // The detail box is 280x160 and holds a name, a type line, a trait and its blurb.
                 foreach (var sp in SpeciesDatabase.All)
