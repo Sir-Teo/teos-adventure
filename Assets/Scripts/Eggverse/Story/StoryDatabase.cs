@@ -212,6 +212,16 @@ namespace Eggverse
 
         static readonly Dictionary<string, TrainerDef> trainers = new Dictionary<string, TrainerDef>();
 
+        /// <summary>The highest level a trainer fields, for telling a player what they face.</summary>
+        public static int TopLevelOf(string trainerId)
+        {
+            var t = GetTrainer(trainerId);
+            if (t == null || t.Levels == null || t.Levels.Length == 0) return 0;
+            int top = 0;
+            foreach (int lv in t.Levels) if (lv > top) top = lv;
+            return top;
+        }
+
         public static TrainerDef GetTrainer(string id)
         {
             TrainerDef t;

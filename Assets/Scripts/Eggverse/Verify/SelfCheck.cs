@@ -983,6 +983,58 @@ namespace Eggverse
                     }
             }
 
+            // ---- what the boss world tells you before you go down ----
+            {
+                // Amy fields the highest levels in the game, and the pacing run says a player
+                // who follows the story efficiently arrives with 48 of the run's 54 forced
+                // encounters still ahead of them. The prompt is the last thing they read
+                // before committing, and it used to say only that Amy was down there.
+                int amy = StoryDatabase.TopLevelOf("amy");
+                check(amy > 0, "Amy's top level is knowable from the trainer data (" + amy + ")");
+
+                // She outclasses everything you meet on the way to her - but not Amaranth's own
+                // wildlife, which runs to 26 against her 23. That is deliberate: the boss world
+                // is the first egg and the oldest things in the game live on it. It does mean
+                // the prompt cannot quote only her level, or a player reads "up to Lv 23" and is
+                // then jumped by a 26 on the walk over.
+                int wildTop = 0; string wildTopName = "";
+                foreach (var w in PlanetDatabase.All)
+                {
+                    if (w.IsBossWorld) continue;
+                    if (w.MaxLevel > wildTop) { wildTop = w.MaxLevel; wildTopName = w.Name; }
+                }
+                check(amy >= wildTop,
+                      "Amy outclasses everything on the way to her (" + amy + " against " +
+                      wildTopName + "'s " + wildTop + ")");
+
+                var boss = PlanetDatabase.Get("amaranth");
+                check(SpaceMode.BossPrompt(boss, 22).Contains("Lv " + boss.MinLevel + "-" + boss.MaxLevel),
+                      "the descent prompt quotes Amaranth's own wild range, not only Amy's team");
+                check(SpaceMode.BossPrompt(boss, 22).Contains("Lv " + amy),
+                      "and quotes what Amy fields");
+
+                // The prompt shares the bottom of the screen with everything else and cannot
+                // wrap; it is the longest one in the game now.
+                check(lines(SpaceMode.BossPrompt(boss, 22), 1600f, 24) == 1,
+                      "the descent prompt fits: " + SpaceMode.BossPrompt(boss, 22));
+
+                // Underlevelled is marked, ready is not.
+                check(SpaceMode.BossPrompt(boss, amy - SpaceMode.AmyComfortableGap - 1).Contains("E55555"),
+                      "a player well under Amy's level is told so");
+                check(!SpaceMode.BossPrompt(boss, amy).Contains("E55555"),
+                      "a player at her level is not nagged");
+
+                // And the warning has to leave room to act. If the gap were zero a player at
+                // exactly her level would be told they are short.
+                check(SpaceMode.AmyComfortableGap > 0 && SpaceMode.AmyComfortableGap < 6,
+                      "the readiness warning has a usable margin (" + SpaceMode.AmyComfortableGap + ")");
+
+                // The Amaranth gate asks for a level; it should not ask for more than Amy has.
+                check(StoryDatabase.GateLevel <= amy,
+                      "the gate does not ask for more than Amy fields (" +
+                      StoryDatabase.GateLevel + " against " + amy + ")");
+            }
+
             // ---- the record cannot exceed its own maximum ----
             {
                 // Evolution registers the grown form, and some grown forms cannot be caught -

@@ -26,6 +26,9 @@ namespace Eggverse
 
         const float LandingMargin = 3.2f;
 
+        /// <summary>How far under Amy's best a lead can be before the chart says so in red.</summary>
+        public const int AmyComfortableGap = 3;
+
         // ---- the drift ----
         //
         // Amy has been pulling warmth off every nest in the sector for eleven years to hold the
@@ -370,7 +373,8 @@ namespace Eggverse
             }
             else if (best.Def.IsBossWorld)
             {
-                dir.Hud.SetPrompt("Press <b>E</b> to descend to <b>" + best.Def.Name + "</b>. Amy is down there.");
+                var lead = dir.State.Leader;
+                dir.Hud.SetPrompt(BossPrompt(best.Def, lead != null ? lead.Level : 0));
             }
             else
             {
@@ -388,6 +392,29 @@ namespace Eggverse
                 if (sealedWorld) dir.Hud.Toast("Your charts do not reach that far yet.");
                 else dir.Land(best.Def);
             }
+        }
+
+        /// <summary>
+        /// What the chart says before you commit to the boss world.
+        ///
+        /// Every other world tells you what level you are flying into; this one said "Amy is
+        /// down there" and nothing else, and a player who has followed the story efficiently
+        /// arrives here with most of the run's forced levelling still ahead of them.
+        ///
+        /// It quotes the wild range as well as Amy's team, because Amaranth's own eggs run to
+        /// 26 against her 23 - the oldest things in the game live on the first egg - and a
+        /// prompt that mentioned only her would understate the walk to her door.
+        /// </summary>
+        public static string BossPrompt(PlanetDef world, int leadLevel)
+        {
+            int amy = StoryDatabase.TopLevelOf("amy");
+            string readiness = leadLevel <= 0 ? ""
+                : leadLevel + AmyComfortableGap < amy
+                    ? "  ·  <color=#E55555>your lead is Lv " + leadLevel + "</color>"
+                    : "  ·  <color=#A8B2C4>your lead is Lv " + leadLevel + "</color>";
+
+            return "Press <b>E</b> to descend to <b>" + world.Name + "</b>  ·  Lv " +
+                   world.MinLevel + "-" + world.MaxLevel + "  ·  Amy fields Lv " + amy + readiness;
         }
 
         void UpdateLabel(PlanetView v, Vector2 teo)
