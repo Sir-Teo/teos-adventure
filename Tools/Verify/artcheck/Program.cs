@@ -350,6 +350,11 @@ static class Program
             var pxl = Surface.Render(560, ToHex(d.Ocean), ToHex(d.Land), ToHex(d.Atmosphere),
                                      d.Theme.ToString(), d.Seed, "Scattered", 30f, id, true);
             WriteBmp(pxl, 560, "landmark-" + id + ".bmp");
+
+            // Resting: the party out on the pad, doing the warming.
+            var pxr = Surface.Render(560, ToHex(d.Ocean), ToHex(d.Land), ToHex(d.Atmosphere),
+                                     d.Theme.ToString(), d.Seed, "Scattered", 24f, id, false, true);
+            WriteBmp(pxr, 560, "resting-" + id + ".bmp");
         }
 
         {

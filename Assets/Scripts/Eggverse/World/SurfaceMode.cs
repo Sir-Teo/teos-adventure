@@ -94,6 +94,12 @@ namespace Eggverse
         int engagedRoamer = -1;
 
         const float NestRange = 3.4f;
+
+        // The pad is 7 units across and its ring 5.4, so the eggs stand between the two:
+        // on the station, outside the ring, not on top of the hut in the middle.
+        public const float NestPadDiameter = 7f, NestRingDiameter = 5.4f, NestHutDiameter = 2.6f;
+        public const float WarmingRingRadius = 2.9f;
+        public const float WarmingRise = 0.35f, WarmingHold = 1.15f, WarmingFall = 0.7f;
         const float RoamerSpeed = 3.4f;
 
         /// <summary>How close you get before a roamer takes an interest in you.</summary>
@@ -1002,6 +1008,65 @@ namespace Eggverse
         }
 
         /// <summary>
+        /// Your nest, out on the pad, doing the warming.
+        ///
+        /// Ori explains in the opening brief that a Nest Station runs warm off the eggs around
+        /// it - that is the whole trick of it, and it is the reason a cold station still works
+        /// when you turn up with a full nest. You had never once seen it happen. Resting was a
+        /// keypress and a line of text.
+        /// </summary>
+        System.Collections.IEnumerator ShowNestWarming()
+        {
+            if (nestStation == null) yield break;
+
+            var party = dir.State.Party;
+            int count = Mathf.Min(party.Count, GameState.PartySize);
+            if (count == 0) yield break;
+
+            var shown = new List<SpriteRenderer>();
+            for (int i = 0; i < count; i++)
+            {
+                float angle = Mathf.PI * 0.5f + i * (Mathf.PI * 2f / count);
+                var at = new Vector2(Mathf.Cos(angle) * WarmingRingRadius,
+                                     Mathf.Sin(angle) * WarmingRingRadius - 0.2f);
+                var sr = Spawn("warm" + i, ProcArt.Egg(party[i].Species, 64), at, 1.15f,
+                               new Color(1f, 1f, 1f, 0f), -21, nestStation);
+                shown.Add(sr);
+            }
+
+            // A pale flush over the pad while they are out, so a cold station visibly takes the
+            // warmth off them rather than simply healing you on dead stone.
+            var flush = Spawn("flush", ProcArt.Disc("nestflush", Color.white, new Color(1f, 1f, 1f, 0f), 1.5f, 64, 64f),
+                              Vector2.zero, 8.5f, new Color(1f, 0.86f, 0.55f, 0f), -26, nestStation);
+
+            const float rise = WarmingRise, hold = WarmingHold, fall = WarmingFall;
+            float t = 0f;
+            while (t < rise + hold + fall)
+            {
+                t += Time.deltaTime;
+                float a = t < rise ? t / rise
+                        : t < rise + hold ? 1f
+                        : 1f - (t - rise - hold) / fall;
+                a = Mathf.Clamp01(a);
+
+                for (int i = 0; i < shown.Count; i++)
+                {
+                    if (shown[i] == null) continue;
+                    shown[i].color = new Color(1f, 1f, 1f, a);
+                    // A small bob, out of phase, so six eggs do not move as one object.
+                    float bob = Mathf.Sin(Time.time * 5f + i * 1.1f) * 0.09f * a;
+                    var p0 = shown[i].transform.localPosition;
+                    shown[i].transform.localPosition = new Vector3(p0.x, p0.y + bob * Time.deltaTime * 12f, p0.z);
+                }
+                if (flush != null) flush.color = new Color(1f, 0.86f, 0.55f, a * 0.30f);
+                yield return null;
+            }
+
+            for (int i = 0; i < shown.Count; i++) if (shown[i] != null) Destroy(shown[i].gameObject);
+            if (flush != null) Destroy(flush.gameObject);
+        }
+
+        /// <summary>
         /// Makes the field under you stir as it gets close to turning something up. Restores the
         /// previous field when you step out of it, because a field left mid-stir stays lifted
         /// and bright for the rest of the visit.
@@ -1162,6 +1227,7 @@ namespace Eggverse
                     st.HealAll();
                     dir.Hud.Toast(RestLine(fainted, hurt, shortOfSupplies));
                     dir.Audio.Play(Sfx.Heal);
+                    StartCoroutine(ShowNestWarming());
                     // Quietly, in the corner: the rest message is the one worth reading here.
                     dir.SaveNow();
                 }

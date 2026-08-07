@@ -155,7 +155,8 @@ static class Surface
         }
     }
 
-    public static Col[] Render(int size, int ocean, int land, int atmo, string theme, int seed, string layout, float viewUnits = 0f, string planetId = null, bool onLandmark = false)
+    public static Col[] Render(int size, int ocean, int land, int atmo, string theme, int seed, string layout, float viewUnits = 0f, string planetId = null, bool onLandmark = false,
+                               bool showWarming = false)
     {
         // viewUnits > 0 renders the in-game camera framing (30 units tall) rather than the disc.
         float span = viewUnits > 0f ? viewUnits : R * 2.25f;
@@ -320,6 +321,21 @@ static class Surface
         Dot(c, tx, ty, 1.6f * 1.30f, Col.Hex(0x141824), 0.30f);
         Dot(c, tx, ty, 1.6f, Col.Hex(0xECF1F7), 0.25f);
         Dot(c, tx, ty - 0.4f, 0.9f, Col.Hex(0x142A4A), 0.35f);
+
+        // The nest out on the pad, warming it. Six eggs at the same radius the game uses, so
+        // the layout can be checked by eye as well as by arithmetic.
+        if (showWarming)
+        {
+            Dot(c, 0, 0, 8.5f, new Col(1f, 0.86f, 0.55f, 0.30f), 0.9f);
+            for (int i = 0; i < 6; i++)
+            {
+                double ang = Math.PI * 0.5 + i * (Math.PI * 2.0 / 6.0);
+                float ex = (float)Math.Cos(ang) * Eggverse.SurfaceMode.WarmingRingRadius;
+                float ey = (float)Math.Sin(ang) * Eggverse.SurfaceMode.WarmingRingRadius - 0.2f;
+                Dot(c, ex, ey, 1.15f * 1.20f, Col.Hex(0x141824), 0.30f);
+                Dot(c, ex, ey, 1.15f, Col.Hex(0xBFE39A), 0.25f);
+            }
+        }
 
         // Horizon ring.
         for (int y = 0; y < size; y++)

@@ -983,6 +983,30 @@ namespace Eggverse
                     }
             }
 
+            // ---- your nest, warming the pad ----
+            {
+                // Ori's rule is that a station runs warm off the eggs around it, which is why
+                // a cold one still works when you turn up with a full nest. Resting shows it
+                // now, so the eggs have to land on the station and not on its furniture.
+                check(SurfaceMode.WarmingRingRadius > SurfaceMode.NestRingDiameter * 0.5f,
+                      "the nest stands outside the station's ring (" + SurfaceMode.WarmingRingRadius +
+                      " against " + (SurfaceMode.NestRingDiameter * 0.5f) + ")");
+                check(SurfaceMode.WarmingRingRadius < SurfaceMode.NestPadDiameter * 0.5f,
+                      "the nest stands on the pad rather than off the edge of it (" +
+                      SurfaceMode.WarmingRingRadius + " against " + (SurfaceMode.NestPadDiameter * 0.5f) + ")");
+
+                // Six eggs at the widest, so no two may overlap on the ring.
+                float step = 2f * Mathf.PI * SurfaceMode.WarmingRingRadius / GameState.PartySize;
+                check(step > 1.15f,
+                      "six eggs fit round the pad without touching (" + step.ToString("0.00") +
+                      " apart, each 1.15 wide)");
+
+                // And it is over before the line explaining it has gone.
+                float whole = SurfaceMode.WarmingRise + SurfaceMode.WarmingHold + SurfaceMode.WarmingFall;
+                check(whole < 3f, "the warming is done inside the toast that describes it (" +
+                      whole.ToString("0.0") + "s)");
+            }
+
             // ---- the stir before an encounter ----
             {
                 // A field turning something up used to be a cut with no tell at all. The stir
