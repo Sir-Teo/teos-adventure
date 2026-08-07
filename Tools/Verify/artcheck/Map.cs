@@ -48,6 +48,8 @@ static class Map
         // sectors still dark. The header counts off this same state, so the picture and the
         // number agree by construction instead of by coincidence.
         var st = new Eggverse.GameState();
+        // A lead a few levels past Glacierim's band, so the readiness line has something to say.
+        st.Party[0].GainXp(4200, null);
         int i = 0;
         foreach (var w in Eggverse.PlanetDatabase.All)
             if (i++ < 13 || w.Id == Selected) st.Visited.Add(w.Id);

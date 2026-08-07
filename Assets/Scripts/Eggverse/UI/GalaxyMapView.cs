@@ -344,6 +344,38 @@ namespace Eggverse
         }
 
         /// <summary>
+        /// How far outside a world's level band you have to be before it is worth saying so.
+        /// The same number the descent prompt uses for Amy - two readings of "comfortable" that
+        /// disagree would be the chart and the prompt telling a player different things about
+        /// the same decision.
+        /// </summary>
+        public const int ComfortGap = 3;
+
+        /// <summary>
+        /// Your lead against this world's wild eggs, in one line.
+        ///
+        /// The lead rather than the party average, because the lead is who walks into the first
+        /// fight. Five bands, not two: "under" and "over" are the ones that change a decision,
+        /// but a player who is exactly right wants to be told that too.
+        /// </summary>
+        public static string Readiness(PlanetDef def, GameState state)
+        {
+            var lead = state.Leader;
+            if (lead == null) return "";
+            int lv = lead.Level;
+
+            if (lv + ComfortGap < def.MinLevel)
+                return "<color=#E55555>Your lead is Lv " + lv + " — under everything here.</color>";
+            if (lv < def.MinLevel)
+                return "<color=#FFC24D>Your lead is Lv " + lv + ", a shade under the low end.</color>";
+            if (lv <= def.MaxLevel)
+                return "<color=#A8B2C4>Your lead is Lv " + lv + ", in among them.</color>";
+            if (lv <= def.MaxLevel + ComfortGap)
+                return "<color=#A8B2C4>Your lead is Lv " + lv + ", a little over.</color>";
+            return "<color=#7A8090>Your lead is Lv " + lv + ". Nothing here will trouble you.</color>";
+        }
+
+        /// <summary>
         /// A marker's two lines. The caret is the non-chromatic half of "this is the one you
         /// have selected" - a halo in the world's own colour said it in hue and nothing else,
         /// which on this chart is not saying it.
@@ -455,6 +487,15 @@ namespace Eggverse
                     sb.Append("  ").Append(mark).Append(" <color=#").Append(hex).Append(">")
                       .Append(known ? species.Name : "? ? ?").Append("</color>\n");
                 }
+
+                // Where you stand against it. The panel said "Wild eggs Lv 14-18" and never
+                // said what yours are - so the chart described seventeen worlds in detail and
+                // answered none of the question a player actually opens it with, which is
+                // whether this is a good place for them right now. The space prompt has told
+                // you your lead's level in front of Amy since it was written; every other world
+                // was left to arithmetic in the player's head.
+                string ready = Readiness(def, state);
+                if (ready.Length > 0) sb.Append('\n').Append(ready).Append('\n');
 
                 // How far it is, from wherever you are standing. The chart is where a course is
                 // chosen and it has never said what choosing one costs.

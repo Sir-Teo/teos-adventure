@@ -1671,6 +1671,78 @@ namespace Eggverse
                 check(elder.Elder && !ordinary.Elder, "and knows it");
             }
 
+            // ---- the chart says where you stand against a world ----
+            {
+                // The panel said "Wild eggs Lv 14-18" and never said what yours are. So the
+                // chart described seventeen worlds in detail and answered none of the question
+                // a player opens it with - whether this is a good place for them right now.
+                // GameState() is not empty - a new run already carries Sprouteg, which is the
+                // whole opening of the game. The first version of this block built its fixtures
+                // with it and then added an egg, so Leader stayed the starter and every level it
+                // claimed to be testing was really level five. Test data invented rather than
+                // read fails the same way every time.
+                check(GalaxyMapView.Readiness(PlanetDatabase.Home, new GameState(false)).Length == 0,
+                      "a chart with no eggs on it says nothing about your lead");
+
+                // Both readings of "comfortable" have to be the same number, or the chart and
+                // the descent prompt tell a player different things about the same decision.
+                check(GalaxyMapView.ComfortGap == SpaceMode.AmyComfortableGap,
+                      "the chart and the descent prompt agree on what comfortable means (" +
+                      GalaxyMapView.ComfortGap + " against " + SpaceMode.AmyComfortableGap + ")");
+
+                foreach (var w in PlanetDatabase.All)
+                {
+                    // Every level a lead can actually be, against every world.
+                    string last = null;
+                    int changes = 0;
+                    for (int lv = 1; lv <= EggInstance.MaxLevel; lv++)
+                    {
+                        var st = new GameState(false);
+                        st.Party.Add(EggInstance.Wild(SpeciesDatabase.All[0].Id, lv));
+                        string line = GalaxyMapView.Readiness(w, st);
+
+                        check(line.Length > 0, w.Name + " says something at Lv " + lv);
+                        check(line.Contains("Lv " + lv), w.Name + " quotes the real level at Lv " + lv);
+                        check(lines(line, 720f, 22) == 1,
+                              w.Name + "'s readiness fits the panel at Lv " + lv + ": " + line);
+
+                        // Red is for the one case that changes a decision. A world you are
+                        // merely a little under is not a warning.
+                        bool red = line.Contains("E55555");
+                        check(red == (lv + GalaxyMapView.ComfortGap < w.MinLevel),
+                              w.Name + " warns exactly when your lead is under everything on it " +
+                              "(Lv " + lv + ", band " + w.MinLevel + "-" + w.MaxLevel + ")");
+
+                        if (line != last) changes++;
+                        last = line;
+                    }
+
+                    // The line has to move as you level, or it is decoration.
+                    check(changes >= 3,
+                          w.Name + "'s readiness changes as you level (" + changes + ")");
+                }
+
+                // And no band may be unreachable. "changes >= 4 per world" was here instead,
+                // which is a number picked rather than a property: deleting the "a little over"
+                // band entirely left every world still changing four times and the check passed.
+                // The question worth asking is the same one the portrait marks get asked -
+                // does some real combination in the game actually produce each of these?
+                var bands = new[] { "under everything here", "a shade under the low end",
+                                    "in among them", "a little over", "Nothing here will trouble you" };
+                foreach (var band in bands)
+                {
+                    bool reached = false;
+                    foreach (var w in PlanetDatabase.All)
+                        for (int lv = 1; lv <= EggInstance.MaxLevel && !reached; lv++)
+                        {
+                            var st = new GameState(false);
+                            st.Party.Add(EggInstance.Wild(SpeciesDatabase.All[0].Id, lv));
+                            if (GalaxyMapView.Readiness(w, st).Contains(band)) reached = true;
+                        }
+                    check(reached, "some world and some level actually reads \"" + band + "\"");
+                }
+            }
+
             // ---- the selected world says so in more than colour ----
             {
                 // The chart's whole job is picking one of seventeen things, and the halo that
