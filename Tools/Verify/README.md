@@ -66,9 +66,13 @@ no-op edit and a working check look identical from the outside.** So this refuse
 conclusion unless it can prove the plant landed: it counts the occurrences, aborts at zero, and
 compares the file against its backup before running anything.
 
-It distinguishes three outcomes, which is the whole point:
+It distinguishes four outcomes, which is the whole point:
 
 - `ABORT` — the pattern matched nothing. Nothing was tested; the result means nothing.
+- `ABORT` — the planted code does not compile, so the suite never ran. A plant that fails to
+  build produces no failures either, and reporting that as "still passes" is the same mistake
+  this script exists to prevent. It happened while testing a coda check, and read exactly like a
+  missing assertion.
 - `NOT CAUGHT` — the fault landed and the suite still passed. The check is missing or toothless.
 - `caught:` — with the failures listed, and a note if the expected one is among them.
 

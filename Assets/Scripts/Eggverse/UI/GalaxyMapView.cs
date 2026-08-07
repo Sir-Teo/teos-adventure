@@ -24,7 +24,7 @@ namespace Eggverse
         readonly List<Marker> markers = new List<Marker>();
         readonly List<Text> sectorLabels = new List<Text>();
         Image teoMarker;
-        Text detailTitle, detailBody, detailCourse, footer;
+        Text detailTitle, detailBody, detailCourse, footer, tally;
         int selected;
 
         public bool IsOpen { get { return canvas != null && canvas.gameObject.activeSelf; } }
@@ -48,6 +48,13 @@ namespace Eggverse
 
             var title = UIKit.Label(root, "Title", "NAVIGATION CHART", 34, UIKit.Accent, TextAnchor.MiddleLeft, FontStyle.Bold);
             UIKit.Place(title.rectTransform, new Vector2(0f, 1f), new Vector2(0f, 1f), new Vector2(70f, -46f), new Vector2(900f, 44f));
+
+            // The header row was a title and 900px of nothing. The chart is the screen a player
+            // opens to decide where to go next, and it had no way of telling them how much of
+            // the map they had actually seen.
+            tally = UIKit.Label(root, "Tally", "", 22, UIKit.InkDim, TextAnchor.MiddleRight);
+            UIKit.Place(tally.rectTransform, new Vector2(1f, 1f), new Vector2(1f, 1f),
+                        new Vector2(-70f, -46f), new Vector2(900f, 44f));
 
             chart = UIKit.Node(root, "Chart");
             UIKit.Place(chart, new Vector2(0f, 0.5f), new Vector2(0f, 0.5f), new Vector2(70f, -20f), new Vector2(ChartWidth, ChartHeight));
@@ -337,8 +344,28 @@ namespace Eggverse
             RefreshDetail();
         }
 
+        /// <summary>
+        /// How much of the map you have actually seen. Inscriptions stay off it until you have
+        /// found one, the same rule the chart's per-world lines follow - a "0 of 17" on a screen
+        /// you open in the first ten minutes is a checklist handed to somebody who has not been
+        /// told there is anything to check.
+        /// </summary>
+        public static string Tally(GameState state)
+        {
+            int charted = 0;
+            foreach (var w in PlanetDatabase.All) if (state.Visited.Contains(w.Id)) charted++;
+
+            string text = charted + " of " + PlanetDatabase.All.Count + " worlds charted";
+            if (state.Landmarks.Count > 0)
+                text += "  ·  " + state.Landmarks.Count + " of " + LandmarkDatabase.Count +
+                        " inscriptions read";
+            return text;
+        }
+
         void RefreshDetail()
         {
+            tally.text = Tally(dir.State);
+
             var m = markers[selected];
             var state = dir.State;
             var story = dir.Story;

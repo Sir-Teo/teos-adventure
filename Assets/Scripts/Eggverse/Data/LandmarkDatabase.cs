@@ -26,10 +26,15 @@ namespace Eggverse
         public readonly LandmarkForm Form;
         public readonly string[] Lines;
 
+        /// <summary>Read only when every other inscription has been. Null on all but one.</summary>
+        public string[] Coda;
+
         public LandmarkDef(string planetId, string name, LandmarkForm form, params string[] lines)
         {
             PlanetId = planetId; Name = name; Form = form; Lines = lines;
         }
+
+        public LandmarkDef WithCoda(params string[] coda) { Coda = coda; return this; }
     }
 
     /// <summary>
@@ -55,6 +60,14 @@ namespace Eggverse
         }
 
         public static IEnumerable<LandmarkDef> All => byPlanet.Values;
+
+        /// <summary>True once every inscription except this one has been read.</summary>
+        public static bool AllOthersRead(string planetId, ICollection<string> read)
+        {
+            foreach (var d in byPlanet.Values)
+                if (d.PlanetId != planetId && !read.Contains(d.PlanetId)) return false;
+            return true;
+        }
         public static int Count => byPlanet.Count;
 
         static void Add(LandmarkDef d) { byPlanet[d.PlanetId] = d; }
@@ -145,10 +158,19 @@ namespace Eggverse
                 "The oldest cairn is not his. It has been here longer than the Belt has been broken."));
 
             // ---------------- Amaranth ----------------
+            // The last word, and the only coda in the game. Sixteen inscriptions record the year
+            // something started going wrong; not one of them records anybody fixing it. That is
+            // the argument the whole collection has been making without saying so, and it only
+            // lands once you have actually read them all.
             Add(new LandmarkDef("amaranth", "The Shell Line", LandmarkForm.Seam,
                 "A seam runs across the whole visible surface, hairline, filled with old mortar.",
                 "The mortar is patched over and over, in a hundred different hands, none recent.",
-                "This is not the crack. This is one that somebody closed, a very long time ago."));
+                "This is not the crack. This is one that somebody closed, a very long time ago.")
+                .WithCoda(
+                "You have read the others now. A post, a bell, a well, nine hundred stacked cairns.",
+                "Every one of them is somebody writing down the year a thing started going wrong.",
+                "Not one records the mending. Nobody ever thought that part was worth the stone.",
+                "Somebody closed this seam and left no name. It held. That is the whole of it."));
         }
     }
 }

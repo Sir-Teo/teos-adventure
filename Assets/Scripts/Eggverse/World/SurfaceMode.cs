@@ -643,10 +643,14 @@ namespace Eggverse
             return dir.State.Landmarks.Contains(current.Id) ? "<b>" + landmarkDef.Name + "</b>" : "";
         }
 
-        static DialogueScript LandmarkScript(LandmarkDef def)
+        static DialogueScript LandmarkScript(LandmarkDef def, GameState state)
         {
-            var lines = new DialogueLine[def.Lines.Length];
+            bool coda = def.Coda != null && LandmarkDatabase.AllOthersRead(def.PlanetId, state.Landmarks);
+            int extra = coda ? def.Coda.Length : 0;
+
+            var lines = new DialogueLine[def.Lines.Length + extra];
             for (int i = 0; i < def.Lines.Length; i++) lines[i] = new DialogueLine(def.Name, def.Lines[i]);
+            for (int i = 0; i < extra; i++) lines[def.Lines.Length + i] = new DialogueLine(def.Name, def.Coda[i]);
             return new DialogueScript(lines);
         }
 
@@ -1018,7 +1022,7 @@ namespace Eggverse
                             landmarkLabel.Text.text = landmarkLabel.Compose(landmarkLabel.HintShown);
                         }
                     }
-                    dir.PlayDialogue(LandmarkScript(landmarkDef));
+                    dir.PlayDialogue(LandmarkScript(landmarkDef, dir.State));
                 }
                 if (EggInput.LiftoffPressed) dir.LiftOff();
                 return;

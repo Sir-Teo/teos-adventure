@@ -54,6 +54,15 @@ fi
 OUT="$("$ROOT/Tools/Verify/verify.sh" 2>&1)"
 FAILS="$(echo "$OUT" | grep -E "SELFCHECK FAIL|^  FAIL:" || true)"
 
+# A plant that does not compile produces no failures either, and reporting that as "the suite
+# still passes" is the exact mistake this script exists to prevent - it would read as a missing
+# check when in fact nothing ran. Say so instead.
+if echo "$OUT" | grep -q "error CS"; then
+  echo "  ABORT: the planted code does not compile, so the suite never ran."
+  echo "$OUT" | grep "error CS" | head -3 | sed 's/^/    /'
+  exit 3
+fi
+
 if [ -z "$FAILS" ]; then
   echo "  NOT CAUGHT: the suite still passes with the fault planted."
   exit 1

@@ -983,6 +983,29 @@ namespace Eggverse
                     }
             }
 
+            // ---- the chart's tally ----
+            {
+                var fresh = new GameState();
+                check(!GalaxyMapView.Tally(fresh).Contains("inscription"),
+                      "the chart says nothing about inscriptions before you have found one");
+
+                var some = new GameState();
+                some.Visited.Add("yolkhaven");
+                some.Landmarks.Add("yolkhaven");
+                check(GalaxyMapView.Tally(some).Contains("1 of " + LandmarkDatabase.Count),
+                      "the chart counts inscriptions once you have read one");
+
+                var done = new GameState();
+                foreach (var w in PlanetDatabase.All) { done.Visited.Add(w.Id); done.Landmarks.Add(w.Id); }
+                string full = GalaxyMapView.Tally(done);
+                check(full.Contains(PlanetDatabase.All.Count + " of " + PlanetDatabase.All.Count),
+                      "the chart can reach every world: " + full);
+
+                // Right-aligned in a 900px box at font 22, sharing the header row with a title
+                // that runs to 970 of the 1920.
+                check(lines(full, 900f, 22) == 1, "the chart's tally fits its header box: " + full);
+            }
+
             // ---- landmark asides ----
             {
                 // Every resident lives on a world that has a landmark, so every resident owes it
@@ -1068,6 +1091,38 @@ namespace Eggverse
                 foreach (var lm in LandmarkDatabase.All) formUse[lm.Form]++;
                 foreach (var kv in formUse)
                     check(kv.Value >= 1, "the " + kv.Key + " form is used somewhere (" + kv.Value + " worlds)");
+
+                // Exactly one coda. Two would be a pattern the player starts expecting; none
+                // would mean seventeen inscriptions that never add up to anything.
+                int codas = 0;
+                foreach (var lm in LandmarkDatabase.All) if (lm.Coda != null) codas++;
+                check(codas == 1, "exactly one inscription has a last word (" + codas + ")");
+
+                // And it waits for the other sixteen.
+                var readAll = new HashSet<string>();
+                foreach (var w in PlanetDatabase.All) readAll.Add(w.Id);
+                foreach (var lm in LandmarkDatabase.All)
+                {
+                    if (lm.Coda == null) continue;
+                    check(!LandmarkDatabase.AllOthersRead(lm.PlanetId, new HashSet<string>()),
+                          lm.Name + " keeps its last word until the others are read");
+                    check(LandmarkDatabase.AllOthersRead(lm.PlanetId, readAll),
+                          lm.Name + " gives up its last word once they are");
+
+                    var oneShort = new HashSet<string>(readAll);
+                    oneShort.Remove("yolkhaven");
+                    check(!LandmarkDatabase.AllOthersRead(lm.PlanetId, oneShort),
+                          lm.Name + " still waits when one inscription is missing");
+
+                    // Reading it does not count as reading the others.
+                    var itselfOnly = new HashSet<string> { lm.PlanetId };
+                    check(!LandmarkDatabase.AllOthersRead(lm.PlanetId, itselfOnly),
+                          lm.Name + " does not count itself");
+
+                    foreach (var line in lm.Coda)
+                        check(lines(line, 1380f, 28) == 1,
+                              lm.Name + "'s last word reads as one line: \"" + line + "\"");
+                }
 
                 var seenNames = new HashSet<string>();
                 foreach (var w in PlanetDatabase.All)

@@ -108,6 +108,7 @@ static class Prose
         {
             Add(lm.Name, lm.Name);
             foreach (var line in lm.Lines) Add(lm.Name, line);
+            if (lm.Coda != null) foreach (var line in lm.Coda) Add(lm.Name + " coda", line);
         }
 
         // the same conversation is reachable from many beats
