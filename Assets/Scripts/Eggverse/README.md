@@ -81,6 +81,16 @@ About one wild egg in twelve is an **Elder** — three levels older, visibly lar
 of its own element, worth 1.7× the experience, and far harder to keep (14% at full health
 against an ordinary egg's 33%, and 40% even at 1 HP). They are trophies, not obstacles.
 
+Resting at a Nest Station says what it actually did. Walk in with a fainted egg and it tells you
+how many are back on their feet; walk in whole and fully stocked and it says so rather than
+claiming to have mended anything — *"Nothing needed doing. The pad is warm anyway."*, and three
+other lines it rotates through, because a player standing on the pad pressing E is usually just
+fond of the place.
+
+It used to say one line forever, and follow it with a second toast reading "Progress saved."
+Resting now saves quietly in the corner like every other autosave, so the message you actually
+wanted to read is the only one on screen.
+
 ## The worlds
 
 Three sectors ring Yolkhaven, and Amaranth Prime sits beyond all of them.

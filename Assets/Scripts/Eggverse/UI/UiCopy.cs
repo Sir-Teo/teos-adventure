@@ -38,6 +38,18 @@ namespace Eggverse
             "CHART  M      COLLECTION  Tab      NAME AN EGG  N      MUTE  0",
         };
 
+        /// <summary>
+        /// What a Nest Station says when there was nothing to fix. Authored rather than built,
+        /// so the prose pass reads them along with everything else the player can be shown.
+        /// </summary>
+        public static readonly string[] RestIdle =
+        {
+            "Nothing needed doing. The pad is warm anyway.",
+            "Everything is already whole. The Keeper nods at you.",
+            "Your eggs settle in, then look at you expectantly.",
+            "You sit a while. The station hums along with the shells.",
+        };
+
         public const string VictoryHeading = "AMY IS BEATEN";
 
         public const string VictoryBody =

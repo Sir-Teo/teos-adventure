@@ -535,6 +535,30 @@ namespace Eggverse
                       sp.Name + " reports gains on every level (" + gainLines + " of " + levelUps + ")");
             }
 
+            // ---- what the Nest Station says ----
+            // Every variant is a toast, so every variant has to fit the 1000px bar - including
+            // the plural forms, which read differently at one.
+            {
+                foreach (var line in new[]
+                {
+                    Words.Count(1, "egg") + " back on its feet. Shells mended, supplies restocked.",
+                    Words.Count(6, "egg") + " back on their feet. Shells mended, supplies restocked.",
+                    "Shells mended, supplies restocked.",
+                    "Supplies restocked. Nothing else needed doing.",
+                    "Nothing needed doing. The pad is warm anyway.",
+                    "Everything is already whole. The keeper nods at you.",
+                    "Your eggs settle in, then look at you expectantly.",
+                    "You sit a while. The station hums along with the shells.",
+                })
+                    check(lines(line, 1000f - 40f, 24) == 1, "rest line fits the toast bar: \"" + line + "\"");
+
+                // The singular and plural forms must actually differ, or the pluralisation is
+                // decorative and "1 eggs back on their feet" is one edit away.
+                check(Words.Count(1, "egg").StartsWith("1 egg") && !Words.Count(1, "egg").Contains("eggs"),
+                      "one egg reads as \"1 egg\"");
+                check(Words.Count(2, "egg") == "2 eggs", "two eggs read as \"2 eggs\"");
+            }
+
             // ---- the catch toast ----
             // The most repeated message in the game. It has to fit the 1000px toast bar for the
             // longest name in the roster, in every combination of Elder and new-to-the-record.

@@ -427,6 +427,36 @@ namespace Eggverse
         const float CacheRange = 1.6f;
 
         /// <summary>Walking over the cache digs it up. No prompt: finding it is the point.</summary>
+        int restIdle;
+
+        /// <summary>
+        /// What the station says, based on what it actually just fixed. A player who walks in
+        /// whole and fully stocked should not be told their eggs are mended.
+        /// </summary>
+        string RestLine(int fainted, int hurt, bool shortOfSupplies)
+        {
+            if (fainted > 0)
+            {
+                restIdle = 0;
+                return Words.Count(fainted, "egg") + " back on " +
+                       (fainted == 1 ? "its" : "their") + " feet. Shells mended, supplies restocked.";
+            }
+            if (hurt > 0)
+            {
+                restIdle = 0;
+                return "Shells mended, supplies restocked.";
+            }
+            if (shortOfSupplies)
+            {
+                restIdle = 0;
+                return "Supplies restocked. Nothing else needed doing.";
+            }
+
+            // Nothing to fix. Rather than lie about mending anything, say so - and vary it,
+            // because a player standing on the pad pressing E is usually just fond of the place.
+            return UiCopy.RestIdle[restIdle++ % UiCopy.RestIdle.Length];
+        }
+
         void TickCache()
         {
             if (cache == null || dir.Mode != GameMode.Surface) return;
@@ -774,10 +804,19 @@ namespace Eggverse
                 prompt = "Press <b>E</b> to rest at the <b>Nest Station</b>  ·  <b>Q</b> to lift off";
                 if (EggInput.InteractPressed)
                 {
-                    dir.State.HealAll();
-                    dir.Hud.Toast("Your eggs are warm and whole again. Cartons restocked.");
+                    // Look at what resting actually did before doing it. The same line every time
+                    // for the most repeated interaction in the game reads like a vending machine,
+                    // and it says "cartons restocked" whether or not you had spent any.
+                    var st = dir.State;
+                    int fainted = 0, hurt = 0;
+                    foreach (var e in st.Party) { if (e.IsFainted) fainted++; else if (e.CurrentHP < e.MaxHP) hurt++; }
+                    bool shortOfSupplies = st.Cartons < st.MaxCartons || st.Salves < GameState.MaxSalves;
+
+                    st.HealAll();
+                    dir.Hud.Toast(RestLine(fainted, hurt, shortOfSupplies));
                     dir.Audio.Play(Sfx.Heal);
-                    dir.SaveNow(true);
+                    // Quietly, in the corner: the rest message is the one worth reading here.
+                    dir.SaveNow();
                 }
             }
             else

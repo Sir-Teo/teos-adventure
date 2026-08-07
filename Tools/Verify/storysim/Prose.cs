@@ -89,6 +89,7 @@ static class Prose
         Add("ending heading", UiCopy.VictoryHeading);
         AddLayout("ending body", UiCopy.VictoryBody);
         AddLayout("ending tally", UiCopy.VictoryTally(120, 24, 24, 8));
+        for (int i = 0; i < UiCopy.RestIdle.Length; i++) Add("rest line " + i, UiCopy.RestIdle[i]);
 
         // the same conversation is reachable from many beats
         var seen = new HashSet<string>();
