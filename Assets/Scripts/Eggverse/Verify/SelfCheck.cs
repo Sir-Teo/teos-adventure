@@ -1029,6 +1029,59 @@ namespace Eggverse
                     }
             }
 
+            // ---- nothing carries element by colour alone ----
+            {
+                // Swept rather than spot-checked. I had already claimed this was handled once,
+                // on the strength of three screens, and the fourth - the field record's own
+                // list - was the one a colour-blind player would spend the most time reading.
+                //
+                // Every surface that tints something by element, and what carries it besides
+                // the hue:
+                //   battle plates      the type chip's own text
+                //   move cards         the type name on the sub-line
+                //   move message       the element spelled in the sentence
+                //   party strip        the abbreviation after the level
+                //   entry panel        the type name under the species name
+                //   field record list  the abbreviation after the name
+                //   chart labels       the abbreviation after the level range
+                //   egg panel          the type name under the egg's name
+                // and the two that are shape rather than text: the effectiveness arrows on the
+                // move cards, and the caught/seen/unmet marks in the record.
+                // Through the chart's own builder. Building the string here instead meant
+                // deleting the element from the real one changed nothing at all.
+                var charted = new GameState(false);
+                var lateStory = new StoryState();
+                lateStory.RestoreFrom(new string[0], StoryDatabase.Beats.Length - 1);
+                foreach (var w in PlanetDatabase.All) charted.Visited.Add(w.Id);
+
+                foreach (var w in PlanetDatabase.All)
+                {
+                    string chartSuffix = GalaxyMapView.MarkerSuffix(
+                        w, charted, lateStory, GalaxyMapView.Presence.Elsewhere);
+
+                    check(chartSuffix.Contains(TypeChart.Abbrev(w.Theme)),
+                          w.Name + "'s chart label names its element: " + chartSuffix);
+                    check(lines(chartSuffix, 240f, 15) == 1,
+                          w.Name + "'s chart label fits at its widest: " + chartSuffix);
+                }
+
+                // And an uncharted world still says only that.
+                var nothing = new GameState(false);
+                foreach (var w in PlanetDatabase.All)
+                {
+                    if (nothing.Visited.Contains(w.Id)) continue;
+                    string s2 = GalaxyMapView.MarkerSuffix(w, nothing, lateStory,
+                                                           GalaxyMapView.Presence.Elsewhere);
+                    check(!s2.Contains(TypeChart.Abbrev(w.Theme)),
+                          w.Name + "'s element is not given away before you have been: " + s2);
+                }
+
+                // The abbreviations are doing the work the colour was, so a collision would put
+                // us back where we started - but that is already asserted where the tags are
+                // defined ("Frost's three-letter tag is unique"), and planting a collision fires
+                // it. A second copy here would be clutter that passes for rigour.
+            }
+
             // ---- the field record does not carry element by colour alone ----
             {
                 // Every other screen in the game spells the element beside the colour, because

@@ -80,7 +80,7 @@ static class Map
 
                 // The level in dim ink and the ring in accent, as the chart draws them. Drawing
                 // the whole suffix in one colour made the mark look like part of the number.
-                string lv = "Lv " + def.MinLevel + "-" + def.MaxLevel;
+                string lv = "Lv " + def.MinLevel + "-" + def.MaxLevel + "  " + Eggverse.TypeChart.Abbrev(def.Theme);
                 string ring = owed > 0 ? "  \u25cb" : "";
                 float wholeW = Battle.TextWidth(lv + ring, 15);
                 float left = px - wholeW * 0.5f;

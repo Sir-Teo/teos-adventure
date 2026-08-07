@@ -319,21 +319,7 @@ namespace Eggverse
                 else dotTint = Color.white;
                 m.Dot.color = dotTint;
 
-                string suffix;
-                if (!sectorOpen) suffix = "<color=#5A6072>· sealed</color>";
-                else if (!visited) suffix = "<color=#8A90A2>· uncharted</color>";
-                else if (PresenceAt(m.Def) == Presence.Landed) suffix = "<color=#FFC24D>· you are here</color>";
-                else if (PresenceAt(m.Def) == Presence.InOrbit) suffix = "<color=#FFC24D>· in orbit</color>";
-                else
-                {
-                    // A world you have walked and not finished. The hollow ring is the same mark
-                    // the field record uses for a species you have not recorded, so it means the
-                    // same thing in both places - and it appears only on worlds you have been to,
-                    // because it is your own record talking rather than the game pointing.
-                    int owed = state.UnrecordedOn(m.Def);
-                    suffix = "<color=#A8B2C4>Lv " + m.Def.MinLevel + "-" + m.Def.MaxLevel + "</color>" +
-                             (owed > 0 ? "  <color=#FFC24D>\u25cb</color>" : "");
-                }
+                string suffix = MarkerSuffix(m.Def, state, story, PresenceAt(m.Def));
 
                 string nameColor = sectorOpen ? "#F2F5FA" : "#5A6072";
                 m.Label.text = "<color=" + nameColor + ">" + m.Def.Name + "</color>\n<size=15>" + suffix + "</size>";
@@ -351,6 +337,32 @@ namespace Eggverse
             teoMarker.rectTransform.anchoredPosition = WorldToChart(teoWorld) + new Vector2(0f, 34f);
 
             RefreshDetail();
+        }
+
+        /// <summary>
+        /// The line under a world's name on the chart. Static so the checks measure what the
+        /// chart draws - the first version of this check built the string itself, which meant
+        /// deleting the element from the real one changed nothing and the suite passed.
+        /// </summary>
+        public static string MarkerSuffix(PlanetDef def, GameState state, StoryState story, Presence presence)
+        {
+            if (!story.CanEnter(def.Sector)) return "<color=#5A6072>· sealed</color>";
+            if (!state.Visited.Contains(def.Id)) return "<color=#8A90A2>· uncharted</color>";
+            if (presence == Presence.Landed) return "<color=#FFC24D>· you are here</color>";
+            if (presence == Presence.InOrbit) return "<color=#FFC24D>· in orbit</color>";
+
+            // A world you have walked and not finished. The hollow ring is the same mark the
+            // field record uses for a species you have not recorded, so it means the same thing
+            // in both places - and it appears only on worlds you have been to, because it is
+            // your own record talking rather than the game pointing.
+            //
+            // The element too. Every dot on this chart is coloured by its world's element and
+            // the label never said which - the last place in the game carrying type by hue
+            // alone, after the field record's own list.
+            int owed = state.UnrecordedOn(def);
+            return "<color=#A8B2C4>Lv " + def.MinLevel + "-" + def.MaxLevel + "</color>" +
+                   "  <color=#7A8090>" + TypeChart.Abbrev(def.Theme) + "</color>" +
+                   (owed > 0 ? "  <color=#FFC24D>\u25cb</color>" : "");
         }
 
         /// <summary>
