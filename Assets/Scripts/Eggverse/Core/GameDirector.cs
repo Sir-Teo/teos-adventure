@@ -145,6 +145,26 @@ namespace Eggverse
         /// Pushes the screen-motion setting out to the things that move. Called when it changes
         /// and when a run starts or loads, rather than before each of the five flash sites.
         /// </summary>
+        /// <summary>
+        /// Says something the moment the record crosses one of Ori's thresholds. He has a reward
+        /// waiting at each, but only hands it over when you next stand in front of him - so
+        /// crossing ten species on a rock three sectors out used to pass in complete silence.
+        /// </summary>
+        void NudgeRecordMilestone()
+        {
+            int recorded = State.Caught.Count;
+            int catchable = SpeciesDatabase.CatchableCount;
+
+            if (recorded >= catchable && !Story.HasFlag("ori_record_full"))
+                Hud.Toast("The record is complete. All " + catchable + " of them. Ori will not believe it.");
+            else if (recorded >= StoryDatabase.RecordNoticeSecond && !Story.HasFlag("ori_record_18"))
+                Hud.Toast(Words.SpellCapitalised(StoryDatabase.RecordNoticeSecond) +
+                          " species recorded. Ori would want to see that.");
+            else if (recorded >= StoryDatabase.RecordNoticeFirst && !Story.HasFlag("ori_record_10"))
+                Hud.Toast(Words.SpellCapitalised(StoryDatabase.RecordNoticeFirst) +
+                          " species recorded. Ori would want to see that.");
+        }
+
         public void ApplyMotionSetting()
         {
             if (Transition != null) Transition.Reduced = !State.ScreenMotion;
@@ -514,6 +534,7 @@ namespace Eggverse
                         if (Battle.LastCatchWasElder) where = "An Elder! " + where;
                         if (Battle.LastCatchWasNewSpecies) where += "  New to the record.";
                         Hud.Toast(where);
+                        if (Battle.LastCatchWasNewSpecies) NudgeRecordMilestone();
                     }
                     break;
 

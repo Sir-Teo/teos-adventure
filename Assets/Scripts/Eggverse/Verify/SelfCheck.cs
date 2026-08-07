@@ -666,6 +666,33 @@ namespace Eggverse
                       "counts pluralise");
             }
 
+            // ---- record milestones ----
+            // Ori has a reward at each threshold but only hands it over face to face, so the
+            // moment of crossing gets its own line. Both places now read the same constants.
+            {
+                foreach (var line in new[]
+                {
+                    Words.SpellCapitalised(StoryDatabase.RecordNoticeFirst) +
+                        " species recorded. Ori would want to see that.",
+                    Words.SpellCapitalised(StoryDatabase.RecordNoticeSecond) +
+                        " species recorded. Ori would want to see that.",
+                    "The record is complete. All " + SpeciesDatabase.CatchableCount +
+                        " of them. Ori will not believe it.",
+                })
+                    check(lines(line, 1000f - 40f, 24) <= capacity(76f, 24),
+                          "milestone toast fits: \"" + line + "\"");
+
+                // The thresholds have to be reachable and in order, or a milestone never fires.
+                check(StoryDatabase.RecordNoticeFirst < StoryDatabase.RecordNoticeSecond,
+                      "the first record milestone comes before the second");
+                check(StoryDatabase.RecordNoticeSecond < SpeciesDatabase.CatchableCount,
+                      "the second milestone comes before a complete record (" +
+                      StoryDatabase.RecordNoticeSecond + " of " + SpeciesDatabase.CatchableCount + ")");
+                check(Words.SpellCapitalised(StoryDatabase.RecordNoticeFirst) != 
+                      StoryDatabase.RecordNoticeFirst.ToString(),
+                      "the first milestone reads as a word in Ori's line");
+            }
+
             // ---- text speed ----
             // Every setting has to name itself for the pause row, produce a sane multiplier, and
             // survive a save. "Instant" is the one worth checking hardest: it is a zero, and a

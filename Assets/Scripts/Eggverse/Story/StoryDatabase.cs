@@ -91,6 +91,11 @@ namespace Eggverse
 
         /// <summary>What Ori asks for before the cold-reading, and what Amaranth asks for at the end.
         /// Named because the objectives and several characters say these numbers out loud.</summary>
+        /// <summary>Where Ori notices the record. He says both numbers out loud, so they live
+        /// here rather than as literals inside his dialogue.</summary>
+        public const int RecordNoticeFirst = 10;
+        public const int RecordNoticeSecond = 18;
+
         public const int FirstCatchEggs = 3;
         public const int GateEggs = 6;
         public const int GateTypes = 4;
@@ -483,21 +488,23 @@ namespace Eggverse
                     }, "ori_record_full", null, "bloomolk", 20, true, true);
                 }
 
-                if (recorded >= 18 && !story.HasFlag("ori_record_18"))
+                if (recorded >= RecordNoticeSecond && !story.HasFlag("ori_record_18"))
                 {
                     return new DialogueScript(new[]
                     {
-                        new DialogueLine("Ori", "Eighteen. You've eighteen species in that record."),
+                        new DialogueLine("Ori", Words.SpellCapitalised(RecordNoticeSecond) + ". You've " +
+                                                Words.Spell(RecordNoticeSecond) + " species in that record."),
                         new DialogueLine("Ori", "The station log says the last hatcher to break fifteen was me, and I cheated — I counted one twice."),
                         new DialogueLine("Ori", "Keep at it. There are a few out there I've only ever read about."),
                     }, "ori_record_18", null, null, 5, true, true);
                 }
 
-                if (recorded >= 10 && !story.HasFlag("ori_record_10"))
+                if (recorded >= RecordNoticeFirst && !story.HasFlag("ori_record_10"))
                 {
                     return new DialogueScript(new[]
                     {
-                        new DialogueLine("Ori", "Ten different species. That's a proper record, that is."),
+                        new DialogueLine("Ori", Words.SpellCapitalised(RecordNoticeFirst) +
+                                                " different species. That's a proper record, that is."),
                         new DialogueLine("Ori", "Most hatchers find their four favourites and stop. Don't stop."),
                         new DialogueLine("Ori", "A wide nest reads the cold better than a strong one. Remember that when you get north."),
                     }, "ori_record_10", null, null, 5, true, true);
