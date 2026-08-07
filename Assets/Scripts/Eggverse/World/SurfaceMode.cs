@@ -520,7 +520,7 @@ namespace Eggverse
         {
             r.SpeciesId = current.RollSpecies();
             r.Level = current.RollLevel();
-            r.IsElder = EggRandom.Value < EggInstance.ElderChance;
+            r.IsElder = dir.State.ElderesAllowed && EggRandom.Value < EggInstance.ElderChance;
             var species = SpeciesDatabase.Get(r.SpeciesId);
 
             r.Sprite.sprite = ProcArt.Egg(species);
@@ -769,7 +769,7 @@ namespace Eggverse
 
             string speciesId = current.RollSpecies();
             int level = current.RollLevel();
-            dir.BeginWildBattle(EggRandom.Value < EggInstance.ElderChance
+            dir.BeginWildBattle(dir.State.ElderesAllowed && EggRandom.Value < EggInstance.ElderChance
                 ? EggInstance.WildElder(speciesId, level)
                 : EggInstance.Wild(speciesId, level));
         }

@@ -47,6 +47,19 @@ namespace Eggverse
         /// rate, which is slow for someone rereading and fast for someone who is not.
         /// </summary>
         public int TextSpeed = 1;                       // 0 relaxed, 1 normal, 2 brisk, 3 instant
+
+        /// <summary>
+        /// Whether the wild is allowed to produce an Elder yet.
+        ///
+        /// They are three levels above the world and 8.5% of encounters, with no gating - which
+        /// meant a brand new player carrying one level-5 Sprouteg could meet a level-9 Elder on
+        /// Yolkhaven inside their first few minutes. Simulated, that fight is lost 100% of the
+        /// time: no second egg to swap to, and fleeing an Elder is not reliable.
+        ///
+        /// So they hold off until the player has the three eggs Ori asks for, which is the point
+        /// the game stops being a tutorial and the player has something to swap to.
+        /// </summary>
+        public bool ElderesAllowed => TotalCollected >= StoryDatabase.FirstCatchEggs;
         public const int TextSpeedCount = 4;
 
         static readonly string[] TextSpeedNames = { "relaxed", "normal", "brisk", "instant" };

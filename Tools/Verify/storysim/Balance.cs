@@ -165,7 +165,16 @@ static class Balance
             {
                 // Three of the six, so type coverage is good but not guaranteed perfect.
                 var mine = Fresh((roster[i % 6], lv), (roster[(i + 2) % 6], lv - 1), (roster[(i + 4) % 6], lv - 1));
-                var foe = Fresh((planet.RollSpecies(), planet.RollLevel()));
+                // Real encounters include Elders at their real rate - three levels above the
+                // world's advertised range, tougher to catch, and 8.5% of what a player meets.
+                // The sim rolled ordinary eggs only, so every difficulty figure here was quoted
+                // for a game slightly easier than the one being played.
+                var foe = new List<EggInstance>();
+                string wildId = planet.RollSpecies();
+                int wildLv = planet.RollLevel();
+                foe.Add(EggRandom.Value < EggInstance.ElderChance
+                        ? EggInstance.WildElder(wildId, wildLv)
+                        : EggInstance.Wild(wildId, wildLv));
                 if (Fight(mine, foe, out int t)) wins++;
                 totalTurns += t;
                 hpLost += 1f - mine[0].HPFraction;
@@ -178,6 +187,35 @@ static class Balance
             check(winPct > 70f, $"{planet.Name}: a paced mixed team should win comfortably (was {winPct:0}%)");
             check(avgTurns >= 2.5f, $"{planet.Name}: fights should not be one-shots (avg {avgTurns:0.0} turns)");
             check(avgTurns <= 14f, $"{planet.Name}: fights should not drag (avg {avgTurns:0.0} turns)");
+        }
+
+        // ---- an Elder met by a brand new player ----
+        // Elders are 8.5% of encounters everywhere, with no early gating, and are three levels
+        // above the world. On Yolkhaven that is a level 9 against a starter, which is the very
+        // first thing many players will meet.
+        {
+            int wins = 0, runs = 400, faints = 0;
+            var home = PlanetDatabase.Home;
+            for (int i = 0; i < runs; i++)
+            {
+                var mine = Fresh(("sprouteg", 5));
+                var foe = new List<EggInstance> { EggInstance.WildElder(home.RollSpecies(), home.MaxLevel) };
+                if (Fight(mine, foe, out _)) wins++;
+                if (mine[0].IsFainted) faints++;
+            }
+            float pct = wins * 100f / runs;
+            Console.WriteLine($"  a lone level-5 starter against a Yolkhaven Elder: {pct:0}% wins, " +
+                              $"{faints * 100f / runs:0}% lose the egg  (which is why they are gated)");
+
+            // The fight is unwinnable, so the answer is not to tune it - it is that the game
+            // must not offer it. Elders hold off until the player has the three eggs Ori asks
+            // for, which is the first point they have anything to swap to.
+            var fresh = new GameState();
+            check(!fresh.ElderesAllowed, "a brand new run meets no Elders");
+            while (fresh.TotalCollected < StoryDatabase.FirstCatchEggs)
+                fresh.Collect(EggInstance.Wild("sprouteg", 5));
+            check(fresh.ElderesAllowed,
+                  $"Elders arrive once the player has {StoryDatabase.FirstCatchEggs} eggs");
         }
 
         // ---- type advantage has to actually decide fights ----

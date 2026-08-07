@@ -81,6 +81,11 @@ About one wild egg in twelve is an **Elder** — three levels older, visibly lar
 of its own element, worth 1.7× the experience, and far harder to keep (14% at full health
 against an ordinary egg's 33%, and 40% even at 1 HP). They are trophies, not obstacles.
 
+They hold off until you are carrying the three eggs Ori asks for. Simulated, a lone level-5
+starter against a Yolkhaven Elder loses **100% of the time** — no second egg to swap to, and
+fleeing one is not reliable. That fight cannot be tuned into a good first encounter, so the game
+does not offer it.
+
 Resting at a Nest Station says what it actually did. Walk in with a fainted egg and it tells you
 how many are back on their feet; walk in whole and fully stocked and it says so rather than
 claiming to have mended anything — *"Nothing needed doing. The pad is warm anyway."*, and three
