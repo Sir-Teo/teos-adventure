@@ -420,19 +420,18 @@ namespace Eggverse
             if (cache.TryGetValue(k, out cached) && cached != null) return cached;
 
             var px = NewBuffer(size);
-            Color backdrop = Mul(tint, 0.22f);
-            Color shoulders = Mul(tint, 0.62f);
-            Color hood = Mul(tint, 0.44f);
+            // The shape comes from the name, not only the tint, and it comes from PortraitForm -
+            // there are no shapes here to fall back on. This function used to take `key`, index
+            // the cache with it, and draw the same hooded silhouette for every person in the game.
             Color eyes = new Color(0.06f, 0.06f, 0.10f, 1f);
-
-            FillEllipse(px, size, 0f, 0f, 0.99f, 0.99f, backdrop, 0.03f);
-            FillEllipse(px, size, 0f, -0.74f, 0.72f, 0.50f, shoulders, 0.10f);
-            FillEllipse(px, size, 0f, 0.26f, 0.46f, 0.40f, hood, 0.09f);
-            FillEllipse(px, size, 0f, 0.04f, 0.39f, 0.44f, tint, 0.07f);
-            FillEllipse(px, size, -0.15f, 0.06f, 0.055f, 0.075f, eyes, 0.35f);
-            FillEllipse(px, size, 0.15f, 0.06f, 0.055f, 0.075f, eyes, 0.35f);
-            FillEllipse(px, size, -0.13f, 0.10f, 0.022f, 0.026f, new Color(1f, 1f, 1f, 0.85f), 0.6f);
-            FillEllipse(px, size, 0.17f, 0.10f, 0.022f, 0.026f, new Color(1f, 1f, 1f, 0.85f), 0.6f);
+            foreach (var b in PortraitForm.Shapes(PortraitForm.For(key)))
+            {
+                Color col = b.Eyes ? eyes
+                          : b.Glint ? new Color(1f, 1f, 1f, b.Alpha)
+                          : Mul(tint, b.Shade);
+                col.a = b.Alpha;
+                FillEllipse(px, size, b.Cx, b.Cy, b.Rx, b.Ry, col, b.Soft);
+            }
 
             return Finish(k, px, size, size, ppu);
         }

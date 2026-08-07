@@ -1626,6 +1626,105 @@ namespace Eggverse
                 check(elder.Elder && !ordinary.Elder, "and knows it");
             }
 
+            // ---- every person in the game has their own face ----
+            {
+                // ProcArt.Portrait took a name, used it to key the cache, and drew the same
+                // hooded silhouette for everybody. The roster is five purples deep - Vess,
+                // Moth, Wren, Lune, Pim - which collapse further for a dichromat player, so a
+                // cast separated only by tint was a cast some players could not separate.
+                var names = new System.Collections.Generic.List<string> { "Teo", "Amy" };
+                foreach (var npc in StoryDatabase.Npcs)
+                    if (!names.Contains(npc.Name)) names.Add(npc.Name);
+
+                float closest = 999f; string pairA = "", pairB = "";
+                for (int i = 0; i < names.Count; i++)
+                    for (int j = i + 1; j < names.Count; j++)
+                    {
+                        float d = PortraitForm.Distance(PortraitForm.For(names[i]),
+                                                        PortraitForm.For(names[j]));
+                        if (d < closest) { closest = d; pairA = names[i]; pairB = names[j]; }
+                    }
+                check(closest >= PortraitForm.MinDistance,
+                      "no two people share a face - closest are " + pairA + " and " + pairB +
+                      " at " + closest.ToString("0.000") + " against " + PortraitForm.MinDistance);
+
+                // Every mark is worn by somebody, or a shape ships that nobody ever sees. This
+                // is a fact about the roster, which is why the marks are authored: hashed, a
+                // bucket of six comes up empty about a quarter of the time with seventeen names,
+                // and no amount of better mixing changes that.
+                foreach (PortraitMark m in System.Enum.GetValues(typeof(PortraitMark)))
+                {
+                    int worn = 0;
+                    foreach (var n in names) if (PortraitForm.For(n).Mark == m) worn++;
+                    check(worn > 0, "somebody in the cast wears the " + m + " mark");
+                    check(worn <= names.Count / 3,
+                          "the " + m + " mark is not most of the cast (" + worn + " of " + names.Count + ")");
+                }
+
+                // Everybody who speaks has a face decided on purpose rather than by hash.
+                foreach (var n in names)
+                    check(PortraitForm.IsAuthored(n), n + "'s mark is authored, not drawn from a hash");
+
+                // A face has to be the same on Tuesday. The first draft asserted this by
+                // comparing a form with itself, which is true of any function ever written; the
+                // thing that can actually break is the hash, so the hash is what gets pinned.
+                // string.GetHashCode is explicitly allowed to differ between runs and platforms.
+                check(PortraitForm.Hash("Ori") == 145266615,
+                      "the portrait hash is the one the faces were drawn from (Ori = " +
+                      PortraitForm.Hash("Ori") + ")");
+                check(PortraitForm.Hash("") == (unchecked((int)2166136261u) & 0x7FFFFFFF),
+                      "the hash starts from the FNV offset basis");
+
+                // Vess is one person standing on two worlds. Portraits are keyed on the spoken
+                // name, so the face follows for free - what does not follow is the tint, which
+                // is written out twice in the roster and could drift on one of them.
+                foreach (var a in StoryDatabase.Npcs)
+                    foreach (var b in StoryDatabase.Npcs)
+                        if (a.Name == b.Name)
+                            check(a.Tint == b.Tint,
+                                  a.Name + " is the same colour on every world they stand on");
+
+                // The drawing has to use the face. Planting `For(key)` -> `For(\"Ori\")` back
+                // into ProcArt went uncaught the first time: the checks proved the forms
+                // differed and nothing proved anything drew them. Shapes() is now the only
+                // source of geometry either side has, so this covers both.
+                for (int i = 0; i < names.Count; i++)
+                    for (int j = i + 1; j < names.Count; j++)
+                    {
+                        var sa = PortraitForm.Shapes(PortraitForm.For(names[i]));
+                        var sb = PortraitForm.Shapes(PortraitForm.For(names[j]));
+                        bool same = sa.Length == sb.Length;
+                        for (int k = 0; same && k < sa.Length; k++)
+                            same = sa[k].Cx == sb[k].Cx && sa[k].Cy == sb[k].Cy &&
+                                   sa[k].Rx == sb[k].Rx && sa[k].Ry == sb[k].Ry;
+                        check(!same, names[i] + " and " + names[j] + " are not drawn identically");
+                    }
+
+                // Every face is made of something, and of the same things: a backdrop, shoulders,
+                // a hood, a head, two eyes and two glints, plus whatever mark they wear.
+                foreach (var n in names)
+                {
+                    var shapes = PortraitForm.Shapes(PortraitForm.For(n));
+                    check(shapes.Length >= 8, n + " is drawn from a whole figure (" + shapes.Length + " parts)");
+                    int eyes = 0, glints = 0;
+                    foreach (var b in shapes) { if (b.Eyes) eyes++; if (b.Glint) glints++; }
+                    check(eyes == 2, n + " has two eyes");
+                    check(glints == 2, n + " has a light in both of them");
+                }
+
+                // Nothing may grow outside the 1x1 portrait square.
+                foreach (var n in names)
+                {
+                    var f = PortraitForm.For(n);
+                    check(f.HoodRise + f.HoodHeight * 1.24f <= 1f,
+                          n + "'s crest stays inside the portrait");
+                    check(f.EyeSpacing * 1.5f + 0.035f <= f.HeadWidth,
+                          n + "'s temple marks stay on their face");
+                    check(f.EyeSpacing + f.EyeSize <= f.HeadWidth * 0.92f,
+                          n + "'s eyes stay on their face");
+                }
+            }
+
             // ---- the pause menu is a list, not four centred sentences ----
             {
                 // This screen had never been rendered. Drawing it showed every row laid out

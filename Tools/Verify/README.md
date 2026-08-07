@@ -139,9 +139,49 @@ text builder from the view — `GalaxyMapView.DetailBody`, `BattleMode.MoveCardT
 If you add a panel to a render, do not type its contents.
 
 `artcheck` reimplements the game's *drawing*, not its data. That reimplementation has produced
-false alarms four times: a font metric that overstated every label by two thirds, sector captions
+false alarms seven times: a font metric that overstated every label by two thirds, sector captions
 placed by an older algorithm than the game's, a truncating text wrap that hid the overflow it
-existed to reveal, and captions drawn at fixed offsets where uGUI centres them.
+existed to reveal, captions drawn at fixed offsets where uGUI centres them, a row highlight on the
+pause menu that the view does not have, drawn volume meters landing a full row high, and — the
+worst of them — an ellipse fill that flipped y "to correct for" a writer that already flips, so
+the entire cast rendered upside down. Shoulders above the head, crests hanging under the chin,
+brows sitting on cheekbones. It was plausible enough that the first round of fixes went into the
+marks rather than into the transform.
+
+The lesson is the same one as transcription, one level down: if the render reimplements a
+function the game already has, copy it to the letter or call it. `Cast.Ell` is now
+`ProcArt.FillEllipse` line for line, and it says so.
+
+## What only looking finds
+
+Rendering has now found, in things that had passed every assertion:
+
+| Screen | What eleven thousand assertions could not say |
+|---|---|
+| Landmarks | a bell, a ship's bow and nine hundred cairns all drew as the same grey rock |
+| Pause menu | every row laid out from its own width; the caret slid sideways down the list |
+| Portraits | `ProcArt.Portrait` took a name, used it to key the cache, and drew one face for everybody |
+
+### A blind spot, stated
+
+`ProcArt.Portrait` cannot be called outside the engine — it allocates a `Texture2D`. So planting
+`PortraitForm.For(key)` → `PortraitForm.For("Ori")` back into it is **not caught**, and cannot be
+by anything that runs here. That is the original bug exactly, one level down.
+
+What was done instead of faking a check: `PortraitForm.Shapes` is now the only source of geometry
+either side has. `ProcArt.Portrait` is a five-line loop over it with no shapes of its own, and
+`Cast.Portrait` is the same loop. The fault is still possible, but it is confined to one
+identifiable line rather than spread across sixteen fill calls, and the self-check proves the
+shapes it is handed do differ per name.
+
+Verify that line by eye when the game next runs in the Editor. It is on the list.
+
+### The sharpest example
+
+The portrait one. The function had a `key` parameter, used it, and used
+it only for the cache — so seventeen residents shared a silhouette and were told apart by tint
+alone, on a roster that runs five shades of purple deep. Nothing measurable was wrong. Two of
+them side by side was all it took.
 
 Anything the renders show should be confirmed against the game's own numbers before being treated
 as a bug. Where a mock can drive off the real database instead of a copy, it now does.

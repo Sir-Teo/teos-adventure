@@ -365,6 +365,13 @@ static class Program
         }
 
         {
+            // Every face in the game, side by side. They had all been the same one.
+            var (cpx, cwd, cht) = Cast.Render();
+            WriteBmpRect(cpx, cwd, cht, "cast.bmp");
+            Console.WriteLine(Cast.Report());
+        }
+
+        {
             // The pause menu, both pages. It had never been drawn.
             WriteBmpRect(Pause.Render(false, 0), Battle.W, Battle.H, "pause.bmp");
             WriteBmpRect(Pause.Render(false, 3), Battle.W, Battle.H, "pause-quit.bmp");
