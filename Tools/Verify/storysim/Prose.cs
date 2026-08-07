@@ -155,6 +155,13 @@ static class Prose
         Add("out of cartons", UiCopy.OutOf(true, false));
         Add("out of salves", UiCopy.OutOf(false, true));
         Add("out of both", UiCopy.OutOf(true, true));
+        foreach (EggStatus cond in System.Enum.GetValues(typeof(EggStatus)))
+        {
+            if (cond == EggStatus.None) continue;
+            var lit = EggInstance.Wild(SpeciesDatabase.All[0].Id, 20);
+            lit.Status = cond;
+            Add("condition " + cond, BattleMode.ConditionLine(lit, true));
+        }
 
         // And what each resident says about their own world's landmark.
         foreach (var npc in StoryDatabase.Npcs)

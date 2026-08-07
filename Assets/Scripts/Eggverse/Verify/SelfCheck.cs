@@ -1671,6 +1671,64 @@ namespace Eggverse
                 check(elder.Elder && !ordinary.Elder, "and knows it");
             }
 
+            // ---- a condition says what it is costing, not just that it is there ----
+            {
+                // The card shows SCORCHED, CHILLED or DAZED, and the line that lands each one
+                // explains it - once. Three turns later the chip is a word with no meaning
+                // attached, and the player is picking a move without being reminded their egg
+                // is moving at half speed.
+                var well = EggInstance.Wild(SpeciesDatabase.All[0].Id, 20);
+                check(BattleMode.ConditionLine(well, true).Length == 0,
+                      "a healthy egg has nothing to report");
+                check(BattleMode.ConditionLine(null, true).Length == 0,
+                      "and neither does no egg at all");
+
+                foreach (EggStatus st in System.Enum.GetValues(typeof(EggStatus)))
+                {
+                    if (st == EggStatus.None) continue;
+                    var egg = EggInstance.Wild(SpeciesDatabase.All[0].Id, 20);
+                    egg.Status = st;
+
+                    string yours = BattleMode.ConditionLine(egg, true);
+                    string theirs = BattleMode.ConditionLine(egg, false);
+
+                    check(yours.Length > 0, st + " says something");
+                    check(yours.Contains(egg.Name), "and names your egg: " + yours);
+                    check(!theirs.Contains(egg.Name), "and does not name theirs: " + theirs);
+
+                    // The whole point: the cost, not the label. A line that only repeats the
+                    // word already on the card is the state again rather than the effect.
+                    string plain = System.Text.RegularExpressions.Regex.Replace(yours, "<[^>]+>", "");
+                    check(plain.Contains("\u2014"),
+                          st + " separates the state from what it costs: " + plain);
+                    check(plain.Length > egg.Name.Length + st.ToString().Length + 12,
+                          st + " says more than the chip does: " + plain);
+
+                    // It has to fit under the action description in the message box, which is
+                    // 1040 wide and 210 tall at font 28.
+                    for (int i = 0; i < BattleMode.ActionHelp.Length; i++)
+                    {
+                        string whole = BattleMode.ActionMessageText(i, egg, false) + "\n" + yours + "\n" + theirs;
+                        check(lines(whole, 1040f, 28) <= capacity(210f, 28),
+                              "action " + i + " plus two conditions still fits the box (" +
+                              lines(whole, 1040f, 28) + " of " + capacity(210f, 28) + ")");
+                    }
+                }
+
+                // Every condition the game can inflict gets a line. One that lands on a player
+                // and says nothing is the state this replaces.
+                foreach (EggStatus st in System.Enum.GetValues(typeof(EggStatus)))
+                {
+                    if (st == EggStatus.None) continue;
+                    var egg = EggInstance.Wild(SpeciesDatabase.All[0].Id, 20);
+                    egg.Status = st;
+                    var other = EggInstance.Wild(SpeciesDatabase.All[1].Id, 20);
+                    other.Status = st;
+                    check(BattleMode.ConditionLine(egg, true) != BattleMode.ConditionLine(other, true),
+                          st + "'s line names whichever egg has it");
+                }
+            }
+
             // ---- running out says where more come from ----
             {
                 // The supply line says "Cartons none" in red, which is the state and not the

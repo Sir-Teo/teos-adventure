@@ -1399,6 +1399,31 @@ namespace Eggverse
             "Get clear. A faster egg gets away more often.",
         };
 
+        /// <summary>
+        /// What a condition is doing to somebody, in the moment a player is choosing what to do
+        /// about it.
+        ///
+        /// The card shows SCORCHED, CHILLED or DAZED, and the line that lands each one explains
+        /// it — once. Three turns later the chip is a word with no meaning attached, and the
+        /// player is picking a move without being reminded that their egg is moving at half
+        /// speed. The chip is the state; this is what the state costs.
+        /// </summary>
+        public static string ConditionLine(EggInstance egg, bool yours)
+        {
+            if (egg == null || egg.Status == EggStatus.None) return "";
+            string who = yours ? egg.Name : "It";
+            switch (egg.Status)
+            {
+                case EggStatus.Scorched:
+                    return "<color=#E5734A>" + who + " is scorched — losing shell every turn.</color>";
+                case EggStatus.Chilled:
+                    return "<color=#8FE3F2>" + who + " is chilled — moving at half speed.</color>";
+                case EggStatus.Dazed:
+                    return "<color=#FFC24D>" + who + " is dazed — may lose the turn outright.</color>";
+            }
+            return "";
+        }
+
         public static string ActionMessageText(int index, EggInstance mine, bool isTrainer)
         {
             if (index < 0 || index >= ActionHelp.Length) return "";
@@ -1706,7 +1731,13 @@ namespace Eggverse
             // its options since it was written.
             else if (activeMenu == actionButtons && cursor < ActionHelp.Length)
             {
-                messageText.text = ActionMessageText(cursor, Mine, IsTrainer);
+                // Yours first: it is the one you can do something about this turn.
+                string mine = ConditionLine(Mine, true);
+                string theirs = ConditionLine(Foe, false);
+                string conditions = mine + (mine.Length > 0 && theirs.Length > 0 ? "\n" : "") + theirs;
+
+                messageText.text = ActionMessageText(cursor, Mine, IsTrainer) +
+                                   (conditions.Length > 0 ? "\n" + conditions : "");
             }
 
             for (int i = 0; i < activeMenu.Count; i++)
