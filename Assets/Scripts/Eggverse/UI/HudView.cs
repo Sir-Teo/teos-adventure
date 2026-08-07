@@ -23,6 +23,8 @@ namespace Eggverse
         RectTransform promptPanel, toastPanel, partyStrip, objectivePanel;
         RectTransform titlePanel, collectionPanel, victoryPanel;
         Text collectionHint;
+        Text autosaveLine;
+        float autosaveTimer;
         Text collectionBody, collectionDex, dexDetail, dexLore, titleHint, titleSaveLine;
         Image dexPortrait;
         int dexCursor;
@@ -48,6 +50,7 @@ namespace Eggverse
             BuildPrompt(root);
             BuildToast(root);
             BuildCollection(root);
+            BuildAutosave(root);
             BuildTitle(root);
             BuildVictory(root);
 
@@ -123,6 +126,27 @@ namespace Eggverse
             // both without abbreviating the labels into guesswork.
             cartonText = UIKit.Label(panel, "Supplies", "", 19, UIKit.InkDim, TextAnchor.LowerLeft);
             UIKit.Place(cartonText.rectTransform, new Vector2(0f, 0f), new Vector2(0f, 0f), new Vector2(18f, 12f), new Vector2(524f, 50f));
+        }
+
+        /// <summary>
+        /// A quiet mark that the game just wrote your progress. The game autosaves five times a
+        /// run - landing, lifting off, story beats - and said nothing about any of them, which
+        /// leaves a player guessing whether the last twenty minutes are safe. A toast for each
+        /// would be noise; this sits in a corner and fades.
+        /// </summary>
+        void BuildAutosave(RectTransform root)
+        {
+            autosaveLine = UIKit.Label(root, "Autosave", "· saved", 19, UIKit.InkDim, TextAnchor.MiddleRight);
+            UIKit.Place(autosaveLine.rectTransform, new Vector2(1f, 0f), new Vector2(1f, 0f),
+                        new Vector2(-28f, 30f), new Vector2(240f, 26f));
+            autosaveLine.gameObject.SetActive(false);
+        }
+
+        public void ShowAutosaved()
+        {
+            if (autosaveLine == null) return;
+            autosaveTimer = 1.9f;
+            autosaveLine.gameObject.SetActive(true);
         }
 
         void BuildPrompt(RectTransform root)
@@ -754,6 +778,16 @@ namespace Eggverse
                 // 1-6, which promotes any party egg to the front, that reaches every
                 // arrangement without a second cursor or a mode to get stuck in.
                 if (EggInput.ConfirmPressed && nestFocus) TakeCursorEgg();
+            }
+
+            // Fade the autosave mark rather than snapping it away.
+            if (autosaveTimer > 0f)
+            {
+                autosaveTimer -= Time.deltaTime;
+                var c = UIKit.InkDim;
+                float a = Mathf.Clamp01(autosaveTimer / 0.6f);          // hold, then fade
+                autosaveLine.color = new Color(c.r, c.g, c.b, a);
+                if (autosaveTimer <= 0f) autosaveLine.gameObject.SetActive(false);
             }
 
             if (toastTimer > 0f)

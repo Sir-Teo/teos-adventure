@@ -150,6 +150,18 @@ namespace Eggverse
                 Hud.Toast(ok ? "Progress saved." : "Could not write the save file.");
                 if (ok) Audio.Play(Sfx.Save);
             }
+            else if (ok)
+            {
+                // The autosaves used to pass in silence. A corner mark is enough to say the run
+                // is safe without interrupting whatever the player was doing to earn it.
+                Hud.ShowAutosaved();
+            }
+            else
+            {
+                // A failed autosave is the one case worth interrupting for: the player would
+                // otherwise keep playing believing the run is being written down.
+                Hud.Toast("Could not write the save file. Your progress is not being saved.");
+            }
         }
 
         void LoadSavedGame()

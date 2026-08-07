@@ -334,6 +334,18 @@ falls back to home for an unknown current world rather than storing it and carry
 headlessly against a deliberately hostile file: fake species, blank ids, a world called
 Atlantis, 99 cartons and -4 salves. What survives is what should.
 
+The game writes five times a run on its own — starting, landing, lifting off, story beats, the
+finale — and used to do all of it in silence. Only the manual **Save now** in the pause menu said
+anything, which leaves a player guessing whether the last twenty minutes are safe.
+
+Autosaves now leave a quiet `· saved` in the bottom-right corner for a moment and fade. A toast
+for each would be noise; a corner mark is enough to say the run is written down without
+interrupting whatever earned it.
+
+A *failed* autosave is the one case worth interrupting for. That now raises a full toast — a
+player who keeps going believing their progress is being recorded is the worst outcome the save
+system can produce.
+
 ## Colour and readability
 
 The nine type colours carry real information, so they are measured rather than eyeballed. The
