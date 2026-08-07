@@ -1671,6 +1671,117 @@ namespace Eggverse
                 check(elder.Elder && !ordinary.Elder, "and knows it");
             }
 
+            // ---- the nest can be reordered without losing track of an egg ----
+            {
+                // Fifty-odd eggs in the order you happened to catch them is the one arrangement
+                // that makes the question you opened the screen to ask - is there anything in
+                // here worth swapping in - hard to answer.
+                //
+                // Reordering a list that three separate things index into by position is where
+                // this goes wrong quietly: the detail panel, N to name, and Enter to swap all
+                // read the row under the cursor, and all three used to reach straight into the
+                // nest. So the checks are about identity, not about sort keys.
+                var st = new GameState();
+                var ids = new System.Collections.Generic.List<string>();
+                foreach (var sp in SpeciesDatabase.All) ids.Add(sp.Id);
+                for (int i = 0; i < 47; i++)
+                    st.Nest.Add(EggInstance.Wild(ids[(i * 7) % ids.Count], 3 + (i * 5) % 34));
+                // Deliberate ties. Forty-seven distinct eggs never exercise the tiebreak, and a
+                // sort that reorders equal rows is exactly what a nest full of duplicate
+                // Sproutegs at the same level would show a player.
+                for (int i = 0; i < 6; i++) st.Nest.Add(EggInstance.Wild(ids[0], 12));
+
+                foreach (HudView.NestOrder order in System.Enum.GetValues(typeof(HudView.NestOrder)))
+                {
+                    var rows = HudView.NestRows(st, order);
+
+                    check(rows.Count == st.Nest.Count,
+                          order + " shows every egg in the nest (" + rows.Count + " of " + st.Nest.Count + ")");
+
+                    // Every egg exactly once. A sort that drops or doubles one is a sort that
+                    // loses an egg a player spent a fight catching.
+                    var seen = new System.Collections.Generic.HashSet<int>();
+                    foreach (var idx in rows)
+                    {
+                        check(idx >= 0 && idx < st.Nest.Count, order + " points at a real egg");
+                        check(seen.Add(idx), order + " shows egg " + idx + " only once");
+                    }
+
+                    // The row a player is looking at holds the egg they think it holds. This is
+                    // the one that would have been silently wrong.
+                    for (int row = 0; row < rows.Count; row++)
+                        check(ReferenceEquals(HudView.NestEggAt(st, st.Party.Count + row, order),
+                                              st.Nest[rows[row]]),
+                              order + " row " + row + " is the egg it is showing");
+
+                    // Stable: the same order twice must be the same list, or the nest reshuffles
+                    // under the cursor between one frame and the next.
+                    var again = HudView.NestRows(st, order);
+                    for (int i = 0; i < rows.Count; i++)
+                        check(rows[i] == again[i], order + " is the same list every time it is built");
+
+                    // And stable in the sense that matters: eggs the order cannot separate stay
+                    // in the sequence they were caught. Removing the tiebreak from the comparer
+                    // survived the check above - List.Sort is deterministic for identical input,
+                    // so "twice the same" says nothing about it. This is what it protects.
+                    for (int i = 1; i < rows.Count; i++)
+                    {
+                        var a = st.Nest[rows[i - 1]];
+                        var b = st.Nest[rows[i]];
+                        bool tied = a.Level == b.Level && a.MaxHP == b.MaxHP &&
+                                    a.Species.Name == b.Species.Name && a.Type == b.Type;
+                        if (tied)
+                            check(rows[i - 1] < rows[i],
+                                  order + " keeps eggs it cannot separate in the order they were " +
+                                  "caught (" + rows[i - 1] + " before " + rows[i] + ")");
+                    }
+
+                    check(HudView.NestOrderName(order).Length > 0, order + " says what it is");
+                }
+
+                // Each order actually orders by what it claims.
+                var strong = HudView.NestRows(st, HudView.NestOrder.Strongest);
+                for (int i = 1; i < strong.Count; i++)
+                    check(st.Nest[strong[i - 1]].Level >= st.Nest[strong[i]].Level,
+                          "strongest-first really is strongest first");
+
+                var byType = HudView.NestRows(st, HudView.NestOrder.Element);
+                for (int i = 1; i < byType.Count; i++)
+                    check((int)st.Nest[byType[i - 1]].Type <= (int)st.Nest[byType[i]].Type,
+                          "by-element groups the elements");
+
+                var bySpecies = HudView.NestRows(st, HudView.NestOrder.Species);
+                for (int i = 1; i < bySpecies.Count; i++)
+                    check(string.CompareOrdinal(st.Nest[bySpecies[i - 1]].Species.Name,
+                                                st.Nest[bySpecies[i]].Species.Name) <= 0,
+                          "by-species groups the species");
+
+                var caught = HudView.NestRows(st, HudView.NestOrder.Caught);
+                for (int i = 0; i < caught.Count; i++)
+                    check(caught[i] == i, "caught-order is the order they were caught");
+
+                // Cycling reaches every order and comes back. A cycle that skips one leaves a
+                // sort nobody can select and a check nobody notices is dead.
+                var reached = new System.Collections.Generic.HashSet<HudView.NestOrder>();
+                var at = HudView.NestOrder.Caught;
+                for (int i = 0; i < 4; i++) { reached.Add(at); at = HudView.NextOrder(at); }
+                check(at == HudView.NestOrder.Caught, "S cycles back round to where it started");
+                check(reached.Count == System.Enum.GetValues(typeof(HudView.NestOrder)).Length,
+                      "S reaches every order (" + reached.Count + ")");
+
+                // And the column still fits with the order line in it.
+                int nestScroll = 0;
+                foreach (HudView.NestOrder order in System.Enum.GetValues(typeof(HudView.NestOrder)))
+                {
+                    string column = HudView.CollectionBodyText(st, st.Party.Count + 30, true, ref nestScroll, order);
+                    check(lines(column, 780f, 20) <= capacity(660f, 20),
+                          "the nest column fits with " + order + " named in it (" +
+                          lines(column, 780f, 20) + " of " + capacity(660f, 20) + ")");
+                    check(column.Contains(HudView.NestOrderName(order)),
+                          "the column says which order it is in (" + order + ")");
+                }
+            }
+
             // ---- the clearance rule is big enough to be worth having ----
             {
                 // Separate from the per-world measurement, and it has to be: seventeen sets of

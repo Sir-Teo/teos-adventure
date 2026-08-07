@@ -62,6 +62,72 @@ namespace Eggverse
         // own eggs. Left/Right chooses which, Up/Down moves inside it.
         bool nestFocus;
         int nestCursor;
+        NestOrder nestOrder;
+        /// <summary>
+        /// How the nest is ordered on screen.
+        ///
+        /// It was insertion order and nothing else, which on a long run is fifty-odd eggs in the
+        /// sequence you happened to catch them. The reason a player opens this screen is to ask
+        /// whether the nest holds anything worth swapping in, and caught-order is the one
+        /// arrangement that makes that question hard - duplicates scattered, the strong ones
+        /// wherever they fell.
+        /// </summary>
+        public enum NestOrder { Caught, Strongest, Species, Element }
+
+        public static string NestOrderName(NestOrder order)
+        {
+            switch (order)
+            {
+                case NestOrder.Strongest: return "strongest first";
+                case NestOrder.Species:   return "by species";
+                case NestOrder.Element:   return "by element";
+                default:                  return "in the order you caught them";
+            }
+        }
+
+        public static NestOrder NextOrder(NestOrder order) =>
+            (NestOrder)(((int)order + 1) % 4);
+
+        /// <summary>
+        /// The nest's rows, as indices into state.Nest. Indices rather than eggs, because Enter
+        /// swaps by position and a reordered view that forgot where a row came from would swap
+        /// the wrong egg - quietly, and only for players who changed the order.
+        ///
+        /// Every order falls back to caught-order for ties, so the list never reshuffles under
+        /// the cursor between one frame and the next.
+        /// </summary>
+        public static List<int> NestRows(GameState state, NestOrder order)
+        {
+            var rows = new List<int>();
+            for (int i = 0; i < state.Nest.Count; i++) rows.Add(i);
+            if (order == NestOrder.Caught) return rows;
+
+            rows.Sort((a, b) =>
+            {
+                var x = state.Nest[a];
+                var y = state.Nest[b];
+                int by = 0;
+                switch (order)
+                {
+                    case NestOrder.Strongest:
+                        by = y.Level.CompareTo(x.Level);
+                        if (by == 0) by = y.MaxHP.CompareTo(x.MaxHP);
+                        break;
+                    case NestOrder.Species:
+                        by = string.CompareOrdinal(x.Species.Name, y.Species.Name);
+                        if (by == 0) by = y.Level.CompareTo(x.Level);
+                        break;
+                    case NestOrder.Element:
+                        by = x.Type.CompareTo(y.Type);
+                        if (by == 0) by = string.CompareOrdinal(x.Species.Name, y.Species.Name);
+                        if (by == 0) by = y.Level.CompareTo(x.Level);
+                        break;
+                }
+                return by != 0 ? by : a.CompareTo(b);
+            });
+            return rows;
+        }
+
         public const int NestWindowSize = 20;
         const int NestWindow = NestWindowSize;
 
@@ -581,8 +647,12 @@ namespace Eggverse
                 return;
             }
 
-            int nestIndex = nestCursor - partyRows;
-            if (nestIndex >= state.Nest.Count) return;
+            int row = nestCursor - partyRows;
+            if (row >= state.Nest.Count) return;
+            // Through the ordering, not straight at the list. A reordered view that swapped by
+            // screen position would take the wrong egg, quietly, and only for players who had
+            // changed the order.
+            int nestIndex = NestRows(state, nestOrder)[row];
             string incoming = state.Nest[nestIndex].Name;
 
             if (state.Party.Count < GameState.PartySize)
@@ -616,6 +686,7 @@ namespace Eggverse
             if (state.Nest.Count > 0) parts.Add("left/right pick a column");
             parts.Add("up/down move");
             if (state.Nest.Count > 0) parts.Add("Enter swaps a nest egg in");
+            if (state.Nest.Count > 1) parts.Add("S reorders the nest");
             if (state.Party.Count + state.Nest.Count > 0) parts.Add("N names");
             if (state.Party.Count > 1) parts.Add("1-" + state.Party.Count + " leads");
             parts.Add("Tab closes");
@@ -704,7 +775,8 @@ namespace Eggverse
         /// composes rather than the pieces it is composed from - measuring DescribeStoredEgg on
         /// its own could not tell that the nest was being drawn with the two-line party row.
         /// </summary>
-        public static string CollectionBodyText(GameState state, int cursor, bool focus, ref int scroll)
+        public static string CollectionBodyText(GameState state, int cursor, bool focus, ref int scroll,
+                                                NestOrder order = NestOrder.Caught)
         {
             var sb = new System.Text.StringBuilder();
 
@@ -748,6 +820,8 @@ namespace Eggverse
                 // swapping in, and the answer was thirty keypresses away.
                 sb.Append("\n<b><color=#FFC24D>NEST</color></b>  <color=#A8B2C4>")
                   .Append(NestSummary(state)).Append("</color>\n");
+                sb.Append("<color=#7A8090>      ").Append(NestOrderName(order))
+                  .Append("  ·  S reorders</color>\n");
 
                 // The nest is unbounded, so show a window of it. The column is 780px at font 20,
                 // which is 33 lines; the party costs at most 8 of those and the headers 2, so 20
@@ -765,11 +839,12 @@ namespace Eggverse
                 if (scroll > 0)
                     sb.Append("<color=#7A8090>      ").Append(scroll).Append(" more above</color>\n");
 
+                var shownRows = NestRows(state, order);
                 for (int i = scroll; i < last; i++)
                 {
                     bool here = focus && cursor == state.Party.Count + i;
                     sb.Append(here ? "<color=#FFC24D>\u25b8</color> " : "  ");
-                    sb.Append(DescribeStoredEgg(state.Nest[i])).Append('\n');
+                    sb.Append(DescribeStoredEgg(state.Nest[shownRows[i]])).Append('\n');
                 }
 
                 if (last < state.Nest.Count)
@@ -813,7 +888,7 @@ namespace Eggverse
         void RefreshCollection()
         {
             var state = dir.State;
-            collectionBody.text = CollectionBodyText(state, nestCursor, nestFocus, ref nestScroll);
+            collectionBody.text = CollectionBodyText(state, nestCursor, nestFocus, ref nestScroll, nestOrder);
             collectionHint.text = HintFor(state);
 
             // Middle column: the field record, with a cursor.
@@ -836,11 +911,23 @@ namespace Eggverse
         }
 
         /// <summary>The egg the party/nest cursor is sitting on, or null.</summary>
-        EggInstance EggUnderCursor(GameState state)
+        EggInstance EggUnderCursor(GameState state) => NestEggAt(state, nestCursor, nestOrder);
+
+        /// <summary>
+        /// The egg on a given row, through whatever order the nest is being shown in.
+        ///
+        /// Three things read the row under the cursor - the detail panel, N to name it, and
+        /// Enter to swap it in - and all three indexed straight into state.Nest. Any of them
+        /// would have shown or taken the wrong egg the moment the list was reordered: quietly,
+        /// correctly-looking, and only for players who had touched the sort.
+        /// </summary>
+        public static EggInstance NestEggAt(GameState state, int row, NestOrder order)
         {
-            if (nestCursor < state.Party.Count) return state.Party[nestCursor];
-            int i = nestCursor - state.Party.Count;
-            return i >= 0 && i < state.Nest.Count ? state.Nest[i] : null;
+            if (row < 0) return null;
+            if (row < state.Party.Count) return state.Party[row];
+            int i = row - state.Party.Count;
+            if (i >= state.Nest.Count) return null;
+            return state.Nest[NestRows(state, order)[i]];
         }
 
         /// <summary>Right column: one of your own eggs, with the numbers behind it.</summary>
@@ -1116,6 +1203,27 @@ namespace Eggverse
                 // reach for a drink, read the toast, look away - and that egg was unnamed for
                 // the rest of the run, in a game that otherwise works hard at making them
                 // yours. Any egg you can see, you can name.
+                // Fifty-odd eggs in the order you happened to catch them is the one arrangement
+                // that makes "is there anything in here worth swapping in" hard to answer.
+                if (EggInput.SKeyPressed && nestFocus && dir.State.Nest.Count > 1)
+                {
+                    // The egg under the cursor keeps the cursor. Reordering a list out from
+                    // under someone and leaving them on row nine of a different list is how a
+                    // sort control becomes a thing players stop touching.
+                    var wasOn = EggUnderCursor(dir.State);
+                    nestOrder = NextOrder(nestOrder);
+                    if (wasOn != null)
+                    {
+                        var rows = NestRows(dir.State, nestOrder);
+                        for (int i = 0; i < rows.Count; i++)
+                            if (ReferenceEquals(dir.State.Nest[rows[i]], wasOn))
+                            { nestCursor = dir.State.Party.Count + i; break; }
+                    }
+                    dir.Audio.Play(Sfx.UiMove);
+                    RefreshCollection();
+                    Toast("Nest " + NestOrderName(nestOrder) + ".");
+                }
+
                 if (EggInput.NKeyPressed && nestFocus)
                 {
                     var subject = EggUnderCursor(dir.State);

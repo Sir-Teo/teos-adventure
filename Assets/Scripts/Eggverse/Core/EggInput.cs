@@ -93,6 +93,16 @@ namespace Eggverse
             }
         }
 
+        /// <summary>The S key: reorders the nest on the collection screen.</summary>
+        public static bool SKeyPressed
+        {
+            get
+            {
+                var k = K;
+                return k != null && k.sKey.wasPressedThisFrame;
+            }
+        }
+
         public static bool MapPressed
         {
             get
