@@ -894,8 +894,24 @@ namespace Eggverse
                       "a full-length nickname fits the battle card's name line");
                 check(lines(HudView.Shorten(fullName, 14) + "  Lv 30  VOI  OUT", 300f, 18) == 1,
                       "a full-length nickname fits the party strip");
-                check(lines(fullName + "  Lv 30  VERDANT   91/91", 720f, 20) == 1,
-                      "a full-length nickname fits a collection row");
+                // At the widest values the game can produce, not convenient ones: the highest
+                // MaxHP any species reaches at level 30, and a nest count with no upper bound.
+                int widestHp = 0; string fattest = "";
+                foreach (var sp3 in SpeciesDatabase.All)
+                {
+                    var at30 = EggInstance.Wild(sp3.Id, EggInstance.MaxLevel);
+                    if (at30.MaxHP > widestHp) { widestHp = at30.MaxHP; fattest = sp3.Name; }
+                }
+                string hp = widestHp + "/" + widestHp;
+                check(lines(fullName + "  Lv " + EggInstance.MaxLevel + "  VERDANT   " + hp, 720f, 20) == 1,
+                      "a full-length nickname fits a collection row at " + fattest + "'s " + hp + " HP");
+                check(lines(fullName + "  Lv " + EggInstance.MaxLevel + "  " + hp, 440f, 30) == 1,
+                      "the battle card holds a full nickname at " + hp + " HP");
+
+                // TotalCollected has no ceiling, so the strip is measured at six figures rather
+                // than at the couple of hundred a normal run reaches.
+                check(lines("Nest 100000 · Types 8/8 · Record 24/24", 524f, 19) == 1,
+                      "the collection strip survives a nest count of six figures");
                 // Measured at the sizes it is actually drawn at: the nickname at 26, the species
                 // name beside it at 17. Measuring the whole string at 26 overstates it by 50px,
                 // which is the sort of wrong that reports a problem that is not there - though
