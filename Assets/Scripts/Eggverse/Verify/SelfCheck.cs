@@ -535,6 +535,27 @@ namespace Eggverse
                       sp.Name + " reports gains on every level (" + gainLines + " of " + levelUps + ")");
             }
 
+            // ---- what the game says after a wild win ----
+            // The single most repeated line in the game. Every variant is a message-box line, so
+            // every variant has to fit at the longest name a player can be carrying.
+            {
+                string longestName = "";
+                foreach (var sp in SpeciesDatabase.All)
+                    if (("Elder " + sp.Name).Length > longestName.Length) longestName = "Elder " + sp.Name;
+
+                foreach (var line in new[]
+                {
+                    "An Elder, no less. " + longestName + " stands over it.",
+                    "Not a scratch on " + longestName + ".",
+                    "One hit. " + longestName + " barely looked up.",
+                    "That was close. " + longestName + " is still standing, just.",
+                    "A long one. Both of them are breathing hard.",
+                    "You won the scrap.",
+                })
+                    check(lines(line, 1016f, 30) == 1,
+                          "wild victory line fits the message box: \"" + line + "\"");
+            }
+
             // ---- what the Nest Station says ----
             // Every variant is a toast, so every variant has to fit the 1000px bar - including
             // the plural forms, which read differently at one.

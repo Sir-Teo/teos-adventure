@@ -44,6 +44,8 @@ namespace Eggverse
         bool IsTrainer => !string.IsNullOrEmpty(trainerName);
         bool battleOver;
         BattleOutcome outcome;
+        int rounds;
+        bool foeWasElder;
 
         /// <summary>What the last catch was, so the toast afterwards can say something the
         /// battle screen did not already say.</summary>
@@ -276,8 +278,11 @@ namespace Eggverse
 
             yield return Say("Go, " + Mine.Name + "!");
 
+            rounds = 0;
+            foeWasElder = Foe.Elder;
             while (!battleOver)
             {
+                rounds++;
                 if (Mine.IsFainted)
                 {
                     if (!AnyAliveInParty())
@@ -873,12 +878,28 @@ namespace Eggverse
             switch (outcome)
             {
                 case BattleOutcome.Won:
-                    yield return Say(IsTrainer ? trainerName + " is out of eggs." : "You won the scrap.");
+                    yield return Say(IsTrainer ? trainerName + " is out of eggs." : WildVictoryLine());
                     break;
                 case BattleOutcome.Lost:
                     yield return Say("Every egg you brought is out cold...");
                     break;
             }
+        }
+
+        /// <summary>
+        /// What the game says after a wild win. "You won the scrap." was the single most
+        /// repeated line in the whole game and it said the same thing after a one-hit knock and
+        /// after clawing back from one HP. The fight already knows which it was.
+        /// </summary>
+        string WildVictoryLine()
+        {
+            var mine = Mine;
+            if (foeWasElder) return "An Elder, no less. " + mine.Name + " stands over it.";
+            if (mine.CurrentHP >= mine.MaxHP) return "Not a scratch on " + mine.Name + ".";
+            if (rounds <= 1) return "One hit. " + mine.Name + " barely looked up.";
+            if (mine.HPFraction < 0.2f) return "That was close. " + mine.Name + " is still standing, just.";
+            if (rounds >= 8) return "A long one. Both of them are breathing hard.";
+            return "You won the scrap.";
         }
 
         // ==================================================================
