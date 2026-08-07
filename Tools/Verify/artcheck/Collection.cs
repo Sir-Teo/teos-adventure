@@ -85,7 +85,13 @@ static class Collection
             string mark = caught ? "*" : seen ? "-" : "0";
             string name = (caught || seen) ? sp.Name.ToUpperInvariant() : "? ? ?";
             if (here) Battle.Text(c, ">", dx - 12, ly, 19, Battle.Accent);
+            // The element beside the name, at the size the record draws it — the list used to
+            // carry element by colour alone, which is the one thing this palette is not allowed
+            // to do.
+            string kind = (caught || seen) ? "  " + Eggverse.TypeChart.Abbrev(sp.Type) : "";
             Battle.Text(c, $"{i + 1:00} {mark} {name}", dx + 8, ly, 19, tint);
+            if (kind.Length > 0)
+                Battle.Text(c, kind, dx + 8 + Battle.TextWidth($"{i + 1:00} {mark} {name}", 19), ly, 15, dim);
         }
 
         // ---- column 3: detail on the cursor ----

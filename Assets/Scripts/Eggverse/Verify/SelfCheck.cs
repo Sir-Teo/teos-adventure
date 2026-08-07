@@ -1029,6 +1029,36 @@ namespace Eggverse
                     }
             }
 
+            // ---- the field record does not carry element by colour alone ----
+            {
+                // Every other screen in the game spells the element beside the colour, because
+                // the palette work assumes hue carries nothing on its own - and the two closest
+                // type colours sit twelve units apart under deuteranopia. The record's list was
+                // the exception: twenty-eight names, coloured by element, saying nothing else.
+                foreach (var sp in SpeciesDatabase.All)
+                {
+                    string known = HudView.DexRow(sp, true, true, 1, false);
+                    check(known.Contains(TypeChart.Abbrev(sp.Type)),
+                          sp.Name + "'s record row names its element: " + known);
+
+                    // 420px at font 19, and the element sits at 15.
+                    check(lines(known, 420f, 19) == 1,
+                          sp.Name + "'s record row fits its column: " + known);
+
+                    // A species you have never met gives nothing away - not its name, and not
+                    // its element either.
+                    string unknown = HudView.DexRow(sp, false, false, 1, false);
+                    check(!unknown.Contains(TypeChart.Abbrev(sp.Type)),
+                          sp.Name + "'s element is not shown before you have met one");
+                    check(unknown.Contains("? ? ?"), "and neither is its name");
+                }
+
+                // The cursor row is bold and one line wider; it still has to fit.
+                foreach (var sp in SpeciesDatabase.All)
+                    check(lines(HudView.DexRow(sp, true, true, 28, true), 420f, 19) == 1,
+                          sp.Name + "'s row fits while the cursor is on it");
+            }
+
             // ---- walking kicks up the ground ----
             {
                 // Minutes of walking on ground the game has gone to some trouble to make

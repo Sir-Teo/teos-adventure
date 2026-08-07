@@ -40,6 +40,32 @@ namespace Eggverse
         /// ones that happen to be on screen - the window used to be the limit, which left an
         /// end-game nest mostly unreachable.
         /// </summary>
+        /// <summary>
+        /// One row of the field record.
+        ///
+        /// The list coloured each name by element and said nothing else about it, so the only
+        /// carrier of type in the whole record was hue - on a screen whose palette work assumes
+        /// the opposite everywhere else, and whose two closest pairs sit twelve units apart
+        /// under deuteranopia. The element is spelled now, three letters, in the space the
+        /// 420px column already had.
+        /// </summary>
+        public static string DexRow(SpeciesDef s, bool caught, bool seen, int number, bool here)
+        {
+            string hex = ColorUtility.ToHtmlStringRGB(TypeChart.ColorOf(s.Type));
+            string mark = caught ? "<color=#5FD068>●</color>"
+                        : seen ? "<color=#FFC24D>◐</color>"
+                        : "<color=#3A4052>○</color>";
+            string name = caught || seen ? s.Name : "? ? ?";
+            string kind = caught || seen
+                ? "  <size=15><color=#7A8090>" + TypeChart.Abbrev(s.Type) + "</color></size>"
+                : "";
+
+            return (here ? "<color=#FFC24D>\u25b8</color>" : " ") + " " +
+                   "<color=#5A6072>" + number.ToString("00") + "</color> " + mark + " " +
+                   "<color=#" + (caught || seen ? hex : "3A4052") + ">" +
+                   (here ? "<b>" + name + "</b>" : name) + "</color>" + kind;
+        }
+
         /// <summary>What the nest holds, in one line: how many, the best level, how many elements.</summary>
         public static string NestSummary(GameState state)
         {
@@ -699,11 +725,7 @@ namespace Eggverse
                 string name = caught || seen ? s.Name : "? ? ?";
                 bool here = i == dexCursor;
 
-                dex.Append(here ? "<color=#FFC24D>▸</color>" : " ").Append(' ')
-                   .Append("<color=#5A6072>").Append((i + 1).ToString("00")).Append("</color> ")
-                   .Append(mark).Append(' ')
-                   .Append("<color=#").Append(caught || seen ? hex : "3A4052").Append(">")
-                   .Append(here ? "<b>" + name + "</b>" : name).Append("</color>\n");
+                dex.Append(DexRow(s, caught, seen, i + 1, here)).Append('\n');
             }
             collectionDex.text = dex.ToString();
 
