@@ -1,4 +1,5 @@
 using System;
+using System.Collections.Generic;
 using System.IO;
 using System.Reflection;
 using Eggverse;
@@ -7,6 +8,9 @@ using Eggverse;
 // in Make(). So the loop builders can be invoked directly and analysed here.
 static class AudioCheck
 {
+    // The loudest music loop, kept so the mix check can hold effects against it.
+    static float musicPeak;
+    static float MusicPeak() => musicPeak;
     const int SR = 44100;
 
     public static void Run(string outDir, Action<bool,string> check)
@@ -41,6 +45,7 @@ static class AudioCheck
 
             check(peak > 0.02f, $"{name} is not silent");
             check(peak <= 1.0f, $"{name} does not clip");
+            if (peak > musicPeak) musicPeak = peak;   // the loudest loop, for the mix check below
             check(Math.Abs(dc) < 0.02f, $"{name} has no DC offset");
             check(ratio < 12f, $"{name} loop seam is smooth (was {ratio:0.0}x the average step)");
 
@@ -55,6 +60,7 @@ static class AudioCheck
         {
             int silent = 0;
             float quietest = 1f; string quietestName = "";
+            var levels = new List<(string name, float peak, float rms)>();
             foreach (Sfx id in Enum.GetValues(typeof(Sfx)))
             {
                 var buf = (float[])sfxMethod.Invoke(null, new object[] { id });
@@ -66,6 +72,7 @@ static class AudioCheck
                 float rms = (float)Math.Sqrt(sum / buf.Length);
 
                 check(peak > 0.02f, $"{id} is audible (peak {peak:0.000})");
+                levels.Add((id.ToString(), peak, rms));
                 check(peak <= 1.0f, $"{id} does not clip (peak {peak:0.000})");
                 check(buf.Length < 44100 * 3, $"{id} is not absurdly long ({buf.Length / 44100f:0.0}s)");
                 // A click at the very end is audible; effects should decay to near silence.
@@ -75,6 +82,44 @@ static class AudioCheck
                 if (peak < quietest) { quietest = peak; quietestName = id.ToString(); }
             }
             Console.WriteLine($"  {Enum.GetValues(typeof(Sfx)).Length} effects checked, none silent, quietest {quietestName} at {quietest:0.00}");
+
+            // Nothing was ever comparing one effect against another. A sound is not just
+            // audible or clipping - it is loud or quiet *relative to the ones around it*, and a
+            // single effect several times the loudness of its neighbours is the one that makes a
+            // player reach for the volume.
+            levels.Sort((a, b) => b.rms.CompareTo(a.rms));
+            Console.WriteLine("  loudest and quietest by rms:");
+            for (int i = 0; i < 3; i++)
+                Console.WriteLine($"    {levels[i].name,-14} rms {levels[i].rms:0.0000}  peak {levels[i].peak:0.000}");
+            Console.WriteLine("    ...");
+            for (int i = levels.Count - 3; i < levels.Count; i++)
+                Console.WriteLine($"    {levels[i].name,-14} rms {levels[i].rms:0.0000}  peak {levels[i].peak:0.000}");
+
+            float loudRms = levels[0].rms, quietRms = levels[levels.Count - 1].rms;
+            float spread = loudRms / Math.Max(0.00001f, quietRms);
+            Console.WriteLine($"  rms spread across the set: {spread:0.0}x " +
+                              $"({levels[0].name} over {levels[levels.Count - 1].name})");
+
+            // A wide spread is normal - a faint UI tick should not match a crit - but past about
+            // twenty to one the quiet end stops being heard at a volume where the loud end is
+            // comfortable.
+            // Effects are heard over music, and the per-effect checks only ever looked at one
+            // sound alone. The pause menu lets effects reach 1.0 and music 0.6, so the loudest
+            // of each have to sum under 1.0 or the mix clips at settings the game offers.
+            float loudestSfx = 0f; string loudestName = "";
+            foreach (var l in levels) if (l.peak > loudestSfx) { loudestSfx = l.peak; loudestName = l.name; }
+            float loudestMusic = MusicPeak();
+            float worstMix = loudestSfx * 1.0f + loudestMusic * 0.6f;
+            Console.WriteLine($"  worst mix: {loudestName} at full over the loudest loop at 0.6 = {worstMix:0.000}");
+            // 0.97, not 1.0. Landing on 0.999 is passing by a rounding error, and the next
+            // sound anybody tweaks puts it over.
+            check(worstMix <= 0.97f,
+                  $"effects and music together leave headroom ({worstMix:0.000}: " +
+                  $"{loudestName} {loudestSfx:0.000} + music {loudestMusic:0.000} x 0.6)");
+
+            check(spread <= 20f,
+                  $"the effects sit within a usable range of each other ({spread:0.0}x, " +
+                  $"{levels[0].name} over {levels[levels.Count - 1].name})");
         }
     }
 

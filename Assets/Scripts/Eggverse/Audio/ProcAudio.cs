@@ -146,11 +146,15 @@ namespace Eggverse
                     AddNote(buf, 0f, 0.16f, 190f, 90f, 0.42f, 0, 3f);
                     break;
 
+                // Scaled down about a tenth from where it was. It peaked at 0.945, and effects
+                // are checked one at a time - but they are heard over music. With effects at
+                // full and music at its own maximum, a strong hit summed to 1.106 and clipped,
+                // on exactly the moments the sound exists to sell.
                 case Sfx.HitStrong:
                     buf = Buffer(0.34f);
-                    AddNoise(buf, 0f, 0.22f, 0.46f, 0.22f, 2.6f);
-                    AddNote(buf, 0f, 0.28f, 260f, 70f, 0.52f, 0, 2.4f);
-                    AddNote(buf, 0.02f, 0.20f, 130f, 55f, 0.34f, 2, 2.6f);
+                    AddNoise(buf, 0f, 0.22f, 0.38f, 0.22f, 2.6f);
+                    AddNote(buf, 0f, 0.28f, 260f, 70f, 0.42f, 0, 2.4f);
+                    AddNote(buf, 0.02f, 0.20f, 130f, 55f, 0.28f, 2, 2.6f);
                     break;
 
                 case Sfx.HitWeak:
