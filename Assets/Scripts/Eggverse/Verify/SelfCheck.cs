@@ -1940,6 +1940,32 @@ namespace Eggverse
                 }
             }
 
+            // ---- the drift, seen from the ground ----
+            {
+                // Space shows warmth crossing the sector toward Amaranth. The story is that it
+                // is being pulled off every nest - which means off the world you are standing
+                // on - and from the ground there was no sign of it.
+                //
+                // Rare on purpose: a player who never looks up never sees one. The numbers are
+                // what make that true rather than annoying.
+                check(SurfaceMode.OverheadEvery > 10f,
+                      "a mote overhead stays rare (one every " + SurfaceMode.OverheadEvery + "s)");
+                check(SurfaceMode.OverheadLife < SurfaceMode.OverheadEvery * 0.4f,
+                      "and is gone long before the next (" + SurfaceMode.OverheadLife + "s of " +
+                      SurfaceMode.OverheadEvery + ")");
+
+                // Long enough to be noticed at all. Under a second and it is a flicker.
+                check(SurfaceMode.OverheadLife > 2f,
+                      "and lasts long enough to be seen (" + SurfaceMode.OverheadLife + "s)");
+
+                // It is the same thing the sky shows, so it has to stop when that does.
+                // Both are keyed on the same flag.
+                var beaten = new StoryState();
+                beaten.RestoreFrom(new[] { "beat_amy" }, StoryDatabase.Beats.Length - 1);
+                check(beaten.HasFlag("beat_amy"),
+                      "the flag that stops the drift is the one Amy's defeat sets");
+            }
+
             // ---- a rematch does not replay the revelation ----
             {
                 // Amy's first defeat is the scene the whole story walks toward: the first egg,

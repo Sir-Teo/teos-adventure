@@ -171,6 +171,10 @@ namespace Eggverse
             landmarkDef = null;
             landmarkLabel = null;
             pending = null;
+            overhead.Clear();
+            overheadLife.Clear();
+            overheadDrift.Clear();
+            overheadTimer = 6f;
         }
 
         SpriteRenderer Spawn(string name, Sprite sprite, Vector2 pos, float diameter, Color tint, int order, Transform parent = null)
@@ -895,6 +899,7 @@ namespace Eggverse
             if (encounterCooldown > 0f) encounterCooldown -= dt;
 
             TickNpcs(dt);
+            TickDriftOverhead(dt);
             TickRoamers(dt);
             TickInteractions();
             TickCache();
@@ -938,6 +943,64 @@ namespace Eggverse
                 n.Bob += dt * 1.8f;
                 n.Visual.localPosition = new Vector3(0f, Mathf.Sin(n.Bob) * 0.13f, 0f);
             }
+        }
+
+        // ---- the drift, seen from the ground ----
+        //
+        // Space shows warmth crossing the sector toward Amaranth. The story is that it is being
+        // pulled off every nest, which means off the world you are standing on - and from the
+        // ground there was no sign of it at all.
+        //
+        // Rare on purpose. One every twenty seconds or so, high and slow and gone in four. A
+        // player who never looks up never sees one, and a player who does gets the plot without
+        // being told it.
+        public const float OverheadEvery = 20f;
+        public const float OverheadLife = 4f;
+        readonly List<SpriteRenderer> overhead = new List<SpriteRenderer>();
+        readonly List<float> overheadLife = new List<float>();
+        readonly List<Vector2> overheadDrift = new List<Vector2>();
+        float overheadTimer = 6f;
+
+        void TickDriftOverhead(float dt)
+        {
+            bool running = !dir.Story.HasFlag("beat_amy");
+
+            for (int i = overhead.Count - 1; i >= 0; i--)
+            {
+                overheadLife[i] -= dt;
+                var sr = overhead[i];
+                if (overheadLife[i] <= 0f || sr == null)
+                {
+                    if (sr != null) Destroy(sr.gameObject);
+                    overhead.RemoveAt(i); overheadLife.RemoveAt(i); overheadDrift.RemoveAt(i);
+                    continue;
+                }
+
+                sr.transform.position += (Vector3)(overheadDrift[i] * dt);
+                float t = overheadLife[i] / OverheadLife;
+                // In and out rather than a hard cut: it should read as something noticed
+                // halfway across, not something that started when you looked.
+                float fade = Mathf.Min(1f, Mathf.Min(t, 1f - t) * 4f);
+                sr.color = new Color(1f, 0.84f, 0.58f, 0.42f * fade);
+            }
+
+            if (!running) return;
+
+            overheadTimer -= dt;
+            if (overheadTimer > 0f) return;
+            overheadTimer = OverheadEvery * Random.Range(0.6f, 1.5f);
+
+            // Across the top of the view, in whatever direction the sector's warmth is going.
+            Vector2 teo = dir.Teo.transform.position;
+            float side = Random.value < 0.5f ? -1f : 1f;
+            var from = teo + new Vector2(side * 22f, Random.Range(7f, 13f));
+            var drift = new Vector2(-side * Random.Range(3.5f, 5.5f), Random.Range(-0.6f, -0.2f));
+
+            var sr2 = Spawn("overhead", ProcArt.Disc("overheadmote", Color.white, new Color(1f, 1f, 1f, 0f), 1.5f, 32, 64f),
+                            from, Random.Range(0.5f, 0.9f), new Color(1f, 0.84f, 0.58f, 0f), -12);
+            overhead.Add(sr2);
+            overheadLife.Add(OverheadLife);
+            overheadDrift.Add(drift);
         }
 
         void TickRoamers(float dt)
