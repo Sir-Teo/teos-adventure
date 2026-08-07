@@ -1640,6 +1640,45 @@ namespace Eggverse
                 check(elder.Elder && !ordinary.Elder, "and knows it");
             }
 
+            // ---- the clearance rule is big enough to be worth having ----
+            {
+                // Separate from the per-world measurement, and it has to be: seventeen sets of
+                // seeds landing far enough apart says nothing about whether the rule that put
+                // them there is sound. The eighteenth world, or a reseeded one, is decided by
+                // the constant rather than by luck.
+                float reach = SurfaceLayout.CacheRange + SurfaceLayout.LandmarkRange;
+                check(SurfaceLayout.LandmarkClearance > reach,
+                      "the landmark clearance exceeds what both prompts can reach (" +
+                      SurfaceLayout.LandmarkClearance + " against " + reach.ToString("0.0") + ")");
+
+                // The rule has to be one some world actually needs. A branch no roster reaches
+                // is a branch nobody has tested, and this one rescues exactly one world -
+                // Mosswell, from 5.0u to 44.0u. If a reseed ever leaves every world clear, this
+                // says so rather than letting the push quietly become decoration.
+                int pushed = 0; string who = "";
+                foreach (var w in PlanetDatabase.All)
+                {
+                    if (!PlanetDatabase.HasCache(w.Id)) continue;
+                    if (Vector2.Distance(SurfaceLayout.CachePosition(w),
+                                         SurfaceLayout.RawLandmarkPosition(w)) < SurfaceLayout.LandmarkClearance)
+                    { pushed++; who = w.Name; }
+                }
+                check(pushed > 0,
+                      "some world actually needs the clearance push (" + pushed + ", " + who + ")");
+
+                // And a landmark pushed to the far side has to still be on the world.
+                foreach (var w in PlanetDatabase.All)
+                {
+                    var lm = SurfaceLayout.LandmarkPosition(w);
+                    check(lm.magnitude <= w.SurfaceRadius,
+                          w.Name + "'s landmark stays on the world (" + lm.magnitude.ToString("0.0") +
+                          " of " + w.SurfaceRadius + ")");
+                    if (PlanetDatabase.HasCache(w.Id))
+                        check(SurfaceLayout.CachePosition(w).magnitude <= w.SurfaceRadius,
+                              w.Name + "'s cache stays on the world");
+                }
+            }
+
             // ---- the number and the bar say the same thing ----
             {
                 // TakeDamage lands before AnimateHit runs, and RefreshCards only ran when the
@@ -3426,11 +3465,29 @@ namespace Eggverse
                     // ground. Reproduce both placements and measure.
                     if (PlanetDatabase.HasCache(w.Id))
                     {
+                        // Against the prompt ranges, not against the clearance constant. The
+                        // clearance is what LandmarkPosition enforces, so asserting the gap
+                        // beats it was the code agreeing with itself - set it to zero and
+                        // "gap > 0" passed. What a player would notice is two "press E" prompts
+                        // offering themselves from the same patch of ground.
+                        float reach = SurfaceLayout.CacheRange + SurfaceLayout.LandmarkRange;
                         float gap = Vector2.Distance(SurfaceLayout.CachePosition(w),
                                                      SurfaceLayout.LandmarkPosition(w));
-                        check(gap > SurfaceLayout.LandmarkClearance,
-                              w.Name + "'s landmark and cache do not overlap (" +
-                              gap.ToString("0.0") + "u apart)");
+                        check(gap > reach,
+                              w.Name + "'s landmark and cache never offer themselves together (" +
+                              gap.ToString("0.0") + "u apart, prompts reach " +
+                              reach.ToString("0.0") + "u)");
+
+                        // And the placement honours its own rule. Alone this is the code agreeing
+                        // with itself - it was, for several revisions, and setting the clearance
+                        // to zero made it pass. It is worth having only because the check above
+                        // pins the constant against the prompts, and only because it catches what
+                        // the prompt check cannot: deleting the push leaves Mosswell 5.0u apart,
+                        // which clears the 4.2u the prompts reach and is nowhere near the margin
+                        // the rule exists to give.
+                        check(gap >= SurfaceLayout.LandmarkClearance,
+                              w.Name + "'s placement honours the clearance rule (" +
+                              gap.ToString("0.0") + " against " + SurfaceLayout.LandmarkClearance + ")");
                     }
 
                     // And the label that floats over it while you walk up.

@@ -178,6 +178,32 @@ opposite sides of the game, from two sounds that land in the same second.
 
 ## Checks that pass and prove nothing
 
+### The code agreeing with itself
+
+`LandmarkPosition` pushes a landmark to the far side of the world when it lands within
+`LandmarkClearance` of a cache. The check asserted that the resulting gap exceeded
+`LandmarkClearance` — against the function that produces that gap by enforcing that constant.
+Setting the clearance to `0` made `gap > 0` trivially true and the whole thing passed. It read
+like real work for several revisions.
+
+Replacing it with the physical fact — `gap > CacheRange + LandmarkRange`, the distance at which
+both "press E" prompts can offer themselves from the same patch of ground — was *also* wrong on
+its own. Deleting the push leaves Mosswell 5.0u apart, which clears the 4.2u the prompts reach
+and is nowhere near the margin the rule exists to give. That plant escaped too.
+
+Three checks, none circular together:
+
+| Check | Catches |
+|---|---|
+| `LandmarkClearance > CacheRange + LandmarkRange` | the rule being too small to matter |
+| `gap >= LandmarkClearance`, per world | the placement not honouring its own rule |
+| some world's raw placement violates the clearance | the push becoming decoration nobody tests |
+
+The third exists because the branch fires exactly once across seventeen worlds — Mosswell, 5.0u
+to 44.0u. A rule no roster reaches is a rule nobody has tested, and a reseed could make that true
+silently.
+
+
 Three faults planted at the HP counter all escaped, and only one of them was a no-op:
 
 - **Twenty samples.** The slide runs about twenty frames, so twenty samples felt like the honest

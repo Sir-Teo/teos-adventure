@@ -509,8 +509,9 @@ namespace Eggverse
                   new Vector2(0f, 0.2f), 1.5f, new Color(1f, 1f, 1f, 0.40f), -27, go.transform);
         }
 
-        const float CacheRange = 1.6f;
-        const float LandmarkRange = 2.6f;
+        // One home, in SurfaceLayout, beside the clearance rule they justify.
+        const float CacheRange = SurfaceLayout.CacheRange;
+        const float LandmarkRange = SurfaceLayout.LandmarkRange;
 
         /// <summary>
         /// The one thing on this world worth walking to. Placed from the planet's own seed, out
