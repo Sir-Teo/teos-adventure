@@ -983,6 +983,34 @@ namespace Eggverse
                     }
             }
 
+            // ---- floating world labels ----
+            {
+                // 420x90, and the hint under each title is drawn two to five points smaller
+                // than the title is. Measuring the whole thing at one size is how the egg
+                // panel's header came out 51px wrong, so each part is measured at its own.
+                int box = UiCopy.LabelBox;
+
+                void label(string title, int titleSize, string hint, string who)
+                {
+                    check(lines(title, box, titleSize) <= 1, who + "'s name fits its label: " + title);
+                    check(lines(hint, box, UiCopy.LabelHintSize) <= 1, who + "'s hint fits its label: " + hint);
+                    // Title at its size plus hint at its size, against the 90px box.
+                    float used = titleSize * 1.16f + UiCopy.LabelHintSize * 1.16f;
+                    check(used <= UiCopy.LabelHeight,
+                          who + "'s label is not taller than its box (" + used.ToString("0") +
+                          " of " + UiCopy.LabelHeight + "px)");
+                }
+
+                label(UiCopy.LabelNestStation, 22, UiCopy.LabelNestHint, "the Nest Station");
+                label(UiCopy.LabelAmy, 26, UiCopy.LabelAmyHint, "Amy");
+
+                foreach (var npc in StoryDatabase.Npcs)
+                    label("<b>" + npc.Name + "</b>", 23, UiCopy.LabelTalkHint, npc.Name);
+
+                foreach (var lm in LandmarkDatabase.All)
+                    label("<b>" + lm.Name + "</b>", 22, UiCopy.LabelLandmarkHint, lm.Name);
+            }
+
             // ---- landmarks ----
             {
                 check(LandmarkDatabase.Count == PlanetDatabase.All.Count,

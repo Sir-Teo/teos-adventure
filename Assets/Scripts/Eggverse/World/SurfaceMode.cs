@@ -29,6 +29,21 @@ namespace Eggverse
             public Vector2 Offset;
             public RectTransform Rect;
             public Text Text;
+
+            /// <summary>The name, always shown.</summary>
+            public string Title;
+            /// <summary>What this thing is for. Dropped once the HUD is saying the same thing.</summary>
+            public string Hint;
+            /// <summary>The range at which the HUD takes over the instruction.</summary>
+            public float Range;
+            public bool HintShown = true;
+
+            /// <summary>An unread landmark has no title yet, so the separator has to be earned.</summary>
+            public string Compose(bool withHint)
+            {
+                if (!withHint || Hint.Length == 0) return Title;
+                return Title.Length == 0 ? Hint : Title + "\n" + Hint;
+            }
         }
 
         class NpcView
@@ -55,6 +70,7 @@ namespace Eggverse
         Transform cache;
         Vector2 cachePos;
         Transform landmark;
+        WorldLabel landmarkLabel;
         LandmarkDef landmarkDef;
         Transform amyFigure;
 
@@ -126,6 +142,7 @@ namespace Eggverse
             cache = null;
             landmark = null;
             landmarkDef = null;
+            landmarkLabel = null;
         }
 
         SpriteRenderer Spawn(string name, Sprite sprite, Vector2 pos, float diameter, Color tint, int order, Transform parent = null)
@@ -403,8 +420,7 @@ namespace Eggverse
             Spawn("hut", ProcArt.Disc("nesthut", new Color(1f, 0.88f, 0.62f, 1f), new Color(0.75f, 0.5f, 0.25f, 1f), 1.2f, 128, 64f),
                   Vector2.zero, 2.6f, Color.white, -20, go.transform);
 
-            AddLabel(go.transform, new Vector2(0f, 2.4f),
-                     "<b>NEST STATION</b>\n<size=18><color=#A8B2C4>press E to rest</color></size>", 22);
+            AddLabel(go.transform, new Vector2(0f, 2.4f), UiCopy.LabelNestStation, UiCopy.LabelNestHint, 22, NestRange);
         }
 
         /// <summary>
@@ -463,8 +479,11 @@ namespace Eggverse
             var stone = AgainstGround(new Color(0.62f, 0.64f, 0.72f), planet.Land, 0.5f, 0.42f);
             BuildLandmarkForm(go.transform, landmarkDef.Form, stone);
 
-            AddLabel(go.transform, new Vector2(0f, 2.1f),
-                     "<b>" + landmarkDef.Name + "</b>\n<size=18><color=#A8B2C4>press E to read</color></size>", 22);
+            // A person's name is written on their face; an inscription's is the thing you walked
+            // out here to find. Before you read it the label says only that there is something
+            // to read, and afterwards it is a name you earned and the world remembers.
+            landmarkLabel = AddLabel(go.transform, new Vector2(0f, 2.1f), LandmarkTitle(),
+                                     UiCopy.LabelLandmarkHint, 22, LandmarkRange);
         }
 
         /// <summary>Walking over the cache digs it up. No prompt: finding it is the point.</summary>
@@ -618,6 +637,12 @@ namespace Eggverse
         /// same weight as talking to somebody, which is right - these are the only voices on the
         /// map older than the people living on it.
         /// </summary>
+        /// <summary>Blank until read, then the name - the label's own small reward.</summary>
+        string LandmarkTitle()
+        {
+            return dir.State.Landmarks.Contains(current.Id) ? "<b>" + landmarkDef.Name + "</b>" : "";
+        }
+
         static DialogueScript LandmarkScript(LandmarkDef def)
         {
             var lines = new DialogueLine[def.Lines.Length];
@@ -731,8 +756,7 @@ namespace Eggverse
                 Spawn("ace" + i, ProcArt.Egg(species), new Vector2((i - 1) * 2.3f, -2.2f), 1.5f, Color.white, 8, go.transform);
             }
 
-            AddLabel(go.transform, new Vector2(0f, 3.2f),
-                     "<b><color=#FFC24D>AMY</color></b>\n<size=18><color=#A8B2C4>press E to challenge</color></size>", 26);
+            AddLabel(go.transform, new Vector2(0f, 3.2f), UiCopy.LabelAmy, UiCopy.LabelAmyHint, 26, 4.5f);
         }
 
         void BuildNpcs(PlanetDef planet)
@@ -768,18 +792,18 @@ namespace Eggverse
                 var sr = Spawn("body", ProcArt.Portrait(def.Name, def.Tint), Vector2.zero, 2.1f, Color.white, 9, visual);
                 sr.transform.localPosition = Vector3.zero;
 
-                AddLabel(go.transform, new Vector2(0f, 2.0f),
-                         "<b>" + def.Name + "</b>\n<size=17><color=#A8B2C4>press E to talk</color></size>", 23);
+                AddLabel(go.transform, new Vector2(0f, 2.0f), "<b>" + def.Name + "</b>",
+                         UiCopy.LabelTalkHint, 23, 3.4f);
 
                 npcs.Add(new NpcView { Def = def, Root = go.transform, Visual = visual });
             }
         }
 
-        void AddLabel(Transform anchor, Vector2 offset, string text, int size)
+        WorldLabel AddLabel(Transform anchor, Vector2 offset, string title, string hint, int size, float range)
         {
             var rect = UIKit.Node(labelCanvas.transform, "WorldLabel");
             UIKit.Place(rect, new Vector2(0.5f, 0.5f), new Vector2(0.5f, 0.5f), Vector2.zero, new Vector2(420f, 90f));
-            var t = UIKit.Label(rect, "Text", text, size, UIKit.Ink, TextAnchor.UpperCenter, FontStyle.Normal);
+            var t = UIKit.Label(rect, "Text", title + (title.Length > 0 && hint.Length > 0 ? "\n" : "") + hint, size, UIKit.Ink, TextAnchor.UpperCenter, FontStyle.Normal);
             UIKit.Stretch(t.rectTransform, 0f, 0f, 0f, 0f);
 
             // World labels float on the planet itself with no panel behind them, so their only
@@ -790,7 +814,13 @@ namespace Eggverse
             var outline = t.gameObject.AddComponent<UnityEngine.UI.Outline>();
             outline.effectColor = new Color32(0x0C, 0x0F, 0x18, 0xE6);
             outline.effectDistance = new Vector2(2f, -2f);
-            labels.Add(new WorldLabel { Anchor = anchor, Offset = offset, Rect = rect, Text = t });
+            var label = new WorldLabel
+            {
+                Anchor = anchor, Offset = offset, Rect = rect, Text = t,
+                Title = title, Hint = hint, Range = range,
+            };
+            labels.Add(label);
+            return label;
         }
 
         // ------------------------------------------------------------------
@@ -830,6 +860,18 @@ namespace Eggverse
                 Vector2 local;
                 RectTransformUtility.ScreenPointToLocalPointInRectangle(labelCanvasRect, screen, null, out local);
                 l.Rect.anchoredPosition = local;
+
+                // Standing next to the Nest Station, the screen said "press E to rest" floating
+                // over the pad and "Press E to rest at the Nest Station" along the bottom. The
+                // hint's job is to tell you from a distance that this is worth walking to; once
+                // you are close enough for the HUD to say it, it is the same sentence twice.
+                bool wantHint = l.Hint.Length > 0 && l.Range > 0f &&
+                                Vector2.Distance(dir.Teo.transform.position, l.Anchor.position) > l.Range;
+                if (wantHint != l.HintShown)
+                {
+                    l.HintShown = wantHint;
+                    l.Text.text = l.Compose(wantHint);
+                }
             }
         }
 
@@ -957,14 +999,25 @@ namespace Eggverse
                 Vector2.Distance(teo, landmark.position) < LandmarkRange &&
                 (nestStation == null || Vector2.Distance(teo, nestStation.position) >= NestRange))
             {
-                dir.Hud.SetPrompt("Press <b>E</b> to read <b>" + landmarkDef.Name + "</b>");
+                dir.Hud.SetPrompt(dir.State.Landmarks.Contains(current.Id)
+                    ? "Press <b>E</b> to read <b>" + landmarkDef.Name + "</b> again"
+                    : "Press <b>E</b> to read what is written here");
                 if (EggInput.InteractPressed)
                 {
                     // Reading it changes nothing and unlocks nothing. It is remembered because
                     // the player will want to know which ones they have found, and because a
                     // thing you found should stay found across a save.
                     bool firstReading = dir.State.Landmarks.Add(current.Id);
-                    if (firstReading) dir.Audio.Play(Sfx.Inscription);
+                    if (firstReading)
+                    {
+                        dir.Audio.Play(Sfx.Inscription);
+                        // The label learns the name at the moment you do.
+                        if (landmarkLabel != null)
+                        {
+                            landmarkLabel.Title = LandmarkTitle();
+                            landmarkLabel.Text.text = landmarkLabel.Compose(landmarkLabel.HintShown);
+                        }
+                    }
                     dir.PlayDialogue(LandmarkScript(landmarkDef));
                 }
                 if (EggInput.LiftoffPressed) dir.LiftOff();

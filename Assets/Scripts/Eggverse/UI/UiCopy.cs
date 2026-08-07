@@ -32,6 +32,26 @@ namespace Eggverse
         /// key opens the chart. The self-check requires both lists to mention the same keys, so
         /// one cannot be updated without the other.
         /// </summary>
+        // ---- world labels ----
+        //
+        // The floating labels on a planet surface. They live here rather than inline in the
+        // surface builder so the checks measure the strings the game draws, not a transcription
+        // of them - the hint is drawn at a smaller size than the title it sits under, and that
+        // is exactly the kind of detail a transcription gets wrong.
+        public const int LabelBox = 420;              // px, the label's width
+        public const int LabelHeight = 90;            // px
+        public const int LabelHintSize = 18;
+
+        public const string LabelNestStation = "<b>NEST STATION</b>";
+        public const string LabelNestHint = "<size=18><color=#A8B2C4>press E to rest</color></size>";
+        public const string LabelAmy = "<b><color=#FFC24D>AMY</color></b>";
+        public const string LabelAmyHint = "<size=18><color=#A8B2C4>press E to challenge</color></size>";
+        // 18, not 17: every other hint is 18, and the check that measures these measures at
+        // LabelHintSize. A hint drawn one point off the size it is verified at is a small lie in
+        // the one place whose entire job is measuring things at the size they are drawn.
+        public const string LabelTalkHint = "<size=18><color=#A8B2C4>press E to talk</color></size>";
+        public const string LabelLandmarkHint = "<size=18><color=#A8B2C4>something is written here</color></size>";
+
         public static readonly string[] PauseControls =
         {
             "MOVE  WASD or arrows      TALK OR REST  E      LIFT OFF  Q",
