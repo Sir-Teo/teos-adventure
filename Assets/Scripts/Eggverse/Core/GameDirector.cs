@@ -1,0 +1,605 @@
+using System.Collections.Generic;
+using UnityEngine;
+using UnityEngine.EventSystems;
+using UnityEngine.InputSystem.UI;
+
+namespace Eggverse
+{
+    public enum GameMode { Title, Space, Surface, Battle, Victory }
+
+    /// <summary>Owns the game: builds the world, switches modes, runs the story, drives the camera.</summary>
+    public class GameDirector : MonoBehaviour
+    {
+        public static GameDirector Instance { get; private set; }
+
+        public GameState State { get; private set; }
+        public StoryState Story { get; private set; }
+        public Camera Cam { get; private set; }
+        public TeoController Teo { get; private set; }
+        public SpaceMode Space { get; private set; }
+        public SurfaceMode Surface { get; private set; }
+        public BattleMode Battle { get; private set; }
+        public HudView Hud { get; private set; }
+        public DialogueView Dialogue { get; private set; }
+        public GalaxyMapView Map { get; private set; }
+        public AudioDirector Audio { get; private set; }
+        public TransitionView Transition { get; private set; }
+        public NameEntryView NameEntry { get; private set; }
+        public PauseView Pause { get; private set; }
+
+        public GameMode Mode { get; private set; }
+        public PlanetDef CurrentPlanet { get; private set; }
+
+        TrainerDef pendingTrainer;
+        Vector3 camVelocity;
+        float targetOrthoSize = 15f;
+        SaveData pendingSave;
+        float playSeconds;
+
+        const float SpaceZoom = 15f;
+        const float SurfaceZoom = 10f;
+
+        public bool OverlayOpen => (Hud != null && Hud.CollectionOpen)
+                                || (Map != null && Map.IsOpen)
+                                || (Dialogue != null && Dialogue.IsOpen)
+                                || (Pause != null && Pause.IsOpen)
+                                || (NameEntry != null && NameEntry.IsOpen);
+
+        void Awake()
+        {
+            if (Instance != null && Instance != this) { Destroy(gameObject); return; }
+            Instance = this;
+
+            State = new GameState();
+            Story = new StoryState();
+
+            Audio = Attach<AudioDirector>("Audio");
+            Audio.Build();
+
+            SetupCamera();
+            SetupEventSystem();
+
+            var teoGo = new GameObject("Teo");
+            teoGo.transform.SetParent(transform, false);
+            Teo = teoGo.AddComponent<TeoController>();
+            Teo.Build();
+
+            Space = Attach<SpaceMode>("SpaceMode");
+            Space.Build(this);
+
+            Surface = Attach<SurfaceMode>("SurfaceMode");
+            Surface.Build(this);
+
+            Battle = Attach<BattleMode>("BattleMode");
+            Battle.Build(this);
+
+            Hud = Attach<HudView>("HudView");
+            Hud.Build(this);
+
+            Dialogue = Attach<DialogueView>("DialogueView");
+            Dialogue.Build(this);
+
+            Map = Attach<GalaxyMapView>("GalaxyMap");
+            Map.Build(this);
+
+            NameEntry = Attach<NameEntryView>("NameEntry");
+            NameEntry.Build();
+
+            Pause = Attach<PauseView>("Pause");
+            Pause.Build(this);
+
+            Transition = Attach<TransitionView>("Transition");
+            Transition.Build();
+
+            Story.BeatAdvanced += OnBeatAdvanced;
+        }
+
+        T Attach<T>(string name) where T : Component
+        {
+            var go = new GameObject(name);
+            go.transform.SetParent(transform, false);
+            return go.AddComponent<T>();
+        }
+
+        void Start()
+        {
+            pendingSave = SaveSystem.Peek();
+
+            CurrentPlanet = PlanetDatabase.Home;
+            State.Visited.Add(CurrentPlanet.Id);
+            Mode = GameMode.Title;
+            Teo.Movement = TeoMovement.Frozen;
+
+            // Stage the home planet behind the title card so the first frame is not empty.
+            Space.SetActive(false);
+            Surface.SetActive(true);
+            Surface.Enter(CurrentPlanet);
+            Teo.SurfaceRadius = CurrentPlanet.SurfaceRadius;
+            Teo.Warp(Surface.LandingPoint());
+            Cam.transform.position = new Vector3(0f, 0f, -10f);
+            Cam.orthographicSize = SurfaceZoom;
+            targetOrthoSize = SurfaceZoom;
+
+            Hud.SetHudVisible(false);
+            Hud.SetTitleSave(SaveSystem.Describe(pendingSave));
+            Audio.SetMusic(MusicTrack.Explore, 2.5f);
+        }
+
+        void UpdateMusic()
+        {
+            MusicTrack want;
+            if (Mode == GameMode.Battle) want = MusicTrack.Battle;
+            else if (CurrentPlanet == null) want = MusicTrack.Explore;
+            else if (CurrentPlanet.IsBossWorld) want = MusicTrack.Amaranth;
+            // The Belt gets its own bed, so crossing into Sector III is audible.
+            else if (CurrentPlanet.Sector == Sector.ShatteredBelt) want = MusicTrack.Belt;
+            else want = MusicTrack.Explore;
+            Audio.SetMusic(want);
+        }
+
+        // ==================================================================
+        // saving
+        // ==================================================================
+
+        public void SaveNow(bool announce = false)
+        {
+            if (Mode == GameMode.Title) return;
+            bool ok = SaveSystem.Save(State, Story, CurrentPlanet != null ? CurrentPlanet.Id : PlanetDatabase.Home.Id, playSeconds);
+            if (announce)
+            {
+                Hud.Toast(ok ? "Progress saved." : "Could not write the save file.");
+                if (ok) Audio.Play(Sfx.Save);
+            }
+        }
+
+        void LoadSavedGame()
+        {
+            GameState loadedState;
+            StoryState loadedStory;
+            string planetId;
+            float seconds;
+
+            if (!SaveSystem.Load(out loadedState, out loadedStory, out planetId, out seconds))
+            {
+                Hud.Toast("That save could not be read. Starting a new run.");
+                StartFreshGame();
+                return;
+            }
+
+            Story.BeatAdvanced -= OnBeatAdvanced;
+            State = loadedState;
+            Story = loadedStory;
+            Story.BeatAdvanced += OnBeatAdvanced;
+            playSeconds = seconds;
+
+            Hud.Rebind(State);
+
+            CurrentPlanet = PlanetDatabase.Get(planetId);
+            State.CurrentPlanetId = CurrentPlanet.Id;
+
+            Space.SetActive(false);
+            Surface.SetActive(true);
+            Surface.Enter(CurrentPlanet);
+            Teo.SurfaceRadius = CurrentPlanet.SurfaceRadius;
+            Teo.Warp(Surface.LandingPoint());
+
+            Mode = GameMode.Surface;
+            Teo.Movement = TeoMovement.Walking;
+            targetOrthoSize = SurfaceZoom;
+            Cam.transform.position = new Vector3(Teo.transform.position.x, Teo.transform.position.y, -10f);
+
+            Hud.HideTitle();
+            Hud.SetHudVisible(true);
+            Hud.Refresh();
+            Hud.Toast("Welcome back. " + Story.Current.Objective);
+        }
+
+        void StartFreshGame()
+        {
+            SaveSystem.Delete();
+            pendingSave = null;
+
+            // Reaching the title via the pause menu leaves the old run live, so a "new run"
+            // has to rebuild the state rather than just hiding the title card.
+            Story.BeatAdvanced -= OnBeatAdvanced;
+            State = new GameState();
+            Story = new StoryState();
+            Story.BeatAdvanced += OnBeatAdvanced;
+            playSeconds = 0f;
+            Hud.Rebind(State);
+
+            CurrentPlanet = PlanetDatabase.Home;
+            State.CurrentPlanetId = CurrentPlanet.Id;
+
+            Space.SetActive(false);
+            Surface.SetActive(true);
+            Surface.Enter(CurrentPlanet);
+            Teo.SurfaceRadius = CurrentPlanet.SurfaceRadius;
+            Teo.Warp(Surface.LandingPoint());
+            targetOrthoSize = SurfaceZoom;
+            Cam.transform.position = new Vector3(Teo.transform.position.x, Teo.transform.position.y, -10f);
+
+            BeginGame();
+        }
+
+        /// <summary>Saves, then drops back to the title card so the run can be resumed or restarted.</summary>
+        public void ReturnToTitle()
+        {
+            SaveNow();
+            pendingSave = SaveSystem.Peek();
+
+            Mode = GameMode.Title;
+            Teo.Movement = TeoMovement.Frozen;
+            Map.Close();
+            Hud.CloseCollection();
+            Hud.HideVictory();
+            Hud.SetHudVisible(false);
+            Hud.ShowTitle();
+            Hud.SetTitleSave(SaveSystem.Describe(pendingSave));
+            Transition.FlashDark(0.6f);
+
+            // PauseView and GameDirector both run Update with no guaranteed order, so the
+            // Enter that confirmed the quit could otherwise be read again this same frame
+            // and bounce straight back into the run.
+            modeGrace = 0.35f;
+        }
+
+        float modeGrace;
+
+        void SetupCamera()
+        {
+            Cam = Camera.main;
+            if (Cam == null) Cam = Object.FindAnyObjectByType<Camera>();
+            if (Cam == null)
+            {
+                var go = new GameObject("Main Camera", typeof(Camera));
+                go.tag = "MainCamera";
+                Cam = go.GetComponent<Camera>();
+            }
+            Cam.orthographic = true;
+            Cam.orthographicSize = SpaceZoom;
+            Cam.clearFlags = CameraClearFlags.SolidColor;
+            Cam.backgroundColor = new Color32(0x05, 0x06, 0x0E, 0xFF);
+            Cam.transform.position = new Vector3(0f, 0f, -10f);
+            Cam.transform.rotation = Quaternion.identity;
+        }
+
+        void SetupEventSystem()
+        {
+            if (Object.FindAnyObjectByType<EventSystem>() != null) return;
+            var go = new GameObject("EventSystem", typeof(EventSystem));
+            go.transform.SetParent(transform, false);
+            var module = go.AddComponent<InputSystemUIInputModule>();
+            module.AssignDefaultActions();
+        }
+
+        // ==================================================================
+        // mode changes
+        // ==================================================================
+
+        public void BeginGame()
+        {
+            Mode = GameMode.Surface;
+            Teo.Movement = TeoMovement.Walking;
+            Hud.HideTitle();
+            Hud.SetHudVisible(true);
+            Hud.Refresh();
+            Hud.Toast("Yolkhaven. Ori is at the Nest Station.");
+        }
+
+        public void Land(PlanetDef planet)
+        {
+            bool firstVisit = State.Visited.Add(planet.Id);
+
+            CurrentPlanet = planet;
+            State.CurrentPlanetId = planet.Id;
+
+            Space.SetActive(false);
+            Surface.SetActive(true);
+            Surface.Enter(planet);
+
+            Teo.SurfaceRadius = planet.SurfaceRadius;
+            Teo.Warp(Surface.LandingPoint());
+            Teo.Movement = TeoMovement.Walking;
+            Teo.ClearPuffs();
+
+            Mode = GameMode.Surface;
+            targetOrthoSize = SurfaceZoom;
+            Cam.transform.position = new Vector3(Teo.transform.position.x, Teo.transform.position.y, -10f);
+
+            Hud.Refresh();
+            Hud.Toast((firstVisit ? "Charted " : "Landed on ") + planet.Name + ". " + planet.Tagline);
+            Audio.Play(Sfx.Land);
+            Transition.Flash(planet.Atmosphere * 0.5f, 0.55f);
+            SaveNow();
+        }
+
+        public void LiftOff()
+        {
+            Surface.SetActive(false);
+            Space.SetActive(true);
+
+            Teo.Warp(Space.DeparturePoint(CurrentPlanet));
+            Teo.Movement = TeoMovement.Flying;
+
+            Mode = GameMode.Space;
+            targetOrthoSize = SpaceZoom;
+            Cam.transform.position = new Vector3(Teo.transform.position.x, Teo.transform.position.y, -10f);
+
+            Hud.Refresh();
+            Hud.Toast("Back in the black. M opens the chart.");
+            Audio.Play(Sfx.Liftoff);
+            Transition.FlashDark(0.5f);
+        }
+
+        /// <summary>Jumps to orbit above an already-charted world. The player still lands themselves.</summary>
+        public void FastTravel(PlanetDef planet)
+        {
+            Surface.SetActive(false);
+            Space.SetActive(true);
+
+            CurrentPlanet = planet;
+            Teo.Warp(Space.DeparturePoint(planet));
+            Teo.Movement = TeoMovement.Flying;
+            Teo.ClearPuffs();
+
+            Mode = GameMode.Space;
+            targetOrthoSize = SpaceZoom;
+            Cam.transform.position = new Vector3(Teo.transform.position.x, Teo.transform.position.y, -10f);
+
+            Hud.Refresh();
+            Hud.Toast("Course set. You are in orbit above " + planet.Name + ".");
+            Audio.Play(Sfx.Liftoff);
+            Transition.FlashDark(0.6f);
+        }
+
+        // ==================================================================
+        // story and dialogue
+        // ==================================================================
+
+        void OnBeatAdvanced(StoryBeat beat)
+        {
+            Hud.Toast(beat.Chapter + " — " + beat.Objective);
+            Hud.Refresh();
+            SaveNow();
+        }
+
+        public void PlayDialogue(DialogueScript script)
+        {
+            if (script == null || Dialogue.IsOpen) return;
+            Hud.SetPrompt(null);
+            Teo.Movement = TeoMovement.Frozen;
+            Dialogue.Play(script, () => OnDialogueComplete(script));
+        }
+
+        void OnDialogueComplete(DialogueScript script)
+        {
+            if (!string.IsNullOrEmpty(script.SetsFlag)) Story.SetFlag(script.SetsFlag);
+
+            if (script.HealsParty)
+            {
+                State.RestoreEggs();
+                Hud.Toast("Your nest is warm again.");
+            }
+            if (script.RestocksCartons)
+            {
+                State.RestockSupplies();
+                Hud.Toast("Cartons restocked.");
+            }
+
+            if (!string.IsNullOrEmpty(script.GivesSpeciesId))
+            {
+                var gift = EggInstance.Wild(script.GivesSpeciesId, script.GivesSpeciesLevel);
+                State.Collect(gift);
+                Hud.Toast("You received " + gift.Name + "!");
+            }
+
+            Story.Evaluate(State);
+            State.RaiseChanged();
+
+            if (!string.IsNullOrEmpty(script.StartsTrainer))
+            {
+                var trainer = StoryDatabase.GetTrainer(script.StartsTrainer);
+                if (trainer != null) { BeginTrainerBattle(trainer); return; }
+            }
+
+            Teo.Movement = Mode == GameMode.Space ? TeoMovement.Flying : TeoMovement.Walking;
+            SaveNow();
+        }
+
+        // ==================================================================
+        // battles
+        // ==================================================================
+
+        public void BeginWildBattle(EggInstance foe)
+        {
+            if (Mode == GameMode.Battle) return;
+            pendingTrainer = null;
+            EnterBattle(new List<EggInstance> { foe }, null);
+        }
+
+        public void BeginTrainerBattle(TrainerDef trainer)
+        {
+            if (Mode == GameMode.Battle || trainer == null) return;
+            pendingTrainer = trainer;
+
+            var team = new List<EggInstance>();
+            for (int i = 0; i < trainer.SpeciesIds.Length; i++)
+            {
+                int level = i < trainer.Levels.Length ? trainer.Levels[i] : trainer.Levels[trainer.Levels.Length - 1];
+                team.Add(EggInstance.Wild(trainer.SpeciesIds[i], level));
+            }
+            EnterBattle(team, trainer.Name);
+        }
+
+        /// <summary>Amy, reached by walking up to her on Amaranth Prime.</summary>
+        public void BeginBossBattle()
+        {
+            BeginTrainerBattle(StoryDatabase.GetTrainer("amy"));
+        }
+
+        void EnterBattle(List<EggInstance> team, string opponentName)
+        {
+            Mode = GameMode.Battle;
+            Teo.Movement = TeoMovement.Frozen;
+            Hud.CloseCollection();
+            Map.Close();
+            Hud.SetHudVisible(false);
+            Audio.Play(Sfx.Encounter);
+            Transition.FlashDark(0.45f);
+            UpdateMusic();
+            Battle.Begin(team, opponentName);
+        }
+
+        public void OnBattleFinished(BattleOutcome outcome)
+        {
+            var trainer = pendingTrainer;
+            pendingTrainer = null;
+
+            Surface.NotifyBattleEnded();
+            Hud.SetHudVisible(true);
+            Mode = GameMode.Surface;
+
+            switch (outcome)
+            {
+                case BattleOutcome.Caught:
+                    Hud.Toast("Egg collected!");
+                    break;
+
+                case BattleOutcome.Lost:
+                    State.HealAll();
+                    Teo.Warp(Surface.LandingPoint());
+                    Hud.Toast("You woke up at the Nest Station. Everything is patched up.");
+                    break;
+
+                case BattleOutcome.Won:
+                    if (trainer != null)
+                    {
+                        Story.SetFlag(trainer.VictoryFlag);
+                        Story.Evaluate(State);
+                        State.RaiseChanged();
+
+                        bool wasAmy = trainer.Id == "amy";
+                        if (wasAmy) State.AmyDefeated = true;
+
+                        // The real scene happens after the fight.
+                        PlayDialogue(new DialogueScript(trainer.OnDefeat, null, null, null, 5, true));
+                        if (wasAmy) pendingVictoryScreen = true;
+                        return;
+                    }
+                    break;
+            }
+
+            Story.Evaluate(State);
+            Teo.Movement = TeoMovement.Walking;
+            State.RaiseChanged();
+            SaveNow();
+        }
+
+        bool pendingVictoryScreen;
+
+        // ==================================================================
+        // per-frame
+        // ==================================================================
+
+        void Update()
+        {
+            if (Mode != GameMode.Title) playSeconds += Time.deltaTime;
+            UpdateMusic();
+
+            // Swallow input for a moment after a mode change so the keypress that caused it
+            // is not immediately re-read by the mode it lands in.
+            if (modeGrace > 0f) { modeGrace -= Time.deltaTime; return; }
+
+            switch (Mode)
+            {
+                case GameMode.Title:
+                    if (EggInput.ConfirmPressed)
+                    {
+                        if (pendingSave != null) LoadSavedGame(); else BeginGame();
+                    }
+                    else if (pendingSave != null && EggInput.NKeyPressed)
+                    {
+                        StartFreshGame();
+                    }
+                    return;
+
+                case GameMode.Victory:
+                    if (EggInput.ConfirmPressed)
+                    {
+                        Hud.HideVictory();
+                        Hud.SetHudVisible(true);
+                        Mode = GameMode.Surface;
+                        Teo.Movement = TeoMovement.Walking;
+                    }
+                    return;
+
+                case GameMode.Battle:
+                    return;
+            }
+
+            // A conversation, the namer, or the pause menu owns all input while it is up.
+            if (Dialogue.IsOpen || NameEntry.IsOpen || Pause.IsOpen)
+            {
+                Teo.Movement = TeoMovement.Frozen;
+                return;
+            }
+
+            if (pendingVictoryScreen)
+            {
+                pendingVictoryScreen = false;
+                Mode = GameMode.Victory;
+                Hud.SetHudVisible(false);
+                Hud.ShowVictory();
+                modeGrace = 0.35f;
+                return;
+            }
+
+            if (Map.IsOpen)
+            {
+                if (EggInput.MapPressed || EggInput.CancelPressed) Map.Close();
+                Teo.Movement = TeoMovement.Frozen;
+                return;
+            }
+
+            if (EggInput.MutePressed) { Audio.ToggleMute(); Hud.Toast(Audio.Muted ? "Sound off." : "Sound on."); }
+
+            if (EggInput.MapPressed) { Hud.CloseCollection(); Map.Open(); Audio.Play(Sfx.Chart); return; }
+
+            if (EggInput.PartyPressed) Hud.ToggleCollection();
+            else if (Hud.CollectionOpen && EggInput.CancelPressed) Hud.CloseCollection();
+            // `overlayWasOpen` is sampled in LateUpdate, so an overlay that closed itself
+            // earlier this frame still suppresses the Esc that closed it — whichever order
+            // the two Update calls happened to run in.
+            else if (EggInput.CancelPressed && !overlayWasOpen) { Pause.Open(); Audio.Play(Sfx.UiConfirm); return; }
+
+            // Reading your collection should not also fly the ship.
+            var wanted = OverlayOpen
+                ? TeoMovement.Frozen
+                : (Mode == GameMode.Space ? TeoMovement.Flying : TeoMovement.Walking);
+            if (Teo.Movement != wanted) Teo.Movement = wanted;
+
+            Story.Evaluate(State);
+        }
+
+        bool overlayWasOpen;
+
+        void LateUpdate()
+        {
+            // Sampled after every Update has run, so it reflects the true end-of-frame state.
+            overlayWasOpen = OverlayOpen;
+
+            if (Cam == null || Teo == null) return;
+            if (Mode == GameMode.Battle || Mode == GameMode.Victory) return;
+
+            Vector3 lead = new Vector3(Teo.Velocity.x, Teo.Velocity.y, 0f) * (Mode == GameMode.Space ? 0.30f : 0.16f);
+            Vector3 target = Teo.transform.position + lead;
+            target.z = -10f;
+
+            Cam.transform.position = Vector3.SmoothDamp(Cam.transform.position, target, ref camVelocity,
+                                                        Mode == GameMode.Space ? 0.18f : 0.12f);
+            Cam.orthographicSize = Mathf.Lerp(Cam.orthographicSize, targetOrthoSize,
+                                              1f - Mathf.Exp(-5f * Time.deltaTime));
+        }
+    }
+}

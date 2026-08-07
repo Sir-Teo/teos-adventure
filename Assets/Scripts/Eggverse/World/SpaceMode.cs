@@ -1,0 +1,296 @@
+using System.Collections.Generic;
+using UnityEngine;
+using UnityEngine.UI;
+
+namespace Eggverse
+{
+    /// <summary>The star map: Teo drifts between planets and picks one to land on.</summary>
+    public class SpaceMode : MonoBehaviour
+    {
+        class PlanetView
+        {
+            public PlanetDef Def;
+            public Transform Root;
+            public SpriteRenderer Body;
+            public SpriteRenderer Halo;
+            public Text Label;
+            public RectTransform LabelRect;
+        }
+
+        GameDirector dir;
+        readonly List<PlanetView> views = new List<PlanetView>();
+        Transform root;
+        Canvas labelCanvas;
+        RectTransform labelCanvasRect;
+        PlanetView inRange;
+
+        const float LandingMargin = 3.2f;
+
+        public void Build(GameDirector director)
+        {
+            dir = director;
+            root = new GameObject("Space").transform;
+            root.SetParent(transform, false);
+
+            labelCanvas = UIKit.CreateCanvas("SpaceLabels", 5, transform);
+            labelCanvasRect = (RectTransform)labelCanvas.transform;
+
+            BuildStarfield();
+
+            var planets = PlanetDatabase.All;
+            for (int i = 0; i < planets.Count; i++) BuildPlanet(planets[i]);
+        }
+
+        // Depths of sky. A layer parked at `depth` drifts at (1 - depth) of the camera's speed,
+        // so the far stars barely move and the near ones sweep past.
+        //
+        // Each layer is a *tile* that wraps around the camera rather than a field spanning the
+        // whole galaxy. Spreading a few hundred stars across the full ~130,000 square units of
+        // map put roughly six of them on screen at a time, which made space read as empty and
+        // made the parallax invisible. Tiling gives a dense sky from the same object count.
+        readonly List<Transform> parallaxLayers = new List<Transform>();
+        readonly List<float> parallaxDepths = new List<float>();
+        readonly List<float> parallaxTiles = new List<float>();
+
+        void BuildStarfield()
+        {
+            Sprite star = ProcArt.Star();
+            var rng = new System.Random(20260807);
+
+            // depth, tile size, count, size range, alpha range
+            float[] depths = { 0.86f, 0.55f, 0.18f };
+            float[] tiles = { 120f, 140f, 160f };   // differing periods hide the repeat
+            // Sized for roughly 75 stars on screen at once: enough to feel like a sky and
+            // to make the parallax readable while flying.
+            int[] counts = { 700, 450, 260 };
+            float[] sizeLow = { 0.05f, 0.09f, 0.14f };
+            float[] sizeHigh = { 0.13f, 0.20f, 0.32f };
+            float[] alphaLow = { 0.26f, 0.42f, 0.60f };
+            float[] alphaHigh = { 0.55f, 0.80f, 1.00f };
+
+            for (int layer = 0; layer < depths.Length; layer++)
+            {
+                var layerRoot = new GameObject("Stars_" + layer).transform;
+                layerRoot.SetParent(root, false);
+                parallaxLayers.Add(layerRoot);
+                parallaxDepths.Add(depths[layer]);
+                parallaxTiles.Add(tiles[layer]);
+
+                float half = tiles[layer] * 0.5f;
+                for (int i = 0; i < counts[layer]; i++)
+                {
+                    var go = new GameObject("star");
+                    go.transform.SetParent(layerRoot, false);
+                    go.transform.localPosition = new Vector3(
+                        Mathf.Lerp(-half, half, (float)rng.NextDouble()),
+                        Mathf.Lerp(-half, half, (float)rng.NextDouble()), 0f);
+                    go.transform.localScale = Vector3.one * Mathf.Lerp(sizeLow[layer], sizeHigh[layer], (float)rng.NextDouble());
+
+                    var sr = go.AddComponent<SpriteRenderer>();
+                    sr.sprite = star;
+                    sr.material = ProcArt.SpriteMaterial;
+                    // Distant stars run cooler, near ones warmer — cheap depth cue.
+                    float warmth = layer / (float)(depths.Length - 1);
+                    sr.color = new Color(Mathf.Lerp(0.82f, 1f, warmth), Mathf.Lerp(0.88f, 0.98f, warmth), 1f,
+                                         Mathf.Lerp(alphaLow[layer], alphaHigh[layer], (float)rng.NextDouble()));
+                    sr.sortingOrder = -100 + layer;
+                }
+            }
+
+            // Wide, faint nebulae sit furthest back, on their own slower tile.
+            var nebulaRoot = new GameObject("Nebulae").transform;
+            nebulaRoot.SetParent(root, false);
+            parallaxLayers.Add(nebulaRoot);
+            parallaxDepths.Add(0.93f);
+            parallaxTiles.Add(200f);
+
+            Color[] nebulaTints =
+            {
+                new Color(0.35f, 0.22f, 0.55f, 1f),
+                new Color(0.16f, 0.30f, 0.52f, 1f),
+                new Color(0.45f, 0.20f, 0.30f, 1f),
+            };
+            // 14 clouds over a 260-unit tile at 0.15 alpha put *nothing* in frame most of the
+            // time — the camera only sees 53x30 units. Denser tile, bigger clouds, and enough
+            // alpha to actually tint the black.
+            for (int i = 0; i < 18; i++)
+            {
+                Color tint = nebulaTints[i % nebulaTints.Length];
+                var go = new GameObject("nebula");
+                go.transform.SetParent(nebulaRoot, false);
+                go.transform.localPosition = new Vector3(
+                    Mathf.Lerp(-100f, 100f, (float)rng.NextDouble()),
+                    Mathf.Lerp(-100f, 100f, (float)rng.NextDouble()), 0f);
+                go.transform.localScale = Vector3.one * Mathf.Lerp(26f, 58f, (float)rng.NextDouble());
+                var sr = go.AddComponent<SpriteRenderer>();
+                sr.sprite = ProcArt.Disc("nebula" + i, tint, new Color(tint.r, tint.g, tint.b, 0f), 1.5f, 128, 64f);
+                sr.material = ProcArt.SpriteMaterial;
+                sr.color = new Color(1f, 1f, 1f, 0.24f);
+                sr.sortingOrder = -105;
+            }
+        }
+
+        void LateUpdate()
+        {
+            if (dir == null || dir.Cam == null || root == null || !root.gameObject.activeSelf) return;
+            Vector3 cam = dir.Cam.transform.position;
+
+            for (int i = 0; i < parallaxLayers.Count; i++)
+            {
+                float depth = parallaxDepths[i];
+                float tile = parallaxTiles[i];
+
+                // Apparent drift is cam*(1-depth); snapping that to whole tiles keeps the
+                // field centred on the camera forever without any visible jump.
+                float driftX = cam.x * (1f - depth), driftY = cam.y * (1f - depth);
+                float wrapX = Mathf.Round(driftX / tile) * tile;
+                float wrapY = Mathf.Round(driftY / tile) * tile;
+
+                parallaxLayers[i].position = new Vector3(cam.x * depth + wrapX, cam.y * depth + wrapY, 0f);
+            }
+        }
+
+        void BuildPlanet(PlanetDef def)
+        {
+            var view = new PlanetView { Def = def };
+
+            var go = new GameObject("Planet_" + def.Id);
+            go.transform.SetParent(root, false);
+            go.transform.position = def.SpacePosition;
+            view.Root = go.transform;
+
+            var bodyGo = new GameObject("Body");
+            bodyGo.transform.SetParent(go.transform, false);
+            view.Body = bodyGo.AddComponent<SpriteRenderer>();
+            view.Body.sprite = ProcArt.Planet(def);
+            view.Body.material = ProcArt.SpriteMaterial;
+            view.Body.sortingOrder = 0;
+            // The planet sprite reserves room for its glow, so scale from the body radius, not the sprite.
+            float planetSpriteWorld = view.Body.sprite.rect.width / view.Body.sprite.pixelsPerUnit;
+            float bodyRadius = planetSpriteWorld / (2f * 1.32f);
+            bodyGo.transform.localScale = Vector3.one * (def.SpaceRadius / bodyRadius);
+
+            var haloGo = new GameObject("Halo");
+            haloGo.transform.SetParent(go.transform, false);
+            view.Halo = haloGo.AddComponent<SpriteRenderer>();
+            view.Halo.sprite = ProcArt.Ring("landing", Color.white, 0.035f);
+            view.Halo.material = ProcArt.SpriteMaterial;
+            view.Halo.sortingOrder = 1;
+            view.Halo.color = new Color(1f, 1f, 1f, 0f);
+            float haloDiameter = (def.SpaceRadius + LandingMargin) * 2f;
+            float haloSpriteWorld = view.Halo.sprite.rect.width / view.Halo.sprite.pixelsPerUnit;
+            haloGo.transform.localScale = Vector3.one * (haloDiameter / haloSpriteWorld);
+
+            // Anchored to the canvas centre so ScreenPointToLocalPointInRectangle results drop straight in.
+            var labelRt = UIKit.Node(labelCanvas.transform, "Label_" + def.Id);
+            UIKit.Place(labelRt, new Vector2(0.5f, 0.5f), new Vector2(0.5f, 0.5f), Vector2.zero, new Vector2(420f, 90f));
+            var text = UIKit.Label(labelRt, "Text", def.Name, 26, UIKit.Ink, TextAnchor.UpperCenter, FontStyle.Bold);
+            UIKit.Stretch(text.rectTransform, 0f, 0f, 0f, 0f);
+            view.Label = text;
+            view.LabelRect = labelRt;
+
+            views.Add(view);
+        }
+
+        public void SetActive(bool active)
+        {
+            if (root != null) root.gameObject.SetActive(active);
+            if (labelCanvas != null) labelCanvas.gameObject.SetActive(active);
+            if (!active) inRange = null;
+        }
+
+        /// <summary>A good place to drop Teo when he lifts off from a planet.</summary>
+        public Vector2 DeparturePoint(PlanetDef from)
+        {
+            return from.SpacePosition + new Vector2(0f, -(from.SpaceRadius + LandingMargin + 2.5f));
+        }
+
+        void Update()
+        {
+            if (dir == null || dir.Mode != GameMode.Space) return;
+            if (dir.OverlayOpen) return;
+
+            Vector2 teo = dir.Teo.transform.position;
+            PlanetView best = null;
+            float bestDist = float.MaxValue;
+
+            for (int i = 0; i < views.Count; i++)
+            {
+                var v = views[i];
+                float d = Vector2.Distance(teo, v.Def.SpacePosition);
+                float range = v.Def.SpaceRadius + LandingMargin;
+
+                float haloAlpha = d < range ? 0.9f : 0f;
+                var c = v.Halo.color;
+                v.Halo.color = new Color(
+                    TypeChart.ColorOf(v.Def.Theme).r,
+                    TypeChart.ColorOf(v.Def.Theme).g,
+                    TypeChart.ColorOf(v.Def.Theme).b,
+                    Mathf.Lerp(c.a, haloAlpha, 1f - Mathf.Exp(-8f * Time.deltaTime)));
+
+                if (d < range && d < bestDist) { best = v; bestDist = d; }
+
+                UpdateLabel(v, teo);
+            }
+
+            inRange = best;
+
+            if (best == null)
+            {
+                dir.Hud.SetPrompt(null);
+                return;
+            }
+
+            bool sealedWorld = !dir.Story.CanEnter(best.Def.Sector);
+            if (sealedWorld)
+            {
+                string missing = dir.Story.CurrentBlockerText(dir.State);
+                dir.Hud.SetPrompt("<b>" + best.Def.Name + "</b> is beyond your charted route." +
+                                  (missing != null ? "  Still needed: " + missing + "." : "  " + dir.Story.Current.Objective));
+            }
+            else if (best.Def.IsBossWorld)
+            {
+                dir.Hud.SetPrompt("Press <b>E</b> to descend to <b>" + best.Def.Name + "</b>. Amy is down there.");
+            }
+            else
+            {
+                dir.Hud.SetPrompt("Press <b>E</b> to land on <b>" + best.Def.Name + "</b>  ·  wild eggs Lv " +
+                                  best.Def.MinLevel + "-" + best.Def.MaxLevel);
+            }
+
+            if (EggInput.InteractPressed)
+            {
+                if (sealedWorld) dir.Hud.Toast("Your charts do not reach that far yet.");
+                else dir.Land(best.Def);
+            }
+        }
+
+        void UpdateLabel(PlanetView v, Vector2 teo)
+        {
+            Vector3 world = v.Def.SpacePosition + new Vector2(0f, -(v.Def.SpaceRadius + 1.6f));
+            Vector3 screen = dir.Cam.WorldToScreenPoint(world);
+
+            bool onScreen = screen.z > 0f &&
+                            screen.x > -200f && screen.x < Screen.width + 200f &&
+                            screen.y > -200f && screen.y < Screen.height + 200f;
+            if (v.LabelRect.gameObject.activeSelf != onScreen) v.LabelRect.gameObject.SetActive(onScreen);
+            if (!onScreen) return;
+
+            Vector2 local;
+            RectTransformUtility.ScreenPointToLocalPointInRectangle(labelCanvasRect, screen, null, out local);
+            v.LabelRect.anchoredPosition = local;
+
+            bool sealedWorld = !dir.Story.CanEnter(v.Def.Sector);
+            bool here = dir.State.CurrentPlanetId == v.Def.Id;
+            bool charted = dir.State.Visited.Contains(v.Def.Id);
+            string sub;
+            if (sealedWorld) sub = "<color=#E55555>SEALED ROUTE</color>";
+            else if (v.Def.IsBossWorld) sub = "<color=#FFC24D>AMY</color>";
+            else if (!charted) sub = "<color=#8A90A2>UNCHARTED · Lv " + v.Def.MinLevel + "-" + v.Def.MaxLevel + "</color>";
+            else sub = "<color=#A8B2C4>Lv " + v.Def.MinLevel + "-" + v.Def.MaxLevel + " · " + TypeChart.Name(v.Def.Theme) + "</color>";
+
+            Color nameColor = here ? UIKit.Accent : sealedWorld ? UIKit.InkDim : UIKit.Ink;
+            v.Label.text = "<color=#" + ColorUtility.ToHtmlStringRGB(nameColor) + "><b>" + v.Def.Name + "</b></color>\n<size=20>" + sub + "</size>";
+        }
+    }
+}

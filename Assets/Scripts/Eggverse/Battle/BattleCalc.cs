@@ -1,0 +1,115 @@
+using UnityEngine;
+
+namespace Eggverse
+{
+    public static class BattleCalc
+    {
+        public const float CritChance = 0.0625f;
+        public const float CritMultiplier = 1.6f;
+
+        /// <summary>Standard damage roll. Returns 0 when the move is a status move.</summary>
+        public static int Damage(EggInstance attacker, EggInstance defender, MoveDef move,
+                                 out float typeMultiplier, out bool critical)
+        {
+            typeMultiplier = TypeChart.Multiplier(move.Type, defender.Type);
+            critical = false;
+            if (move.IsStatus) return 0;
+
+            float critChance = attacker.Trait == EggTrait.Lucky ? CritChance * 2.5f : CritChance;
+            critical = EggRandom.Value < critChance;
+
+            float stab = attacker.Type == move.Type ? 1.4f : 1f;
+            float crit = critical ? CritMultiplier : 1f;
+            float roll = EggRandom.Range(0.85f, 1.0f);
+
+            // Passives: Overheat rewards fighting hurt, Tough Shell blunts type advantage.
+            float traitBoost = attacker.Trait == EggTrait.Overheat && attacker.HPFraction < 0.34f ? 1.3f : 1f;
+            float traitResist = defender.Trait == EggTrait.ToughShell && typeMultiplier > 1.2f ? 0.75f : 1f;
+
+            float baseDamage = ((2f * attacker.Level / 5f + 2f) * move.Power * attacker.Atk / Mathf.Max(1, defender.Def)) / 28f + 2f;
+            return Mathf.Max(1, Mathf.RoundToInt(baseDamage * stab * typeMultiplier * crit * roll * traitBoost * traitResist));
+        }
+
+        public static bool Hits(MoveDef move) => EggRandom.Range(0, 100) < move.Accuracy;
+
+        public static bool MoverGoesFirst(EggInstance a, EggInstance b)
+        {
+            if (a.Spd != b.Spd) return a.Spd > b.Spd;
+            return EggRandom.Value < 0.5f;
+        }
+
+        /// <summary>Chance an egg carton succeeds. Weakening the target matters far more than luck.</summary>
+        public static float CatchChance(EggInstance target)
+        {
+            float hpFactor = (3f * target.MaxHP - 2f * target.CurrentHP) / (3f * target.MaxHP);
+            float rate = target.Species.CatchRate / 255f;
+            float levelFactor = Mathf.Clamp01(1.2f - target.Level / 40f);
+            float elderResist = target.Elder ? 0.45f : 1f;
+            return Mathf.Clamp01(hpFactor * rate * levelFactor * 1.6f * elderResist);
+        }
+
+        /// <summary>Rolls a catch and reports how many times the carton wobbled, for drama.</summary>
+        public static bool RollCatch(EggInstance target, out int shakes)
+        {
+            float p = CatchChance(target);
+            if (EggRandom.Value < p) { shakes = 3; return true; }
+
+            // Near misses wobble more.
+            float perShake = Mathf.Pow(Mathf.Clamp01(p), 0.35f);
+            shakes = 0;
+            for (int i = 0; i < 3; i++)
+            {
+                if (EggRandom.Value >= perShake) break;
+                shakes++;
+            }
+            return false;
+        }
+
+        public static float FleeChance(EggInstance mine, EggInstance foe)
+        {
+            float ratio = (mine.Spd - foe.Spd) / Mathf.Max(1f, foe.Spd);
+            return Mathf.Clamp(0.4f + 0.35f * ratio, 0.25f, 0.95f);
+        }
+
+        /// <summary>
+        /// How good a move looks: expected damage, roughly. Mirrors the passives the damage
+        /// formula applies, so the chooser does not recommend moves the maths then blunts.
+        /// </summary>
+        public static float AiScore(EggInstance user, EggInstance target, MoveDef move)
+        {
+            if (move.IsStatus)
+            {
+                // Worth something early, never worth spamming.
+                switch (move.Effect)
+                {
+                    case MoveEffect.Heal50: return user.HPFraction < 0.4f ? 70f : 5f;
+                    case MoveEffect.AtkUp: return user.AtkStage < 2 ? 32f : 2f;
+                    case MoveEffect.DefUp: return user.DefStage < 2 ? 28f : 2f;
+                    case MoveEffect.SpdUp: return user.SpdStage < 2 ? 26f : 2f;
+                    // Pointless into a Hardhead.
+                    case MoveEffect.SpdDownFoe: return target.Trait == EggTrait.Hardhead ? 1f : 20f;
+                    default: return 10f;
+                }
+            }
+
+            float stab = user.Type == move.Type ? 1.4f : 1f;
+            float mult = TypeChart.Multiplier(move.Type, target.Type);
+
+            // Tough Shell eats a quarter of any super-effective hit, so it is worth less here too.
+            if (target.Trait == EggTrait.ToughShell && mult > 1.2f) mult *= 0.75f;
+
+            float hits = move.Effect == MoveEffect.MultiHit2 ? 2f : 1f;
+            float boost = user.Trait == EggTrait.Overheat && user.HPFraction < 0.34f ? 1.3f : 1f;
+
+            float score = move.Power * stab * mult * hits * (move.Accuracy / 100f) * boost;
+
+            // Striking a Static egg costs you health; multi-hit moves pay that twice.
+            if (target.Trait == EggTrait.Static) score *= hits > 1f ? 0.86f : 0.93f;
+
+            // Recoil is real damage to yourself, and worse when you are nearly out.
+            if (move.Effect == MoveEffect.Recoil25) score *= user.HPFraction < 0.3f ? 0.7f : 0.9f;
+
+            return score;
+        }
+    }
+}
