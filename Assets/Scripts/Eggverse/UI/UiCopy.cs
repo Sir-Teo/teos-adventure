@@ -137,6 +137,28 @@ namespace Eggverse
         public const string WokeCold = "You woke on cold stone. It took a while. Everything is patched up, and nobody is saying how.";
 
         /// <summary>
+        /// What to do about having run out.
+        ///
+        /// The supply line says "Cartons none" in red, which is the state and not the recovery.
+        /// A player three worlds in has worked out that a Nest Station restocks; a player on
+        /// their second has not, and is the one it happens to — they threw everything at a
+        /// Sprouteg and now the record has stopped moving for a reason the HUD is reporting and
+        /// not explaining.
+        ///
+        /// Once, when it happens, and again only if it happens again.
+        /// </summary>
+        public static string OutOf(bool cartons, bool salves)
+        {
+            if (cartons && salves)
+                return "Out of cartons and salves. A Nest Station restocks both — rest at the pad.";
+            if (cartons)
+                return "That was your last carton. A Nest Station restocks them — rest at the pad.";
+            if (salves)
+                return "That was your last salve. A Nest Station restocks them — rest at the pad.";
+            return null;
+        }
+
+        /// <summary>
         /// Losing to somebody who was trying to beat you, rather than to something that was
         /// defending its field.
         ///

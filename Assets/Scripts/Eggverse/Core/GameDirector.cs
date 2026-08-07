@@ -162,6 +162,32 @@ namespace Eggverse
         /// waiting at each, but only hands it over when you next stand in front of him - so
         /// crossing ten species on a rock three sectors out used to pass in complete silence.
         /// </summary>
+        // Whether the player has already been told about each empty. Cleared when they restock,
+        // so it fires the next time they run dry and not on every fight in between.
+        bool saidNoCartons, saidNoSalves;
+
+        /// <summary>
+        /// Says where more come from, once, at the moment running out starts to matter. Called
+        /// on the surface rather than mid-fight: a toast a player cannot act on is a toast that
+        /// teaches them to stop reading toasts.
+        /// </summary>
+        void NudgeSupplies()
+        {
+            if (State.Cartons > 0) saidNoCartons = false;
+            if (State.Salves > 0) saidNoSalves = false;
+
+            bool cartons = State.Cartons == 0 && !saidNoCartons;
+            bool salves = State.Salves == 0 && !saidNoSalves;
+            if (!cartons && !salves) return;
+
+            string line = UiCopy.OutOf(cartons, salves);
+            if (line == null) return;
+
+            Hud.Toast(line);
+            if (cartons) saidNoCartons = true;
+            if (salves) saidNoSalves = true;
+        }
+
         void NudgeRecordMilestone()
         {
             int recorded = State.RecordedCatchable;
@@ -611,6 +637,12 @@ namespace Eggverse
 
             Story.Evaluate(State);
             Teo.Movement = TeoMovement.Walking;
+
+            // After every outcome, not just after a catch. Losing heals your eggs and restocks
+            // nothing, so a player who threw their last carton and then went down is at zero on
+            // the way back up and is exactly who this is for. The toast queue takes both lines.
+            NudgeSupplies();
+
             State.RaiseChanged();
             SaveNow();
         }

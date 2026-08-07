@@ -1671,6 +1671,51 @@ namespace Eggverse
                 check(elder.Elder && !ordinary.Elder, "and knows it");
             }
 
+            // ---- running out says where more come from ----
+            {
+                // The supply line says "Cartons none" in red, which is the state and not the
+                // recovery. A player three worlds in has worked out that a Nest Station
+                // restocks; a player on their second has not, and is the one it happens to.
+                check(UiCopy.OutOf(false, false) == null,
+                      "a player with supplies is told nothing");
+
+                foreach (var pair in new[] { (true, false), (false, true), (true, true) })
+                {
+                    string line = UiCopy.OutOf(pair.Item1, pair.Item2);
+                    check(line != null, "running out of something says so");
+                    check(lines(line, 900f, 22) <= 2, "and fits the toast: " + line);
+
+                    // The whole point: it names the recovery, not just the problem.
+                    check(line.Contains("Nest Station"),
+                          "and names where more come from: " + line);
+                    check(line.Contains("rest"),
+                          "and what to do there: " + line);
+
+                    // It names what actually ran out, or a player with salves goes looking
+                    // for a problem they do not have.
+                    check(line.Contains("carton") == pair.Item1,
+                          "cartons are mentioned exactly when they are gone: " + line);
+                    check(line.Contains("salve") == pair.Item2,
+                          "and salves likewise: " + line);
+                }
+
+                // Three different lines, or two of the three states are being told the wrong
+                // thing about themselves.
+                check(UiCopy.OutOf(true, false) != UiCopy.OutOf(false, true),
+                      "cartons and salves do not share a line");
+                check(UiCopy.OutOf(true, true) != UiCopy.OutOf(true, false),
+                      "and running out of both is its own line");
+
+                // And a station really does restock both, or the line is a lie.
+                var dry = new GameState();
+                dry.Cartons = 0;
+                dry.Salves = 0;
+                dry.RestockSupplies();
+                check(dry.Cartons > 0 && dry.Salves > 0,
+                      "resting at a station restocks what the line promises (" +
+                      dry.Cartons + " cartons, " + dry.Salves + " salves)");
+            }
+
             // ---- the game has more than one thing to say about losing ----
             {
                 // It had exactly one, and it was about the temperature of the pad. Losing to a
