@@ -295,11 +295,20 @@ namespace Eggverse
         public static string Describe(SaveData data)
         {
             if (data == null) return null;
-            int partyCount = data.party != null ? data.party.Length : 0;
+
+            // "N in nest" was the party count. A run with six in the party and fifty-nine back
+            // home read "6 in nest" on the title screen, which is the first thing a returning
+            // player looks at and the only place the game summarises their run to them.
+            int inParty = data.party != null ? data.party.Length : 0;
+            int atNest = data.nest != null ? data.nest.Length : 0;
+
             int best = 0;
-            if (data.party != null)
-                for (int i = 0; i < data.party.Length; i++)
-                    if (data.party[i] != null) best = Mathf.Max(best, data.party[i].level);
+            foreach (var group in new[] { data.party, data.nest })
+            {
+                if (group == null) continue;
+                for (int i = 0; i < group.Length; i++)
+                    if (group[i] != null) best = Mathf.Max(best, group[i].level);
+            }
 
             var beat = StoryDatabase.Beats[Mathf.Clamp(data.beatIndex, 0, StoryDatabase.Beats.Length - 1)];
             var planet = PlanetDatabase.Get(string.IsNullOrEmpty(data.planet) ? PlanetDatabase.Home.Id : data.planet);
@@ -308,7 +317,8 @@ namespace Eggverse
             string time = minutes >= 60 ? (minutes / 60) + "h " + (minutes % 60) + "m" : minutes + "m";
             string when = string.IsNullOrEmpty(data.savedAt) ? "" : "  ·  saved " + data.savedAt;
 
-            return beat.Chapter + "  ·  " + planet.Name + "  ·  " + partyCount + " in nest, top level " + best +
+            return beat.Chapter + "  ·  " + planet.Name + "  ·  " +
+                   inParty + " in party, " + atNest + " at the nest  ·  top level " + best +
                    "  ·  " + time + when;
         }
     }

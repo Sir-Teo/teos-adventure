@@ -1940,6 +1940,38 @@ namespace Eggverse
                 }
             }
 
+            // ---- the line a returning player reads first ----
+            {
+                // It said "6 in nest" when it meant the party, on a run with fifty-nine
+                // actually at the nest. It is the only place the game summarises a run back
+                // to the player, and it is the first thing they read on coming back to it.
+                var st = new GameState(false);
+                for (int i = 0; i < GameState.PartySize; i++) st.Party.Add(EggInstance.Wild("sprouteg", 22));
+                for (int i = 0; i < 59; i++) st.Nest.Add(EggInstance.Wild("cobblet", 30));
+
+                var story = new StoryState();
+                story.RestoreFrom(new string[0], StoryDatabase.Beats.Length - 1);
+                string line = SaveSystem.Describe(SaveSystem.Capture(st, story, "glacierim", 2500f));
+
+                check(line.Contains("6 in party"), "the summary counts the party as the party: " + line);
+                check(line.Contains("59 at the nest"), "and the nest as the nest");
+
+                // Top level looks at everything you own, not only what you are carrying - the
+                // best egg of a long run is often sitting at home.
+                check(line.Contains("top level 30"),
+                      "top level counts eggs at the nest too: " + line);
+
+                // 1300px at font 21, and it cannot wrap.
+                check(lines(line, 1600f, 21) == 1, "the summary fits the title screen: " + line);
+
+                // An empty-nest run says so rather than going blank.
+                var thin = new GameState();
+                string thinLine = SaveSystem.Describe(SaveSystem.Capture(thin, new StoryState(),
+                                                                          PlanetDatabase.Home.Id, 30f));
+                check(thinLine.Contains("0 at the nest"), "a fresh run reads properly: " + thinLine);
+                check(lines(thinLine, 1600f, 21) == 1, "and a fresh run fits too: " + thinLine);
+            }
+
             // ---- an egg's own record, in its panel ----
             {
                 // The panel carried every number the game computes about an egg and not the

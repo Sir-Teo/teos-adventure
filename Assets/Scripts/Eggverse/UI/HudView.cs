@@ -294,7 +294,10 @@ namespace Eggverse
             UIKit.Place(titleHint.rectTransform, new Vector2(0.5f, 0f), new Vector2(0.5f, 0f), new Vector2(0f, 96f), new Vector2(1300f, 40f));
 
             titleSaveLine = UIKit.Label(titlePanel, "SaveLine", "", 21, UIKit.InkDim, TextAnchor.MiddleCenter);
-            UIKit.Place(titleSaveLine.rectTransform, new Vector2(0.5f, 0f), new Vector2(0.5f, 0f), new Vector2(0f, 62f), new Vector2(1300f, 28f));
+            // 1600, not 1300. The summary names the party and the nest separately now, which is
+            // eighteen characters more than "6 in nest" and put the longest form over a 119
+            // character box. The line is centred on a 1920 screen; the room was there.
+            UIKit.Place(titleSaveLine.rectTransform, new Vector2(0.5f, 0f), new Vector2(0.5f, 0f), new Vector2(0f, 62f), new Vector2(1600f, 28f));
         }
 
         void BuildVictory(RectTransform root)
