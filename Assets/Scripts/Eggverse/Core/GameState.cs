@@ -193,6 +193,21 @@ namespace Eggverse
             }
         }
 
+        /// <summary>
+        /// The egg that was out in front for the most fights, across the party and the nest.
+        /// Null until something has actually fought.
+        /// </summary>
+        public EggInstance MostFought
+        {
+            get
+            {
+                EggInstance best = null;
+                foreach (var e in Party) if (e.Fought > 0 && (best == null || e.Fought > best.Fought)) best = e;
+                foreach (var e in Nest)  if (e.Fought > 0 && (best == null || e.Fought > best.Fought)) best = e;
+                return best;
+            }
+        }
+
         /// <summary>The egg Ori gave you, wherever it is now, or null if you let it go.</summary>
         public EggInstance EggFromOri
         {

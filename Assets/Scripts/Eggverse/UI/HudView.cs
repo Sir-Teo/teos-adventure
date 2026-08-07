@@ -386,7 +386,10 @@ namespace Eggverse
                 var t = body.GetComponent<Text>();
                 if (t != null)
                 {
+                    var carried = dir.State.MostFought;
                     t.text = UiCopy.VictoryBody +
+                             (carried != null
+                                  ? UiCopy.VictoryCarried(carried.Name, carried.Fought) : "") +
                              (dir.State.Landmarks.Count >= LandmarkDatabase.Count
                                   ? UiCopy.VictoryCoda : "") +
                              UiCopy.VictoryTally(dir.State.TotalCollected,

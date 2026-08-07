@@ -17,6 +17,7 @@ namespace Eggverse
         public int[] movePP;
         public bool elder;
         public bool fromOri;
+        public int fought;
     }
 
     [Serializable]
@@ -141,6 +142,7 @@ namespace Eggverse
                     movePP = pps,
                     elder = egg.Elder,
                     fromOri = egg.FromOri,
+                    fought = egg.Fought,
                 };
             }
             return result;
@@ -264,7 +266,7 @@ namespace Eggverse
                 var s = saves[i];
                 if (s == null || string.IsNullOrEmpty(s.species)) continue;
                 if (!SpeciesDatabase.Exists(s.species)) { dropped++; continue; }
-                target.Add(EggInstance.Restore(s.species, s.nickname, s.level, s.xp, s.hp, s.moveIds, s.movePP, s.elder, s.fromOri));
+                target.Add(EggInstance.Restore(s.species, s.nickname, s.level, s.xp, s.hp, s.moveIds, s.movePP, s.elder, s.fromOri, s.fought));
             }
             return dropped;
         }

@@ -22,6 +22,7 @@ static class Ending
 
         // Body: 1300x460 anchored at -140, drawn from the top of that box, font 28.
         string text = UiCopy.VictoryBody
+                    + (readEverything ? UiCopy.VictoryCarried("Pebbles", 84) : "")
                     + (readEverything ? UiCopy.VictoryCoda : "")
                     + UiCopy.VictoryTally(120, 24, 24, 8, LandmarkDatabase.Count, LandmarkDatabase.Count,
                                         PlanetDatabase.CacheWorlds.Count, PlanetDatabase.CacheWorlds.Count);
@@ -31,7 +32,7 @@ static class Ending
         // ending look like it was falling out of the card.
         float step = 28f * 1.16f;
         int rows = text.Split('\n').Length;
-        float top = cy - 140f + (rows * step) * 0.5f - step * 0.5f;
+        float top = cy - 160f + (rows * step) * 0.5f - step * 0.5f;
         int row = 0;
         foreach (var raw in text.Split('\n'))
         {

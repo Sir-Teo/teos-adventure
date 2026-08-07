@@ -249,8 +249,19 @@ namespace Eggverse
             routine = StartCoroutine(Run());
         }
 
+        /// <summary>Everyone who spent time out in front this fight.</summary>
+        readonly HashSet<int> foughtThisBattle = new HashSet<int>();
+
         void Finish(BattleOutcome result)
         {
+            // Credited on the way out rather than per turn, so a fight is a fight however many
+            // rounds it ran - and everybody who was sent out gets it, not only whoever happened
+            // to be standing there at the end.
+            foughtThisBattle.Add(activeIndex);
+            foreach (int i in foughtThisBattle)
+                if (i >= 0 && i < State.Party.Count) State.Party[i].RecordFight();
+            foughtThisBattle.Clear();
+
             // Conditions last the fight and no longer. Clearing here rather than on the way
             // out means a caught egg and a fainted one are both handed back clean.
             for (int i = 0; i < State.Party.Count; i++) State.Party[i].ClearStatus();
@@ -422,6 +433,7 @@ namespace Eggverse
                         Mine.ClearStages();
                         yield return Say("Come back, " + Mine.Name + "!");
                         activeIndex = chosenParam;
+                        foughtThisBattle.Add(activeIndex);
                         RefreshCards(true);
                         yield return Say("Go, " + incoming.Name + "!");
                         yield return FoeTurn();
@@ -883,7 +895,7 @@ namespace Eggverse
             messageText.text = "Send out which egg?";
             yield return WaitChoice(partyButtons, 1, false);
             UIKit.SetActive(partyPanel, false);
-            if (pendingChoice >= 0) activeIndex = pendingChoice;
+            if (pendingChoice >= 0) { activeIndex = pendingChoice; foughtThisBattle.Add(activeIndex); }
             RefreshCards(true);
             yield return Say("Go, " + Mine.Name + "!");
         }

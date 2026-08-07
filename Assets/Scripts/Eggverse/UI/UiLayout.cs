@@ -27,8 +27,13 @@ namespace Eggverse
         // ---- ending ----
         public static readonly Vector2 EndHeadingAt = new Vector2(0f, 186f);
         public static readonly Vector2 EndHeadingSize = new Vector2(1400f, 110f);
-        public static readonly Vector2 EndBodyAt = new Vector2(0f, -140f);
-        public static readonly Vector2 EndBodySize = new Vector2(1300f, 460f);
+        // 500 tall at -160, not 460 at -140. The top edge stays where it was, under the
+        // heading; the extra forty comes off the bottom, where there was room. The card can
+        // carry five optional lines now - the scene, who carried the run, the coda for reading
+        // every inscription, and two lines of tally - and at 460 the fullest version was fifteen
+        // lines in fourteen.
+        public static readonly Vector2 EndBodyAt = new Vector2(0f, -160f);
+        public static readonly Vector2 EndBodySize = new Vector2(1300f, 500f);
 
         /// <summary>
         /// Vertical air between two centre-anchored boxes. Not overlap - air. Both of these

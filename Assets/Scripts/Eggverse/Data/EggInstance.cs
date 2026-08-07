@@ -69,6 +69,15 @@ namespace Eggverse
         /// </summary>
         public bool FromOri { get; private set; }
 
+        /// <summary>
+        /// How many fights this egg has been out in front for. Not a stat and it changes
+        /// nothing - the game simply had no idea which of your six had done the work, and by
+        /// the end of a run that is the one thing about your team you actually know.
+        /// </summary>
+        public int Fought { get; private set; }
+
+        public void RecordFight() { Fought++; }
+
         public void MarkFromOri() { FromOri = true; }
 
         public string Name =>
@@ -380,7 +389,7 @@ namespace Eggverse
 
         /// <summary>Rebuilds a saved egg exactly, including its remembered moves and PP.</summary>
         public static EggInstance Restore(string speciesId, string nickname, int level, int xp, int currentHP,
-                                          string[] moveIds, int[] movePP, bool elder = false, bool fromOri = false)
+                                          string[] moveIds, int[] movePP, bool elder = false, bool fromOri = false, int fought = 0)
         {
             var egg = new EggInstance(SpeciesDatabase.Get(speciesId), level);
             egg.Elder = elder;
@@ -402,6 +411,7 @@ namespace Eggverse
 
             egg.CurrentHP = Mathf.Clamp(currentHP, 0, egg.MaxHP);
             egg.FromOri = fromOri;
+            egg.Fought = fought;
             return egg;
         }
     }

@@ -1940,6 +1940,50 @@ namespace Eggverse
                 }
             }
 
+            // ---- the egg that carried the run ----
+            {
+                // Not a stat and it changes nothing. The game simply had no idea which of your
+                // six had done the work, and by the end of a run that is the one thing about
+                // your team a player actually knows.
+                var st = new GameState(false);
+                check(st.MostFought == null, "nothing has carried anything before a fight happens");
+
+                var workhorse = EggInstance.Wild("sprouteg", 20);
+                var passenger = EggInstance.Wild("cobblet", 20);
+                st.Party.Add(workhorse); st.Party.Add(passenger);
+                for (int i = 0; i < 40; i++) workhorse.RecordFight();
+                for (int i = 0; i < 3; i++) passenger.RecordFight();
+
+                check(ReferenceEquals(st.MostFought, workhorse),
+                      "the one that fought most is the one named (" + st.MostFought.Fought + ")");
+
+                // It counts eggs sitting at the nest too - a favourite you retired still did
+                // the work.
+                var retired = EggInstance.Wild("yolkano", 20);
+                for (int i = 0; i < 99; i++) retired.RecordFight();
+                st.Nest.Add(retired);
+                check(ReferenceEquals(st.MostFought, retired),
+                      "an egg retired to the nest still counts");
+
+                // And the line it produces fits the card.
+                string line = UiCopy.VictoryCarried("Bartholomew", 999);
+                foreach (var row in line.Split('\n'))
+                    check(lines(row, 1300f, 28) <= 1,
+                          "the carried line fits the ending card: " + row);
+
+                // The whole card, with every optional line on it at once.
+                string full = UiCopy.VictoryBody + line + UiCopy.VictoryCoda +
+                              UiCopy.VictoryTally(120, 24, 24, 8, LandmarkDatabase.Count,
+                                                  LandmarkDatabase.Count,
+                                                  PlanetDatabase.CacheWorlds.Count,
+                                                  PlanetDatabase.CacheWorlds.Count);
+                int used = 0;
+                foreach (var row in full.Split('\n')) used += lines(row, 1300f, 28);
+                check(used <= capacity(UiLayout.EndBodySize.y, 28),
+                      "the ending card fits with every line it can carry (" + used + " of " +
+                      capacity(UiLayout.EndBodySize.y, 28) + ")");
+            }
+
             // ---- the swap menu says how the switch lands ----
             {
                 // It listed name, level, element and health - everything except the one thing
@@ -2898,7 +2942,7 @@ namespace Eggverse
                                         PlanetDatabase.CacheWorlds.Count, PlanetDatabase.CacheWorlds.Count);
                     int used = 0;
                     foreach (var row in ending.Split('\n')) used += lines(row, 1300f, 28);
-                    check(used <= capacity(460f, 28),
+                    check(used <= capacity(UiLayout.EndBodySize.y, 28),
                           "the ending card fits" + (coda.Length > 0 ? " with its last word" : "") +
                           " (" + used + " of " + capacity(460f, 28) + " lines)");
                 }

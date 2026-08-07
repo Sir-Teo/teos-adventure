@@ -120,6 +120,13 @@ namespace Eggverse
         /// started going wrong and not one records anybody fixing it - which is the argument the
         /// Shell Line's last word makes, and this is the moment it is answered.
         /// </summary>
+        /// <summary>
+        /// The egg that did the most of it. The game had no idea which of your six had carried
+        /// the run, and by the end that is the one thing about your team you actually know.
+        /// </summary>
+        public static string VictoryCarried(string name, int fights) =>
+            "<color=#D2D8E4>" + name + " was out in front for " + fights + " of them.</color>\n";
+
         public const string VictoryCoda =
             "<color=#A8B2C4>You read every stone in the sector. Not one of them recorded a mending.\n" +
             "Neither will this.</color>\n\n";
