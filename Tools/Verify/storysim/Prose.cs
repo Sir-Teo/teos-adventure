@@ -105,6 +105,14 @@ static class Prose
             foreach (var line in script.Lines) Add("Ori on his egg", line.Text);
         }
 
+        // Amy's rematch scene, which only exists once she has been beaten.
+        {
+            var after = new StoryState();
+            after.RestoreFrom(new[] { "beat_amy" }, StoryDatabase.Beats.Length - 1);
+            foreach (var l in StoryDatabase.DefeatLinesFor(StoryDatabase.GetTrainer("amy"), after))
+                Add("Amy rematch", l.Text);
+        }
+
         Add("woke warm", UiCopy.WokeWarm);
         Add("woke cold", UiCopy.WokeCold);
 

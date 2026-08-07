@@ -571,10 +571,14 @@ namespace Eggverse
                         State.RaiseChanged();
 
                         bool wasAmy = trainer.Id == "amy";
+
+                        // Read before the flag is set, so the first win still gets the first
+                        // scene - the flag is what tells the two apart.
+                        var defeatLines = StoryDatabase.DefeatLinesFor(trainer, Story);
                         if (wasAmy) State.AmyDefeated = true;
 
                         // The real scene happens after the fight.
-                        PlayDialogue(new DialogueScript(trainer.OnDefeat, null, null, null, 5, true));
+                        PlayDialogue(new DialogueScript(defeatLines, null, null, null, 5, true));
                         if (wasAmy) pendingVictoryScreen = true;
                         return;
                     }

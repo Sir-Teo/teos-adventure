@@ -1940,6 +1940,48 @@ namespace Eggverse
                 }
             }
 
+            // ---- a rematch does not replay the revelation ----
+            {
+                // Amy's first defeat is the scene the whole story walks toward: the first egg,
+                // eleven years of holding it, the offer to share it. She replayed every word
+                // of it on a rematch, while her greeting already knew the difference.
+                var amy = StoryDatabase.GetTrainer("amy");
+                check(amy != null, "Amy is a trainer the game can look up");
+
+                var first = new StoryState();
+                var again = new StoryState();
+                again.RestoreFrom(new[] { "beat_amy" }, StoryDatabase.Beats.Length - 1);
+
+                var firstScene = StoryDatabase.DefeatLinesFor(amy, first);
+                var rematch = StoryDatabase.DefeatLinesFor(amy, again);
+
+                check(firstScene.Length == amy.OnDefeat.Length,
+                      "the first win still gets the whole scene (" + firstScene.Length + " lines)");
+                check(rematch.Length < firstScene.Length,
+                      "a rematch is shorter (" + rematch.Length + " against " + firstScene.Length + ")");
+
+                // The revelation is in one and not the other.
+                var firstText = new System.Text.StringBuilder();
+                foreach (var l in firstScene) firstText.Append(l.Text).Append(' ');
+                var againText = new System.Text.StringBuilder();
+                foreach (var l in rematch) againText.Append(l.Text).Append(' ');
+
+                check(firstText.ToString().Contains("An egg. The first one."),
+                      "the first win explains what Amaranth is");
+                check(!againText.ToString().Contains("The first one"),
+                      "and the rematch does not explain it again");
+
+                // Every line of both fits the dialogue box.
+                foreach (var l in rematch)
+                    check(lines(l.Text, 1380f, 28) <= capacity(180f, 28),
+                          "Amy's rematch line fits: " + l.Text);
+
+                // Other trainers are untouched - they only ever fight you once.
+                var vess = StoryDatabase.GetTrainer("vess_1");
+                check(StoryDatabase.DefeatLinesFor(vess, again).Length == vess.OnDefeat.Length,
+                      "other trainers keep their one scene");
+            }
+
             // ---- naming is not a 2.6 second window ----
             {
                 // Naming used to be a prompt that ran for 2.6 seconds after a catch, and

@@ -221,6 +221,26 @@ namespace Eggverse
         static readonly Dictionary<string, TrainerDef> trainers = new Dictionary<string, TrainerDef>();
 
         /// <summary>The highest level a trainer fields, for telling a player what they face.</summary>
+        /// <summary>
+        /// What a trainer says on being beaten. Amy's first defeat is the scene the whole story
+        /// has been walking toward - the first egg, eleven years of holding it, the offer to
+        /// share it - and she replayed every word of it on a rematch. Her greeting already knows
+        /// the difference: "Back again? Good. It gets heavy when nobody's pushing."
+        /// </summary>
+        public static DialogueLine[] DefeatLinesFor(TrainerDef trainer, StoryState story)
+        {
+            if (trainer == null) return new DialogueLine[0];
+            if (trainer.Id != "amy" || !story.HasFlag("beat_amy")) return trainer.OnDefeat;
+
+            return new[]
+            {
+                new DialogueLine("Amy", "Still standing. Both of us."),
+                new DialogueLine("Amy", "It is easier with two, and I am not going to say that twice."),
+                new DialogueLine("Teo", "You just did."),
+                new DialogueLine("Amy", "...Go on. Take the long way back."),
+            };
+        }
+
         public static int TopLevelOf(string trainerId)
         {
             var t = GetTrainer(trainerId);
