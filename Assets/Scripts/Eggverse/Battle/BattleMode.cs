@@ -1216,6 +1216,20 @@ namespace Eggverse
         }
 
         /// <summary>
+        /// Whether there is anybody to swap to: another egg in the party, still standing.
+        ///
+        /// Every other action in this menu greys itself out when it would be refused - the
+        /// salve since it was written, the carton and the run more recently. This was the last
+        /// one that did not.
+        /// </summary>
+        public static bool CanSwap(GameState state, int activeIndex)
+        {
+            for (int i = 0; i < state.Party.Count; i++)
+                if (i != activeIndex && !state.Party[i].IsFainted) return true;
+            return false;
+        }
+
+        /// <summary>
         /// A supply action's label. Empty says so in a word rather than a zero in brackets -
         /// the same reason the supplies strip reads "Cartons none": a 0 among other numbers is
         /// the easiest thing on a screen to read straight past.
@@ -1237,6 +1251,11 @@ namespace Eggverse
             // told you it was empty only after you had spent the input on it. The salve beside
             // it had been greying itself out for exactly that reason since it was written.
             actionButtons[1].interactable = State.Cartons > 0;
+
+            // And swapping, which was the last one left. With nobody else able to stand up it
+            // took the input and then said "No other egg is in any shape to fight."
+            actionButtons[3].interactable = CanSwap(State, activeIndex);
+
             if (IsTrainer)
             {
                 actionButtons[1].interactable = false;   // CARTON

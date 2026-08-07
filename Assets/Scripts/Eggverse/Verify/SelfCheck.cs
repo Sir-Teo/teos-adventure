@@ -1626,6 +1626,40 @@ namespace Eggverse
                 check(elder.Elder && !ordinary.Elder, "and knows it");
             }
 
+            // ---- nothing in the menu takes an input to refuse it ----
+            {
+                // The salve has greyed itself out when it would be wasted since it was
+                // written, with a comment saying why. The carton did not until two commits ago
+                // and swapping did not until this one - it took the input and then said "No
+                // other egg is in any shape to fight."
+                var alone = new GameState(false);
+                alone.Party.Add(EggInstance.Wild("sprouteg", 12));
+                check(!BattleMode.CanSwap(alone, 0),
+                      "a party of one cannot swap");
+
+                var pair = new GameState(false);
+                pair.Party.Add(EggInstance.Wild("sprouteg", 12));
+                pair.Party.Add(EggInstance.Wild("cobblet", 12));
+                check(BattleMode.CanSwap(pair, 0), "a party of two can");
+
+                pair.Party[1].CurrentHP = 0;
+                check(!BattleMode.CanSwap(pair, 0),
+                      "and cannot once the other one is out cold");
+
+                // The egg already out does not count as somebody to swap to.
+                var three = new GameState(false);
+                for (int i = 0; i < 3; i++) three.Party.Add(EggInstance.Wild("sprouteg", 12));
+                three.Party[0].CurrentHP = 0;
+                three.Party[2].CurrentHP = 0;
+                check(!BattleMode.CanSwap(three, 1),
+                      "the one already standing there is not a swap target");
+
+                // The line it used to spend an input on still exists, for the case where an
+                // egg faints and the game has to say why nobody is coming out.
+                check(System.Array.IndexOf(UiCopy.BattleLines, UiCopy.NobodyLeft) >= 0,
+                      "the refusal line is still there for when it is the only thing to say");
+            }
+
             // ---- an empty stack says so ----
             {
                 // The supplies strip was fixed a while back so that running out reads as a
