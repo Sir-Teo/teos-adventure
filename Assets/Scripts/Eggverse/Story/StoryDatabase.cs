@@ -276,7 +276,105 @@ namespace Eggverse
         // ------------------------------------------------------------------
 
         /// <summary>The right conversation for this NPC given where the story currently stands.</summary>
+        public static NpcDef NpcById(string id)
+        {
+            for (int i = 0; i < Npcs.Length; i++) if (Npcs[i].Id == id) return Npcs[i];
+            return null;
+        }
+
+        /// <summary>
+        /// One line from each resident about the landmark on their own world, the first time you
+        /// talk to them after reading it.
+        ///
+        /// Every NPC lives on a world with a landmark, and six of the inscriptions name them
+        /// outright - Ori's notches, Sable's notebook, the chalk drawing signed VESS. Walking out
+        /// to read a stone and having nobody ever mention it made the landmarks feel like set
+        /// dressing rather than the place these people actually live.
+        /// </summary>
+        static string[] LandmarkAside(string npcId)
+        {
+            switch (npcId)
+            {
+                case "ori": return new[] {
+                    "You found the post. My father cut the first notch. I cut the one at my shoulder.",
+                    "The empty column is not for me. I started it the year you were born, if you must know." };
+                case "hob": return new[] {
+                    "The bell? I took the rope off it myself. Eleven years is long enough to keep flinching.",
+                    "I kept the rope, mind. That is not the same as throwing it out." };
+                case "nell": return new[] {
+                    "Forty stones, and I set the last four of them. My hand was not steady. It shows.",
+                    "The water is not coming in any faster. It is just not going back out." };
+                case "bram": return new[] {
+                    "Somebody cut that warning before I was born and nobody has argued with it since.",
+                    "I lower a line every spring. It has never come up wet. It has never come up dry either." };
+                case "sax": return new[] {
+                    "The Gannet. Eggs nest in her hold now, which is more use than she ever was to me.",
+                    "I scrubbed at that date a whole winter. Some things would rather not be read." };
+                case "marn": return new[] {
+                    "Count the strike-marks if you like. I stopped at four hundred and took up drinking.",
+                    "It is still standing. So am I. Neither of us can tell you why." };
+                case "tilda": return new[] {
+                    "You walked the fence, then. Everyone does once, and then everyone asks the same thing.",
+                    "I have the last stake. It goes back when somebody tells me what the tune was for." };
+                case "quill": return new[] {
+                    "Hundreds of clay eggs and not one of them fired. My mother's work. She meant to return.",
+                    "I keep the door propped. If the fire ever comes back it will find the shelves ready." };
+                case "vess1": return new[] {
+                    "Two hundred paces of good wall and then nothing. People assume the builder died.",
+                    "They did not. They worked out that the wall was not going to help, and set the stone down." };
+                case "sable": return new[] {
+                    "You read my notebook. It was not locked, so I can hardly complain about it.",
+                    "The same three words for two years. I write them because writing them is not nothing." };
+                case "moth": return new[] {
+                    "Sixty lamps. I lit every one, and it was exactly as dark as before. Warmer, though.",
+                    "The second note is mine. If you want to waste an evening, the oil is still in the tin." };
+                case "pim": return new[] {
+                    "The chalk mark is mine. That is where the note used to sit, before it came down.",
+                    "It has not shifted in eleven years. I check it each morning like a fool with a job." };
+                case "wren": return new[] {
+                    "Eleven years of nothing, recorded properly. Do not laugh. Nothing is a reading.",
+                    "The day it moves, somebody will want to know exactly how long it did not." };
+                case "vess2": return new[] {
+                    "You saw the drawing, then. I scrubbed at the name and could not finish the job.",
+                    "I was six. I drew a sun on a world that has not had one since." };
+                case "garrow": return new[] {
+                    "Nine hundred, near enough. I do not count them and I do not ask whose rock is whose.",
+                    "The oldest one is not mine. Somebody was doing this before the Belt came apart." };
+                case "lune": return new[] {
+                    "A sundial. On a world with no sun. My grandmother cut it there out of pure habit.",
+                    "I have never once thought that was stupid. I have thought a great many other things." };
+                default: return null;
+            }
+        }
+
+        /// <summary>
+        /// The aside rides on the front of whatever the NPC was going to say, rather than
+        /// replacing it. Replacing it would have swallowed Ori's "three, I said" nag, which is
+        /// the only thing telling a new player what to do next.
+        /// </summary>
         public static DialogueScript GetDialogue(string npcId, StoryState story, GameState state)
+        {
+            var script = NpcDialogue(npcId, story, state);
+            if (script == null || state == null) return script;
+
+            var npc = NpcById(npcId);
+            if (npc == null || !state.Landmarks.Contains(npc.PlanetId)) return script;
+            if (state.LandmarkAsides.Contains(npcId)) return script;
+
+            var aside = LandmarkAside(npcId);
+            if (aside == null) return script;
+            state.LandmarkAsides.Add(npcId);
+
+            var merged = new DialogueLine[aside.Length + script.Lines.Length];
+            for (int i = 0; i < aside.Length; i++) merged[i] = new DialogueLine(npc.Name, aside[i]);
+            for (int i = 0; i < script.Lines.Length; i++) merged[aside.Length + i] = script.Lines[i];
+
+            return new DialogueScript(merged, script.SetsFlag, script.StartsTrainer,
+                                      script.GivesSpeciesId, script.GivesSpeciesLevel,
+                                      script.HealsParty, script.RestocksCartons);
+        }
+
+        static DialogueScript NpcDialogue(string npcId, StoryState story, GameState state)
         {
             switch (npcId)
             {

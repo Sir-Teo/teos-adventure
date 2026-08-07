@@ -30,6 +30,7 @@ namespace Eggverse
         public string[] flags;
         public string[] caches;
         public string[] landmarks;
+        public string[] landmarkAsides;
         // Defaulted true, so a save written before the option existed loads with motion on.
         public bool screenMotion = true;
         // Defaults to normal, which is also what a file written before the option existed gets.
@@ -81,6 +82,7 @@ namespace Eggverse
                     cartons = state.Cartons,
                     caches = ToArray(state.Caches),
                     landmarks = ToArray(state.Landmarks),
+                    landmarkAsides = ToArray(state.LandmarkAsides),
                     screenMotion = state.ScreenMotion,
                     textSpeed = state.TextSpeed,
                     salves = state.Salves,
@@ -199,6 +201,7 @@ namespace Eggverse
                 // Caches before cartons: carton capacity is derived from them.
                 stale += AddKnown(state.Caches, data.caches, PlanetDatabase.HasCache);
                 stale += AddKnown(state.Landmarks, data.landmarks, id => LandmarkDatabase.For(id) != null);
+                stale += AddKnown(state.LandmarkAsides, data.landmarkAsides, id => StoryDatabase.NpcById(id) != null);
                 StaleEntriesDropped = stale;
                 state.Cartons = Mathf.Clamp(data.cartons, 0, state.MaxCartons);
                 state.Salves = Mathf.Clamp(data.salves, 0, GameState.MaxSalves);

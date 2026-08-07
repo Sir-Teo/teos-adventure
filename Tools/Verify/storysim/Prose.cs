@@ -91,6 +91,18 @@ static class Prose
         AddLayout("ending tally", UiCopy.VictoryTally(120, 24, 24, 8));
         for (int i = 0; i < UiCopy.RestIdle.Length; i++) Add("rest line " + i, UiCopy.RestIdle[i]);
 
+        // And what each resident says about their own world's landmark.
+        foreach (var npc in StoryDatabase.Npcs)
+        {
+            var lit = new GameState();
+            lit.Landmarks.Add(npc.PlanetId);
+            var plain = StoryDatabase.GetDialogue(npc.Id, new StoryState(), new GameState());
+            var withAside = StoryDatabase.GetDialogue(npc.Id, new StoryState(), lit);
+            if (plain == null || withAside == null) continue;
+            for (int i = 0; i < withAside.Lines.Length - plain.Lines.Length; i++)
+                Add(npc.Name + " aside", withAside.Lines[i].Text);
+        }
+
         // Landmarks are authored prose too - seventeen of them, read in the dialogue box.
         foreach (var lm in LandmarkDatabase.All)
         {

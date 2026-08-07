@@ -36,6 +36,9 @@ namespace Eggverse
         /// <summary>Ids of worlds whose landmark has been read. Nothing unlocks; it is a memory.</summary>
         public readonly HashSet<string> Landmarks = new HashSet<string>();
 
+        /// <summary>Npc ids who have already remarked on their world's landmark. Once each.</summary>
+        public readonly HashSet<string> LandmarkAsides = new HashSet<string>();
+
         /// <summary>Twelve, plus one for every cache dug up.</summary>
         public int MaxCartons
         {

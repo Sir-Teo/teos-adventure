@@ -983,6 +983,50 @@ namespace Eggverse
                     }
             }
 
+            // ---- landmark asides ----
+            {
+                // Every resident lives on a world that has a landmark, so every resident owes it
+                // a line. One missing is a world where you walk out, read a stone about somebody
+                // by name, come back, and they have nothing to say about it.
+                foreach (var npc in StoryDatabase.Npcs)
+                {
+                    var lm = LandmarkDatabase.For(npc.PlanetId);
+                    if (lm == null) continue;
+
+                    var withRead = new GameState();
+                    withRead.Landmarks.Add(npc.PlanetId);
+                    var virgin = new StoryState();
+
+                    var plain = StoryDatabase.GetDialogue(npc.Id, virgin, new GameState());
+                    var withAside = StoryDatabase.GetDialogue(npc.Id, virgin, withRead);
+                    if (plain == null) continue;
+
+                    check(withAside.Lines.Length > plain.Lines.Length,
+                          npc.Name + " remarks on " + lm.Name + " once you have read it");
+
+                    // It rides in front of the normal script - nothing the story needed is lost.
+                    check(withAside.SetsFlag == plain.SetsFlag &&
+                          withAside.StartsTrainer == plain.StartsTrainer &&
+                          withAside.GivesSpeciesId == plain.GivesSpeciesId &&
+                          withAside.HealsParty == plain.HealsParty &&
+                          withAside.RestocksCartons == plain.RestocksCartons,
+                          npc.Name + "'s aside does not swallow what the story needed him to do");
+
+                    for (int i = 0; i < withAside.Lines.Length - plain.Lines.Length; i++)
+                    {
+                        check(withAside.Lines[i].Speaker == npc.Name,
+                              npc.Name + "'s aside is spoken by " + npc.Name);
+                        check(lines(withAside.Lines[i].Text, 1380f, 28) == 1,
+                              npc.Name + "'s aside reads as one line: \"" + withAside.Lines[i].Text + "\"");
+                    }
+
+                    // Once, and then never again.
+                    var again = StoryDatabase.GetDialogue(npc.Id, virgin, withRead);
+                    check(again.Lines.Length == plain.Lines.Length,
+                          npc.Name + " only says it once");
+                }
+            }
+
             // ---- floating world labels ----
             {
                 // 420x90, and the hint under each title is drawn two to five points smaller
