@@ -176,6 +176,28 @@ than the rest. Planting the old `LevelUp` back in scores 0.113 — which passes 
 fails the adjacency one. A flat threshold cannot tell `Liftoff` against `Inscription`, heard on
 opposite sides of the game, from two sounds that land in the same second.
 
+## Which assertions never ran
+
+"Did anything fail" and "did everything get asked" are different questions, and a suite this size
+only ever answered the first. A check sitting inside a guard that is never true passes forever
+and proves nothing, and there is no way to spot one by reading.
+
+`SelfCheck.Check` is a delegate with `[CallerLineNumber]`, so every assertion records the line it
+was written on. `Coverage` reads `SelfCheck.cs`, finds every line that writes one, and reports the
+difference. 547 sites; 545 run.
+
+The two that do not are **declared tripwires** — an assertion meant never to fire, marked
+`// tripwire:` in the source with the reason. One is the story walk failing to advance. The other
+scans dialogue for a claim that every egg on the speaker's own world is one element; nobody
+currently writes such a line, so the corpus cannot exercise it. The corpus cannot be made to
+without writing a bad line on purpose, so **the detector is what gets tested** — including
+against Moth's "every egg carries a knack from its element", which is true, is about eggs
+everywhere rather than about Umbralux, and which an earlier version of the filter failed.
+
+Undeclared dead checks fail the suite. Guarding one assertion away is caught; guarding a block
+away is caught as seven. There is also a ceiling on how much of the suite may be tripwires, since
+a suite that is mostly tripwires checks nothing.
+
 ## Checks that pass and prove nothing
 
 ### The code agreeing with itself

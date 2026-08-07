@@ -17,11 +17,26 @@ namespace Eggverse
     /// </summary>
     public static class SelfCheck
     {
+        /// <summary>
+        /// An assertion, and where it was written.
+        ///
+        /// The line number is filled in by the compiler at the call site, which is the only way
+        /// to answer the question that matters about a suite this size: not "did anything fail"
+        /// but "did every check actually run". A check inside a guard that is never true passes
+        /// forever and proves nothing, and there is no way to see one by reading.
+        /// </summary>
+        public delegate void Check(bool ok, string what,
+                                   [System.Runtime.CompilerServices.CallerLineNumber] int line = 0);
+
         public class Report
         {
             public int Passed;
             public readonly List<string> Failures = new List<string>();
             public readonly List<string> Notes = new List<string>();
+
+            /// <summary>Every line of SelfCheck.cs that actually asserted something.</summary>
+            public readonly HashSet<int> LinesRun = new HashSet<int>();
+
             public bool Ok => Failures.Count == 0;
 
             public override string ToString()
@@ -40,8 +55,9 @@ namespace Eggverse
         public static Report Run()
         {
             var r = new Report();
-            Action<bool, string> check = (ok, what) =>
+            Check check = (ok, what, line) =>
             {
+                r.LinesRun.Add(line);
                 if (ok) r.Passed++;
                 else r.Failures.Add(what);
             };
@@ -58,7 +74,7 @@ namespace Eggverse
 
         // ------------------------------------------------------------------
 
-        static void Story(Report r, Action<bool, string> check)
+        static void Story(Report r, Check check)
         {
             var state = new GameState();
             var story = new StoryState();
@@ -86,6 +102,7 @@ namespace Eggverse
 
                 int before = story.BeatIndex;
                 story.Evaluate(state);
+                // tripwire: the walk advancing is the point; this only fires if it stops.
                 if (story.BeatIndex == before) { check(false, "story is stuck on beat '" + beat.Id + "'"); return; }
             }
             check(story.Finished, "the story can be played to its end");
@@ -147,7 +164,21 @@ namespace Eggverse
 
         // ------------------------------------------------------------------
 
-        static void Chart(Report r, Action<bool, string> check)
+        /// <summary>
+        /// Whether a line says every egg on the speaker's own world is one element. Both halves
+        /// matter: "every egg" alone is usually about eggs in general, and a locality phrase
+        /// alone is not a claim about elements.
+        /// </summary>
+        static bool ClaimsWholeWorld(string text, EggType t)
+        {
+            string low = (text ?? "").ToLowerInvariant();
+            if (!low.Contains("every egg") && !low.Contains("all the eggs")) return false;
+            if (!low.Contains("this rock") && !low.Contains("this world") &&
+                !low.Contains("this place") && !low.Contains("round here")) return false;
+            return low.Contains(TypeChart.Name(t).ToLowerInvariant());
+        }
+
+        static void Chart(Report r, Check check)
         {
             var types = new List<EggType>();
             foreach (EggType t in Enum.GetValues(typeof(EggType))) if (t != EggType.Plain) types.Add(t);
@@ -193,7 +224,7 @@ namespace Eggverse
 
         // ------------------------------------------------------------------
 
-        static void Progression(Report r, Action<bool, string> check)
+        static void Progression(Report r, Check check)
         {
             // ---- supplies ----
             {
@@ -255,7 +286,7 @@ namespace Eggverse
 
         // ------------------------------------------------------------------
 
-        static void Species(Report r, Action<bool, string> check)
+        static void Species(Report r, Check check)
         {
             var dexNumbers = new HashSet<int>();
             int families = 0;
@@ -320,7 +351,7 @@ namespace Eggverse
         /// Shell fields are where the eggs are. If they do not separate from the ground, the
         /// player cannot see where to walk — which is exactly what happened on the ice world.
         /// </summary>
-        static void Ground(Report r, Action<bool, string> check)
+        static void Ground(Report r, Check check)
         {
             float worst = 1f;
             string worstName = "";
@@ -337,7 +368,7 @@ namespace Eggverse
                         " at a luminance gap of " + worst.ToString("0.00"));
         }
 
-        static void Palette(Report r, Action<bool, string> check)
+        static void Palette(Report r, Check check)
         {
             var types = new List<EggType>();
             foreach (EggType t in Enum.GetValues(typeof(EggType))) types.Add(t);
@@ -391,7 +422,7 @@ namespace Eggverse
 
         // ------------------------------------------------------------------
 
-        static void Text(Report r, Action<bool, string> check)
+        static void Text(Report r, Check check)
         {
             // Estimated wrapped line count against the box each string is displayed in.
             Func<string, float, int, int> lines = (text, width, font) =>
@@ -2694,23 +2725,39 @@ namespace Eggverse
                         // Only claims pinned to the speaker's own world. The first version
                         // caught Moth saying "every egg carries a knack from its element" -
                         // true, and about eggs everywhere rather than about Umbralux.
-                        string low = line.Text.ToLowerInvariant();
-                        if (!low.Contains("every egg") && !low.Contains("all the eggs")) continue;
-                        if (!low.Contains("this rock") && !low.Contains("this world") &&
-                            !low.Contains("this place") && !low.Contains("round here")) continue;
-
                         foreach (EggType t in System.Enum.GetValues(typeof(EggType)))
                         {
-                            if (!low.Contains(TypeChart.Name(t).ToLowerInvariant())) continue;
+                            if (!ClaimsWholeWorld(line.Text, t)) continue;
                             bool allThat = true;
                             foreach (var sp in world.Spawns)
                                 if (SpeciesDatabase.Get(sp.SpeciesId).Type != t) allThat = false;
+                            // tripwire: nobody currently writes a line like this. The detector
+                            // itself is tested below, so this will notice when somebody does.
                             check(allThat,
                                   npc.Name + " does not overclaim " + TypeChart.Name(t) +
                                   " on " + world.Name + ": \"" + line.Text + "\"");
                         }
                     }
                 }
+
+                // Nothing in the cast currently writes a line like this, so the assertion above
+                // has never once run - which the coverage pass found and which is exactly the
+                // shape of check that passes forever and proves nothing.
+                //
+                // The corpus cannot be made to exercise it without writing a bad line on
+                // purpose, so the detector is what gets tested. If somebody later writes the
+                // sentence this exists to catch, these say the filter will notice.
+                check(ClaimsWholeWorld("Every egg on this rock is " + TypeChart.Name(EggType.Molten) + ", top to bottom.", EggType.Molten),
+                      "an overclaim about a whole world is recognised");
+                check(ClaimsWholeWorld("All the eggs round here are " + TypeChart.Name(EggType.Tidal) + ".", EggType.Tidal),
+                      "and so is the other way of saying it");
+
+                // And the false positive the filter was narrowed for. Moth's line is true and is
+                // about eggs everywhere, not about Umbralux; the first version failed it.
+                check(!ClaimsWholeWorld("Every egg carries a knack from its element.", EggType.Molten),
+                      "a claim about eggs everywhere is not read as a claim about one world");
+                check(!ClaimsWholeWorld("Every egg on this rock has a name.", EggType.Molten),
+                      "a claim with no element in it is not read as an element claim");
             }
 
             // ---- cold stations ----

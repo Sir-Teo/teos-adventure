@@ -334,6 +334,15 @@ class Sim {
         Console.WriteLine("== audio ==");
         // Beside the renders, not in a scratch directory belonging to one session. The music
         // loops have been written since they were written and nobody could find them.
+        // Which assertions never ran. Answering "did anything fail" is not the same as
+        // answering "did everything get asked".
+        {
+            var selfReport = SelfCheck.Run();
+            Coverage.Run(System.IO.Path.Combine(
+                System.IO.Path.GetDirectoryName(System.Reflection.Assembly.GetExecutingAssembly().Location) ?? ".",
+                "..", "..", "..", "..", "..", "..", "Assets", "Scripts", "Eggverse", "Verify", "SelfCheck.cs"),
+                selfReport.LinesRun, Check);
+        }
         AudioCheck.Run(System.IO.Path.Combine(
             System.IO.Path.GetDirectoryName(System.Reflection.Assembly.GetExecutingAssembly().Location) ?? ".",
             "..", "..", "..", "..", "audio"), Check);
