@@ -963,7 +963,8 @@ namespace Eggverse
                     // Reading it changes nothing and unlocks nothing. It is remembered because
                     // the player will want to know which ones they have found, and because a
                     // thing you found should stay found across a save.
-                    dir.State.Landmarks.Add(current.Id);
+                    bool firstReading = dir.State.Landmarks.Add(current.Id);
+                    if (firstReading) dir.Audio.Play(Sfx.Inscription);
                     dir.PlayDialogue(LandmarkScript(landmarkDef));
                 }
                 if (EggInput.LiftoffPressed) dir.LiftOff();

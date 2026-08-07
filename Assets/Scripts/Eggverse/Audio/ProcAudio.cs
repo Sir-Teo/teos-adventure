@@ -9,7 +9,7 @@ namespace Eggverse
         Hit, HitStrong, HitWeak, Crit,
         Faint, LevelUp, Evolve, Heal,
         CartonThrow, CartonWobble, CatchSuccess, CatchFail,
-        Encounter, Land, Liftoff, Talk, Chart, Save,
+        Encounter, Land, Liftoff, Talk, Chart, Save, Inscription,
         Debuff
     }
 
@@ -256,6 +256,15 @@ namespace Eggverse
                 case Sfx.Talk:
                     buf = Buffer(0.045f);
                     AddNote(buf, 0f, 0.035f, 420f, 400f, 0.10f, 1, 4f);
+                    break;
+
+                case Sfx.Inscription:
+                    // Stone, not machinery. A low struck note with a long tail and a fifth
+                    // above it - the only sound in the game that is older than the player.
+                    buf = Buffer(1.35f);
+                    AddNote(buf, 0f, 1.30f, 146.8f, 145.4f, 0.16f, 0, 1.1f);
+                    AddNote(buf, 0.02f, 1.10f, 220.0f, 219.0f, 0.09f, 0, 1.0f);
+                    AddNote(buf, 0.00f, 0.16f, 587.3f, 520.0f, 0.05f, 1, 5f);
                     break;
 
                 case Sfx.Chart:

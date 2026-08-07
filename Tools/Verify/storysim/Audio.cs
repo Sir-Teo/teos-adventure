@@ -83,6 +83,62 @@ static class AudioCheck
             }
             Console.WriteLine($"  {Enum.GetValues(typeof(Sfx)).Length} effects checked, none silent, quietest {quietestName} at {quietest:0.00}");
 
+            // Every effect above was measured on its own. The one that matters is the one that
+            // is never heard on its own: reading an inscription rings a 1.3s stone note and then
+            // the dialogue box types over the whole of it, one blip per revealed character. A
+            // sound that is clean alone and clips against its own typewriter is a defect you can
+            // only hear, so mix them here at a cadence faster than any real reveal.
+            {
+                var stone = (float[])sfxMethod.Invoke(null, new object[] { Sfx.Inscription });
+                var blip = (float[])sfxMethod.Invoke(null, new object[] { Sfx.Talk });
+                var mix = (float[])stone.Clone();
+                int step = (int)(SR * 0.03f);
+                for (int at = 0; at < mix.Length; at += step)
+                    for (int i = 0; i < blip.Length && at + i < mix.Length; i++)
+                        mix[at + i] += blip[i];
+
+                // Clipping is the wrong question here, and planting proved it: the note has to
+                // clip on its own before the mix does, because the blips never land on its peak.
+                // The real risk is masking - a sound that is technically playing and cannot be
+                // picked out of the noise on top of it is a sound nobody hears.
+                var blipsOnly = new float[mix.Length];
+                for (int at = 0; at < blipsOnly.Length; at += step)
+                    for (int i = 0; i < blip.Length && at + i < blipsOnly.Length; i++)
+                        blipsOnly[at + i] += blip[i];
+
+                float mixPeak = 0f, mixSum = 0f, blipSum = 0f;
+                for (int i = 0; i < mix.Length; i++)
+                {
+                    mixPeak = Math.Max(mixPeak, Math.Abs(mix[i]));
+                    mixSum += mix[i] * mix[i];
+                    blipSum += blipsOnly[i] * blipsOnly[i];
+                }
+                float mixRms = (float)Math.Sqrt(mixSum / mix.Length);
+                float blipRms = (float)Math.Sqrt(blipSum / blipsOnly.Length);
+                float lift = mixRms / Math.Max(0.00001f, blipRms);
+
+                float stoneSum = 0f;
+                foreach (var v in stone) stoneSum += v * v;
+                float stoneRms = (float)Math.Sqrt(stoneSum / stone.Length);
+
+                Console.WriteLine($"  inscription under a full typewriter: peak {mixPeak:0.000}, " +
+                                  $"note rms {stoneRms:0.0000} vs typewriter {blipRms:0.0000} " +
+                                  $"({lift:0.00}x together)");
+                check(mixPeak <= 1.0f, $"the inscription does not clip while the text types (peak {mixPeak:0.000})");
+
+                // The falsifiable form: the note has to be louder than the blips laid over it.
+                // A ratio threshold picked out of the air was so lenient that cutting the note
+                // to a fifth of its amplitude still passed, which is not a check.
+                check(stoneRms > blipRms,
+                      $"the inscription is louder than the typewriter over it " +
+                      $"({stoneRms:0.0000} vs {blipRms:0.0000})");
+
+                // And it has to still be ringing when the line finishes, or it is just a click
+                // at the start of a paragraph.
+                check(stone.Length > SR * 0.8f,
+                      $"the inscription outlasts the line it opens ({stone.Length / (float)SR:0.0}s)");
+            }
+
             // Nothing was ever comparing one effect against another. A sound is not just
             // audible or clipping - it is loud or quiet *relative to the ones around it*, and a
             // single effect several times the loudness of its neighbours is the one that makes a
