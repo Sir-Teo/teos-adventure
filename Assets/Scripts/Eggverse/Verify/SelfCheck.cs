@@ -447,6 +447,21 @@ namespace Eggverse
             check(lines("Cartons 12/12 · Salves 4/4", 524f, 19) == 1, "the HUD supply line wraps");
             check(lines("Nest 240 · Types 8/8 · Record 24/24", 524f, 19) == 1, "the HUD collection line wraps");
 
+            // ---- the catch toast ----
+            // The most repeated message in the game. It has to fit the 1000px toast bar for the
+            // longest name in the roster, in every combination of Elder and new-to-the-record.
+            foreach (var sp in SpeciesDatabase.All)
+            {
+                string who = "Elder " + sp.Name;
+                foreach (bool joined in new[] { true, false })
+                {
+                    string where = joined ? who + " joined your party." : who + " is waiting at the nest.";
+                    string toast = "An Elder! " + where + "  New to the record.";
+                    check(lines(toast, 1000f - 40f, 24) == 1,
+                          "catch toast fits: \"" + toast + "\"");
+                }
+            }
+
             // ---- prose that states a number the code owns ----
             // Some lines read better with the word in them than with a substitution: Nell saying
             // "Twelve is all you get between rests" is better writing than "12 is all you get".

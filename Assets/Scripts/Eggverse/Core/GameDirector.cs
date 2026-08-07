@@ -463,7 +463,18 @@ namespace Eggverse
             switch (outcome)
             {
                 case BattleOutcome.Caught:
-                    Hud.Toast("Egg collected!");
+                    // The battle screen has already said "Gotcha!". The useful thing left to say
+                    // is where the egg went - a player who does not know it went to the nest will
+                    // not think to go and trade it in - and whether the record just grew.
+                    {
+                        string who = string.IsNullOrEmpty(Battle.LastCatchName) ? "It" : Battle.LastCatchName;
+                        string where = Battle.LastCatchJoinedParty
+                            ? who + " joined your party."
+                            : who + " is waiting at the nest.";
+                        if (Battle.LastCatchWasElder) where = "An Elder! " + where;
+                        if (Battle.LastCatchWasNewSpecies) where += "  New to the record.";
+                        Hud.Toast(where);
+                    }
                     break;
 
                 case BattleOutcome.Lost:

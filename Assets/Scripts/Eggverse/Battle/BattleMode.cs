@@ -44,6 +44,13 @@ namespace Eggverse
         bool IsTrainer => !string.IsNullOrEmpty(trainerName);
         bool battleOver;
         BattleOutcome outcome;
+
+        /// <summary>What the last catch was, so the toast afterwards can say something the
+        /// battle screen did not already say.</summary>
+        public string LastCatchName { get; private set; }
+        public bool LastCatchJoinedParty { get; private set; }
+        public bool LastCatchWasNewSpecies { get; private set; }
+        public bool LastCatchWasElder { get; private set; }
         PlayerAction chosenAction;
         int chosenParam;
         Coroutine routine;
@@ -746,7 +753,12 @@ namespace Eggverse
             {
                 dir.Audio.Play(Sfx.CatchSuccess);
                 var prize = Foe;
+                // Recorded before Collect, which is what adds it to the record.
+                LastCatchWasNewSpecies = !State.Caught.Contains(prize.Species.Id);
+                LastCatchWasElder = prize.Elder;
                 bool intoParty = State.Collect(prize);
+                LastCatchName = prize.Name;
+                LastCatchJoinedParty = intoParty;
                 yield return Say("Gotcha! " + prize.Name + " was collected!");
 
                 // Offer a nickname, but never force the player through a text prompt.
