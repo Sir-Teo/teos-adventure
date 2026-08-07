@@ -283,6 +283,22 @@ These are not hypothetical checks — between them they caught a story gate that
 type chart where Stone dominated five other elements, a Tidal world with no obtainable counter,
 and two colours indistinguishable to the commonest form of colour blindness.
 
+### Prose
+
+A separate pass reads every string the game can put on screen — 291 of them — out of the
+databases rather than out of the source. The first attempt grepped the `.cs` files and matched
+across string boundaries, reporting code as dialogue; the data cannot misreport what it holds.
+
+It walks the story one flag at a time rather than jumping from "nothing set" to "everything
+set", because several conversations only exist in between: Ori's briefing, the one place the
+Keepers are named, needs `met_ori` set and `ori_briefed` not.
+
+It checks doubled words, double spaces, stray whitespace, space before punctuation, and that
+apostrophes and ellipses each pick one convention and keep it (currently 90 straight, 0 curly;
+10 ASCII, 0 unicode). It also checks the invented nouns — Nest Station, Prime Egg, Elder,
+Keeper, the sector names — are capitalised the same way everywhere, skipping sentence-initial
+uses so ordinary grammar is not mistaken for drift.
+
 ## What is still not verified
 
 **Actual rendering.** Text overflow inside correctly-sized panels, font legibility, sprite draw
