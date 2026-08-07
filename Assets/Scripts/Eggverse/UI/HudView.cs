@@ -230,18 +230,20 @@ namespace Eggverse
             UIKit.Stretch(bg.rectTransform, 0, 0, 0, 0);
 
             var heading = UIKit.Label(titlePanel, "Heading", UiCopy.Title, 96, UIKit.Accent, TextAnchor.MiddleCenter, FontStyle.Bold);
-            UIKit.Place(heading.rectTransform, new Vector2(0.5f, 0.5f), new Vector2(0.5f, 0.5f), new Vector2(0f, 250f), new Vector2(1200f, 120f));
+            // 268, not 250. With the subtitle at 158 the two boxes cleared each other by 7px,
+            // which is legal and reads as a 34pt line resting on the descenders of a 96pt one.
+            UIKit.Place(heading.rectTransform, new Vector2(0.5f, 0.5f), new Vector2(0.5f, 0.5f), UiLayout.TitleHeadingAt, UiLayout.TitleHeadingSize);
 
             var sub = UIKit.Label(titlePanel, "Sub", UiCopy.Subtitle, 34, UIKit.Ink, TextAnchor.MiddleCenter);
-            // 158, not 170: the heading's box runs down to +190 and the subtitle's ran up to
-            // +195, so they overlapped by 5px. The glyphs are centred inside their boxes so it
-            // never showed, which is exactly the kind of thing that stops being invisible the
-            // moment a font or a size changes.
-            UIKit.Place(sub.rectTransform, new Vector2(0.5f, 0.5f), new Vector2(0.5f, 0.5f), new Vector2(0f, 158f), new Vector2(1200f, 50f));
+            // 150, with the heading at 268: 33px of air between them instead of 7.
+            UIKit.Place(sub.rectTransform, new Vector2(0.5f, 0.5f), new Vector2(0.5f, 0.5f), UiLayout.TitleSubAt, UiLayout.TitleSubSize);
 
+            // Centred in its box, not hung from the top of it. The box is 460 tall and the
+            // copy is 334, so the block sat high and left 126px of the slack at the bottom -
+            // which is where the gap before "press SPACE to begin" came from.
             var body = UIKit.Label(titlePanel, "Body", UiCopy.TitleBody,
-                24, UIKit.Ink, TextAnchor.UpperCenter);
-            UIKit.Place(body.rectTransform, new Vector2(0.5f, 0.5f), new Vector2(0.5f, 0.5f), new Vector2(0f, -110f), new Vector2(1500f, 460f));
+                24, UIKit.Ink, TextAnchor.MiddleCenter);
+            UIKit.Place(body.rectTransform, new Vector2(0.5f, 0.5f), new Vector2(0.5f, 0.5f), UiLayout.TitleBodyAt, UiLayout.TitleBodySize);
 
             titleHint = UIKit.Label(titlePanel, "Hint", UiCopy.BeginHint, 30, UIKit.Accent, TextAnchor.MiddleCenter, FontStyle.Bold);
             UIKit.Place(titleHint.rectTransform, new Vector2(0.5f, 0f), new Vector2(0.5f, 0f), new Vector2(0f, 96f), new Vector2(1300f, 40f));
@@ -261,7 +263,7 @@ namespace Eggverse
             // 186, not 156: at 156 the two boxes cleared each other by 11px, which was legal and
             // looked it - an 82pt heading sitting straight on the first line of the scene under
             // it. The body grew taller when the ending became a scene, so the heading moves up.
-            UIKit.Place(heading.rectTransform, new Vector2(0.5f, 0.5f), new Vector2(0.5f, 0.5f), new Vector2(0f, 186f), new Vector2(1400f, 110f));
+            UIKit.Place(heading.rectTransform, new Vector2(0.5f, 0.5f), new Vector2(0.5f, 0.5f), UiLayout.EndHeadingAt, UiLayout.EndHeadingSize);
 
             // Centred in the box, not hung from its top. The box is sized for the longer of the
             // two endings, so the ordinary one sat high with 170px of nothing under it. Centring
@@ -270,7 +272,7 @@ namespace Eggverse
             // 460 tall, not 300: the ending is a scene now rather than two lines, and a player
             // who read all seventeen inscriptions gets three more. Anchored lower so the top
             // edge stays where it was, below the heading.
-            UIKit.Place(body.rectTransform, new Vector2(0.5f, 0.5f), new Vector2(0.5f, 0.5f), new Vector2(0f, -140f), new Vector2(1300f, 460f));
+            UIKit.Place(body.rectTransform, new Vector2(0.5f, 0.5f), new Vector2(0.5f, 0.5f), UiLayout.EndBodyAt, UiLayout.EndBodySize);
             body.name = "VictoryBody";
 
             var hint = UIKit.Label(victoryPanel, "Hint", "press SPACE to keep exploring", 26, UIKit.InkDim, TextAnchor.MiddleCenter);

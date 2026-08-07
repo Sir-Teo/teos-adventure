@@ -1,5 +1,6 @@
 using System;
 using System.Collections.Generic;
+using Eggverse;
 
 /// I cannot render a frame, but uGUI anchor maths is arithmetic — so the panel rectangles
 /// can be reproduced here and checked for overflow and unintended overlap.
@@ -138,7 +139,7 @@ static class Layout
 
         // ---- the ending card, drawn straight onto the screen ----
         CheckScreen(check, "victory", Inside(1920f, 1080f,
-            ("Heading", 0.5f, 0.5f, 0.5f, 0.5f, 0f,  156f, 1400f, 110f),
+            ("Heading", 0.5f, 0.5f, 0.5f, 0.5f, 0f,  UiLayout.EndHeadingAt.y, UiLayout.EndHeadingSize.x, UiLayout.EndHeadingSize.y),
             ("Body",    0.5f, 0.5f, 0.5f, 0.5f, 0f,  -60f, 1300f, 300f),
             ("Hint",    0.5f, 0f,   0.5f, 0f,   0f,   80f,  800f,  34f)));
 
@@ -155,9 +156,9 @@ static class Layout
         // overlapping by 5px, hidden because both are vertically centred inside their boxes.
         var titleCard = new List<Box>
         {
-            Place("Heading",   0.5f, 0.5f, 0.5f, 0.5f,  0f,  250f, 1200f, 120f),
+            Place("Heading",   0.5f, 0.5f, 0.5f, 0.5f,  0f,  UiLayout.TitleHeadingAt.y, UiLayout.TitleHeadingSize.x, UiLayout.TitleHeadingSize.y),
             Place("Subtitle",  0.5f, 0.5f, 0.5f, 0.5f,  0f,  158f, 1200f,  50f),
-            Place("TitleBody", 0.5f, 0.5f, 0.5f, 0.5f,  0f, -110f, 1500f, 460f),
+            Place("TitleBody", 0.5f, 0.5f, 0.5f, 0.5f,  0f, UiLayout.TitleBodyAt.y, UiLayout.TitleBodySize.x, UiLayout.TitleBodySize.y),
             Place("BeginHint", 0.5f, 0f,   0.5f, 0f,    0f,   96f, 1300f,  40f),
             Place("SaveLine",  0.5f, 0f,   0.5f, 0f,    0f,   62f, 1300f,  28f),
         };

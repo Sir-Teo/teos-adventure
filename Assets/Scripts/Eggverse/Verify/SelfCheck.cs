@@ -1913,6 +1913,22 @@ namespace Eggverse
                 }
                 check(lines(UiCopy.VictoryHeading, 1400f, 82) == 1, "the ending heading fits");
 
+                // Air, not merely absence of overlap. The title's 96pt wordmark cleared its
+                // subtitle by 7px and the ending's 82pt heading cleared its body by 11px; both
+                // passed the overlap check and both read as a small line resting on a large
+                // one's descenders. Overlap is the wrong question for a heading.
+                float titleGap = UiLayout.GapBetween(UiLayout.TitleHeadingAt, UiLayout.TitleHeadingSize,
+                                                     UiLayout.TitleSubAt, UiLayout.TitleSubSize);
+                check(titleGap >= UiLayout.MinHeadingGap,
+                      "the wordmark has air under it (" + titleGap.ToString("0") + "px, needs " +
+                      UiLayout.MinHeadingGap + ")");
+
+                float endGap = UiLayout.GapBetween(UiLayout.EndHeadingAt, UiLayout.EndHeadingSize,
+                                                   UiLayout.EndBodyAt, UiLayout.EndBodySize);
+                check(endGap >= UiLayout.MinHeadingGap,
+                      "the ending heading has air under it (" + endGap.ToString("0") + "px, needs " +
+                      UiLayout.MinHeadingGap + ")");
+
                 // The card must not contradict the scene it follows. Amy is relieved, not
                 // beaten; she says so in her own last lines, and the card used to say otherwise.
                 check(!UiCopy.VictoryHeading.Contains("BEATEN") && !UiCopy.VictoryBody.Contains("cracked it"),

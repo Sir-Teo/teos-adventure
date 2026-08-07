@@ -43,13 +43,16 @@ static class Title
 
         float cx = Battle.W / 2f, cy = Battle.H / 2f;
 
-        Battle.TextCentre(c, UiCopy.Title, cx, cy + 250f + 24f, 96, Battle.Accent);
-        Battle.TextCentre(c, UiCopy.Subtitle, cx, cy + 170f + 12f, 34, Battle.Ink);
+        // The game's own placement. The subtitle was drawn at +170 here against the view's
+        // +158 - twelve pixels of drift in the one gap that was already the tightest on the
+        // screen, so the render was flattering it.
+        Battle.TextCentre(c, UiCopy.Title, cx, cy + 268f + 24f, 96, Battle.Accent);
+        Battle.TextCentre(c, UiCopy.Subtitle, cx, cy + 150f + 12f, 34, Battle.Ink);
 
-        // Body: 1500x460 anchored at centre + (0,-110), drawn from the top of that box.
-        float top = cy - 110f + 230f;
+        // Body: 1500x460 centred at (0,-110), so the block is laid out from its own height.
         float step = 24f * 1.16f;
         var lines = UiCopy.TitleBody.Split('\n');
+        float top = cy - 110f + (lines.Length * step) * 0.5f - step * 0.5f;
         for (int i = 0; i < lines.Length; i++)
         {
             float y = top - i * step;
