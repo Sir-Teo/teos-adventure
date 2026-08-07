@@ -240,84 +240,134 @@ namespace Eggverse
                 case "pim": return PimDialogue(story);
                 case "vess2": return VessTwoDialogue(story);
 
-                case "hob": return Resident("Hob", new[]
+                case "hob": return Resident(story, "Hob", new[]
                 {
                     "Forty years I've farmed ash. You learn the trick of it: never fight fire with fire.",
                     "Every egg on this rock is Molten. Bring something wet, or something clever, and you'll walk out with a full carton.",
                     "Bring another Molten and you'll walk out carrying it.",
+                }, new[]
+                {
+                    "Ash is warm again. Not hot. *Warm.* Forty years, I know the difference.",
+                    "And you did it the way I would have told you to, near enough. Brought something that was not fire.",
                 }, true);
 
-                case "nell": return Resident("Nell", new[]
+                case "nell": return Resident(story, "Nell", new[]
                 {
                     "Watch how I do it. You don't grab a healthy egg — it just kicks out and you've lost a carton.",
                     "You wear it down first. Get it low, then throw. The difference is night and day, I promise you.",
                     "And keep an eye on the carton count. Twelve is all you get between rests.",
+                }, new[]
+                {
+                    "Caught six before breakfast and never broke a sweat. They are *lively* again.",
+                    "You can tell, you know. A cold egg does not kick. These kick.",
                 }, true);
 
-                case "bram": return Resident("Bram", new[]
+                case "bram": return Resident(story, "Bram", new[]
                 {
                     "Careful round the wells. They go down further than the planet ought to allow.",
                     "You've got a young one there. Keep it fighting and it'll crack — properly crack, I mean, and come out bigger.",
                     "Mine did it twice. Went in a Sprouteg, came out something I needed both arms for.",
+                }, new[]
+                {
+                    "Wells have gone quiet. The good quiet — the kind where nothing is being pulled down them.",
+                    "My old Bloomolk cracked again last night. Third time. I did not know they could.",
                 }, false);
 
-                case "sax": return Resident("Sax", new[]
+                case "sax": return Resident(story, "Sax", new[]
                 {
                     "Mind the hulls. Half of them are still full of eggs and the other half are still full of sea.",
                     "Rule of the wreck: when a fight turns against you, pull the egg out. Swapping costs you a turn, losing costs you the egg.",
                     "Nobody who bled out down here did it because they couldn't swim. They did it because they wouldn't let go.",
+                }, new[]
+                {
+                    "Tide came in warm. First time since I got here.",
+                    "You knew when to pull an egg out and when to hold on. That is the whole job. Most only ever learn the one half.",
                 }, true);
 
-                case "quill": return Resident("Quill", new[]
+                case "quill": return Resident(story, "Quill", new[]
                 {
                     "Don't tell me where you've been. Tell me where you haven't — that's the interesting map.",
                     "You've a chart of your own, haven't you? Press M and look at it properly.",
                     "Anywhere you've already set foot, you can jump straight back to. No sense flying the same dark twice.",
+                }, new[]
+                {
+                    "So. Where have you not been?",
+                    "Do not answer. I have seen your chart. There is nothing left on it you have not stood on.",
+                    "Come back when somebody draws a new one.",
                 }, false);
 
-                case "moth": return Resident("Moth", new[]
+                case "moth": return Resident(story, "Moth", new[]
                 {
                     "Light's a habit, not a need. You'll adjust.",
                     "Here's a thing worth knowing: every egg carries a knack from its element. Void ones can't be rattled — you can't lower what they've got.",
                     "The green ones mend themselves as they fight. The stone ones will not go down from full health, not for anything.",
                     "Learn the eight and you'll never be surprised twice.",
+                }, new[]
+                {
+                    "Light has come back a little. I had got so used to the habit I nearly resented it.",
+                    "Every egg on this rock stood up straighter the same hour. All eight knacks at once. You do not see that.",
                 }, true);
 
-                case "lune": return Resident("Lune", new[]
+                case "lune": return Resident(story, "Lune", new[]
                 {
                     "You came over the fen without a lamp. Brave, or you didn't know it was a fen.",
                     "Here — take a salve while you're standing still. Nobody thinks to use one mid-fight, and that's the only time it counts.",
                     "It costs you the turn, mind. You'll take a hit for it. But an egg that's still standing is worth more than a turn.",
                     "Four in a stack, same as your cartons. Any Nest Station will fill both.",
+                }, new[]
+                {
+                    "The fen is throwing shadows. Ours, I mean. We have them again.",
+                    "Keep the salves on you. The habit is worth more than the stack.",
                 }, true);
 
-                case "tilda": return Resident("Tilda", new[]
+                case "tilda": return Resident(story, "Tilda", new[]
                 {
                     "Mind the heather. It's not the ground that's charged, it's the air above it.",
                     "You'll have seen the little arrows on an egg's card — the up ones and the down ones. Those aren't decoration.",
                     "A move that drops the other one's speed sticks for the whole fight. Two of those and you're going first every round, whatever it was born with.",
                     "Half of winning up here is deciding who moves first. The other half is remembering you decided it.",
+                }, new[]
+                {
+                    "Heather is humming a whole tone up. I have had to retune every fence on the moor.",
+                    "So you worked out who moves first. Good. Most never do.",
                 }, true);
 
-                case "garrow": return Resident("Garrow", new[]
+                case "garrow": return Resident(story, "Garrow", new[]
                 {
                     "Every cairn out there is somebody's rock. I stack them; I don't ask whose.",
                     "You'll meet a big one eventually. Older, three levels past its neighbours, and lit up round the shell.",
                     "Don't throw early at those. They sit in the carton twice as hard as an ordinary egg — get it right down first or you'll spend the whole stack.",
                     "Worth it, though. They come up faster than anything you'll raise from a hatchling.",
+                }, new[]
+                {
+                    "Stacked one for you. Small one, mind — you are not dead, it would be rude to make it big.",
+                    "The old ones are coming out of the rock again. Big, lit up round the shell. Years since the Belt had Elders in it.",
                 }, true);
 
-                case "wren": return Resident("Wren", new[]
+                case "wren": return Resident(story, "Wren", new[]
                 {
                     "...",
                     "Sorry. You get out of the habit of talking.",
                     "The instruments read nothing here. No temperature, no mass, no sound. And yet the eggs sit perfectly happy in it.",
                     "Which tells you the cold isn't a *place*. It's a direction. Something upstream is drinking, and this is just where the river runs dry.",
                     "Go north and see. I've had eleven years to and I never did.",
+                }, new[]
+                {
+                    "The instruments read something.",
+                    "Not much. A temperature. It has been eleven years since this place had a temperature.",
+                    "You went north. I never did. I am glad one of us was going to.",
                 }, true);
             }
             return null;
         }
+
+        /// <summary>
+        /// A resident who has something different to say once the nests are warm again.
+        /// Everyone on every world felt this happen; it would be strange if only the keepers did.
+        /// </summary>
+        static DialogueScript Resident(StoryState story, string speaker, string[] lines,
+                                       string[] afterAmy, bool rests) =>
+            Resident(speaker, story.HasFlag("beat_amy") && afterAmy != null ? afterAmy : lines, rests);
 
         /// <summary>A short, repeatable conversation from a non-story resident.</summary>
         static DialogueScript Resident(string speaker, string[] lines, bool rests)

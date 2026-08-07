@@ -43,8 +43,17 @@ size is never fixed, it is *carried*"); **Pim** hears the Belt's one flat note c
 and **Vess** — who wanted to break the Prime rather than hold it — concedes she only ever counted
 to two, and asks whether Amy is all right.
 
-The self-check enforces this: every named character must say something different once `beat_amy`
-is set. All five of them spoke their mid-game lines over the credits until something checked.
+All sixteen react, not just the keepers. Hob's ash is warm again, not hot — "forty years, I know
+the difference". Nell's eggs kick when she throws at them. Wren's instruments read a temperature
+for the first time in eleven years. Garrow has stacked you a cairn, a small one, "you are not dead,
+it would be rude to make it big".
+
+The self-check enforces this: **every** character in the cast must say something different once
+`beat_amy` is set. All of them spoke their mid-game lines over the credits until something checked.
+
+A second check walks the dialogue tree to a fixed point and requires every beat's prerequisite
+flag to be inside the set of flags something can actually grant. A gate nothing opens is a
+soft-lock, and a one-character typo in a flag name is all it takes; the check names the beat.
 
 ## The loop
 
