@@ -225,7 +225,7 @@ namespace Eggverse
                 foreach (var p in PlanetDatabase.All)
                     if ((int)p.Sector <= (int)sector)
                         foreach (var s in p.Spawns)
-                            if (SpeciesDatabase.Get(s.SpeciesId).CatchRate >= 20) reachable.Add(s.SpeciesId);
+                            if (SpeciesDatabase.Get(s.SpeciesId).CatchRate >= SpeciesDatabase.CatchableThreshold) reachable.Add(s.SpeciesId);
 
                 foreach (var p in PlanetDatabase.All)
                 {
@@ -247,7 +247,7 @@ namespace Eggverse
                     foreach (var s in p.Spawns)
                     {
                         var sp = SpeciesDatabase.Get(s.SpeciesId);
-                        if (sp.Type == t && sp.CatchRate >= 20) available = true;
+                        if (sp.Type == t && sp.CatchRate >= SpeciesDatabase.CatchableThreshold) available = true;
                     }
                 check(available, t + " eggs are catchable somewhere");
             }
@@ -939,7 +939,7 @@ namespace Eggverse
                     if (w.IsBossWorld) continue;
                     int catchable = 0;
                     foreach (var sp in w.Spawns)
-                        if (SpeciesDatabase.Get(sp.SpeciesId).CatchRate >= 20) catchable++;
+                        if (SpeciesDatabase.Get(sp.SpeciesId).CatchRate >= SpeciesDatabase.CatchableThreshold) catchable++;
 
                     foreach (var owed in new[]
                     {
@@ -1027,6 +1027,37 @@ namespace Eggverse
                         check(lines(course, 848f, 22) == 1,
                               "chart course line is one line for " + w.Name + ": " + course);
                     }
+            }
+
+            // ---- the chart marks worlds you have not finished ----
+            {
+                // Choosing where to fly meant selecting each of seventeen worlds in turn to
+                // read what it still owed you. The hollow ring is the same mark the field
+                // record uses for an unrecorded species, so it means one thing in both places.
+                var fresh = new GameState();
+                var home = PlanetDatabase.Home;
+                check(fresh.EggFromOri != null, "the fresh state is the one a player starts in");
+
+                // A world whose whole roster is recorded owes nothing.
+                var doneWithHome = new GameState();
+                foreach (var sp in home.Spawns) doneWithHome.Caught.Add(sp.SpeciesId);
+
+                // Through the game's own counter, not a second copy of the same loop. The first
+                // version of this check recomputed it here, so planting a fault in the real one
+                // changed nothing and the suite passed.
+                int owedFresh = fresh.UnrecordedOn(home);
+                int owedDone = doneWithHome.UnrecordedOn(home);
+                check(owedFresh > 0, home.Name + " owes a new player something (" + owedFresh + ")");
+                check(owedDone == 0, home.Name + " owes nothing once its roster is recorded");
+
+                // Every world must be finishable, or the mark would never clear.
+                foreach (var w in PlanetDatabase.All)
+                {
+                    if (w.Spawns == null) continue;
+                    var all = new GameState(false);
+                    foreach (var sp in w.Spawns) all.Caught.Add(sp.SpeciesId);
+                    check(all.UnrecordedOn(w) == 0, w.Name + " can be finished");
+                }
             }
 
             // ---- the egg Ori gave you ----

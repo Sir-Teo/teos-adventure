@@ -15,6 +15,10 @@ static class Battle
     {
         var f = new Dictionary<char, string[]>();
         void G(char c, string rows) => f[c] = rows.Split('|');
+        // The hollow ring the chart puts on a world you have walked and not finished, and the
+        // field record puts on a species you have not caught.
+        G('\u25cb', ".###.|#...#|#...#|#...#|#...#|#...#|.###.");
+
         // The semicolon, which the ending's first line uses. It was printing as
         // "IT IS NOT A CEREMONY? SHE SHIFTS HER WEIGHT".
         G(';', ".....|..##.|..##.|.....|..##.|..#..|.#...");

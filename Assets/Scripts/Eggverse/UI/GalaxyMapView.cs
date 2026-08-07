@@ -324,7 +324,16 @@ namespace Eggverse
                 else if (!visited) suffix = "<color=#8A90A2>· uncharted</color>";
                 else if (PresenceAt(m.Def) == Presence.Landed) suffix = "<color=#FFC24D>· you are here</color>";
                 else if (PresenceAt(m.Def) == Presence.InOrbit) suffix = "<color=#FFC24D>· in orbit</color>";
-                else suffix = "<color=#A8B2C4>Lv " + m.Def.MinLevel + "-" + m.Def.MaxLevel + "</color>";
+                else
+                {
+                    // A world you have walked and not finished. The hollow ring is the same mark
+                    // the field record uses for a species you have not recorded, so it means the
+                    // same thing in both places - and it appears only on worlds you have been to,
+                    // because it is your own record talking rather than the game pointing.
+                    int owed = state.UnrecordedOn(m.Def);
+                    suffix = "<color=#A8B2C4>Lv " + m.Def.MinLevel + "-" + m.Def.MaxLevel + "</color>" +
+                             (owed > 0 ? "  <color=#FFC24D>\u25cb</color>" : "");
+                }
 
                 string nameColor = sectorOpen ? "#F2F5FA" : "#5A6072";
                 m.Label.text = "<color=" + nameColor + ">" + m.Def.Name + "</color>\n<size=15>" + suffix + "</size>";

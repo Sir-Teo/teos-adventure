@@ -153,6 +153,24 @@ namespace Eggverse
             }
         }
 
+        /// <summary>
+        /// Catchable species on a world that are not yet in the record. On the state rather
+        /// than the director because the checks need it too - the first version lived on
+        /// GameDirector, the check reimplemented the same loop to get at it, and planting a
+        /// fault in the real one changed nothing at all.
+        /// </summary>
+        public int UnrecordedOn(PlanetDef planet)
+        {
+            if (planet == null || planet.Spawns == null) return 0;
+            int missing = 0;
+            for (int i = 0; i < planet.Spawns.Length; i++)
+            {
+                var sp = SpeciesDatabase.Get(planet.Spawns[i].SpeciesId);
+                if (sp.CatchRate >= SpeciesDatabase.CatchableThreshold && !Caught.Contains(sp.Id)) missing++;
+            }
+            return missing;
+        }
+
         /// <summary>The egg Ori gave you, wherever it is now, or null if you let it go.</summary>
         public EggInstance EggFromOri
         {

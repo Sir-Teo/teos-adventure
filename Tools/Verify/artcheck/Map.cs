@@ -67,6 +67,28 @@ static class Map
                 }
             Battle.TextCentre(c, def.Name, px, py - dot * 0.66f - 6, 18,
                               seen ? Battle.Ink : Battle.InkDim);
+
+            // The suffix line under each name, at the size the chart draws it.
+            if (seen)
+            {
+                var owing = new Eggverse.GameState();
+                int owed = 0;
+                foreach (var sp in def.Spawns)
+                    if (Eggverse.SpeciesDatabase.Get(sp.SpeciesId).CatchRate >=
+                            Eggverse.SpeciesDatabase.CatchableThreshold &&
+                        !owing.Caught.Contains(sp.SpeciesId)) owed++;
+
+                // The level in dim ink and the ring in accent, as the chart draws them. Drawing
+                // the whole suffix in one colour made the mark look like part of the number.
+                string lv = "Lv " + def.MinLevel + "-" + def.MaxLevel;
+                string ring = owed > 0 ? "  \u25cb" : "";
+                float wholeW = Battle.TextWidth(lv + ring, 15);
+                float left = px - wholeW * 0.5f;
+                float subY = py - dot * 0.66f - 26;
+                Battle.Text(c, lv, left, subY, 15, Battle.InkDim);
+                if (ring.Length > 0)
+                    Battle.Text(c, ring, left + Battle.TextWidth(lv, 15), subY, 15, Battle.Accent);
+            }
         }
 
         // Detail panel: the game's own text, not a plausible-looking imitation of it.
