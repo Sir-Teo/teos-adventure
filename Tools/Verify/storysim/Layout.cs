@@ -106,6 +106,49 @@ static class Layout
         check(800f + 420f < 1236f, "collection: dex column clears the second divider");
         check(1280f + 450f <= PW - 20f, "collection: detail column clears the panel edge");
 
+        // ---- children inside a panel ----
+        // Same anchor maths, but resolved against the panel's own size rather than the screen.
+        // Three overlays were only ever checked as whole boxes on the screen; nothing looked
+        // inside them, which is how the title card's heading came to sit on its subtitle.
+        List<Box> Inside(float panelW, float panelH, params (string name, float ax, float ay,
+                                                             float px, float py, float x, float y,
+                                                             float w, float h)[] parts)
+        {
+            var made = new List<Box>();
+            foreach (var p2 in parts)
+            {
+                float cx2 = p2.ax * panelW + p2.x;
+                float cy2 = p2.ay * panelH + p2.y;
+                made.Add(new Box
+                {
+                    Name = p2.name,
+                    X0 = cx2 - p2.px * p2.w, Y0 = cy2 - p2.py * p2.h,
+                    X1 = cx2 - p2.px * p2.w + p2.w, Y1 = cy2 - p2.py * p2.h + p2.h,
+                });
+            }
+            return made;
+        }
+
+        // ---- dialogue box internals: 1660 x 300 ----
+        CheckScreen(check, "dialogue", Inside(1660f, 300f,
+            ("Portrait", 0f, 1f, 0f, 1f,  26f, -26f, 196f, 196f),
+            ("Speaker",  0f, 1f, 0f, 1f, 246f, -26f, 900f,  38f),
+            ("Body",     0f, 1f, 0f, 1f, 246f, -74f, 1380f, 180f),
+            ("Hint",     1f, 0f, 1f, 0f, -26f,  16f, 500f,  26f)));
+
+        // ---- the ending card, drawn straight onto the screen ----
+        CheckScreen(check, "victory", Inside(1920f, 1080f,
+            ("Heading", 0.5f, 0.5f, 0.5f, 0.5f, 0f,  156f, 1400f, 110f),
+            ("Body",    0.5f, 0.5f, 0.5f, 0.5f, 0f,  -60f, 1300f, 300f),
+            ("Hint",    0.5f, 0f,   0.5f, 0f,   0f,   80f,  800f,  34f)));
+
+        // ---- name entry: 900 x 420 ----
+        CheckScreen(check, "name entry", Inside(900f, 420f,
+            ("Portrait", 0.5f, 1f,   0.5f, 1f,   0f,  -30f, 130f, 130f),
+            ("Title",    0.5f, 1f,   0.5f, 1f,   0f, -172f, 820f,  40f),
+            ("Field",    0.5f, 0.5f, 0.5f, 0.5f, 0f,  -60f, 680f,  76f),
+            ("Hint",     0.5f, 0f,   0.5f, 0f,   0f,   34f, 840f,  28f)));
+
         // ---- title card ----
         // Never listed here: only the text-fit checks covered it, which measure whether a string
         // fits its box, not whether the boxes fit each other. The heading and subtitle were

@@ -88,7 +88,10 @@ namespace Eggverse
             UIKit.Place(speakerText.rectTransform, new Vector2(0f, 1f), new Vector2(0f, 1f), new Vector2(246f, -26f), new Vector2(900f, 38f));
 
             bodyText = UIKit.Label(box, "Body", "", 28, UIKit.Ink, TextAnchor.UpperLeft);
-            UIKit.Place(bodyText.rectTransform, new Vector2(0f, 1f), new Vector2(0f, 1f), new Vector2(246f, -74f), new Vector2(1380f, 190f));
+            // 180, not 190: the body ran down to 36 from the box floor and the hint sits at
+            // 16..42 in the same corner, so they overlapped by 6px. Five lines either way at
+            // font 28, so nothing is lost.
+            UIKit.Place(bodyText.rectTransform, new Vector2(0f, 1f), new Vector2(0f, 1f), new Vector2(246f, -74f), new Vector2(1380f, 180f));
 
             hintText = UIKit.Label(box, "Hint", "Space to continue", 20, UIKit.InkDim, TextAnchor.LowerRight);
             UIKit.Place(hintText.rectTransform, new Vector2(1f, 0f), new Vector2(1f, 0f), new Vector2(-26f, 16f), new Vector2(500f, 26f));

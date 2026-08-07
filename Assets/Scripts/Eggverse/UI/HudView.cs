@@ -255,7 +255,8 @@ namespace Eggverse
             UIKit.Stretch(bg.rectTransform, 0, 0, 0, 0);
 
             var heading = UIKit.Label(victoryPanel, "Heading", UiCopy.VictoryHeading, 82, UIKit.Accent, TextAnchor.MiddleCenter, FontStyle.Bold);
-            UIKit.Place(heading.rectTransform, new Vector2(0.5f, 0.5f), new Vector2(0.5f, 0.5f), new Vector2(0f, 140f), new Vector2(1400f, 110f));
+            // 156, not 140: the heading's box ran down to 625 and the body's up to 630.
+            UIKit.Place(heading.rectTransform, new Vector2(0.5f, 0.5f), new Vector2(0.5f, 0.5f), new Vector2(0f, 156f), new Vector2(1400f, 110f));
 
             var body = UIKit.Label(victoryPanel, "Body", "", 28, UIKit.Ink, TextAnchor.UpperCenter);
             UIKit.Place(body.rectTransform, new Vector2(0.5f, 0.5f), new Vector2(0.5f, 0.5f), new Vector2(0f, -60f), new Vector2(1300f, 300f));
