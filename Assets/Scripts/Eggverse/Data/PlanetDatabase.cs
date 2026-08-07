@@ -130,6 +130,24 @@ namespace Eggverse
             return outp;
         }
 
+        /// <summary>
+        /// Worlds whose Nest Station has gone cold. Ori names Brineholt and Mosswell in the
+        /// opening brief and then says "and now ours"; Vesper's own landmark is two dark pads
+        /// with the straw still in them.
+        ///
+        /// This lives here rather than only in the dialogue because the dialogue was the only
+        /// place it existed. Every station in the game glowed the same warm amber, including the
+        /// ones a character had just finished telling you were dead - and including Vesper,
+        /// where the landmark you can walk to says both pads are dark.
+        /// </summary>
+        static readonly HashSet<string> coldStations = new HashSet<string>
+        {
+            "yolkhaven", "brineholt", "mosswell", "vesper",
+        };
+
+        public static bool StationCold(string planetId) => coldStations.Contains(planetId);
+        public static IEnumerable<string> ColdStations => coldStations;
+
         public static bool HasCache(string planetId) => CacheWorlds.ContainsKey(planetId);
 
         public static bool Exists(string id) => !string.IsNullOrEmpty(id) && byId.ContainsKey(id);

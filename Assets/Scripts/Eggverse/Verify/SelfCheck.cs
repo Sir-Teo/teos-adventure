@@ -983,6 +983,47 @@ namespace Eggverse
                     }
             }
 
+            // ---- cold stations ----
+            {
+                // The list and the dialogue have to agree. Ori names the dead ones in the
+                // opening brief; if somebody adds a world to the list and not to his line, or
+                // writes a line about a world that still glows, one of them is lying and there
+                // is no way to tell which from inside the game.
+                var oriBrief = StoryDatabase.GetDialogue("ori", new StoryState(), new GameState());
+                var said = new System.Text.StringBuilder();
+                foreach (var line in oriBrief.Lines) said.Append(line.Text).Append(' ');
+                string brief = said.ToString();
+
+                var home = PlanetDatabase.Home;
+                foreach (var id in PlanetDatabase.ColdStations)
+                {
+                    var w = PlanetDatabase.Get(id);
+                    check(w != null, "the cold-station list names a real world: " + id);
+                    if (w == null) continue;
+
+                    // Home is "and now ours" and Vesper says it with its own landmark.
+                    if (id == home.Id || id == "vesper") continue;
+                    check(brief.Contains(w.Name),
+                          "Ori's brief names " + w.Name + " as cold, because the game draws it that way");
+                }
+
+                // Vesper's landmark is the two dark pads. If Vesper ever left the list, that
+                // landmark would be describing something the player can see is not true.
+                check(PlanetDatabase.StationCold("vesper"),
+                      "Vesper's station is cold, as its own landmark says");
+                var vesper = LandmarkDatabase.For("vesper");
+                check(vesper != null && vesper.Lines[0].Contains("dark"),
+                      "Vesper's landmark still describes dark pads");
+
+                // And a warm world stays warm.
+                check(!PlanetDatabase.StationCold("cinderoost"),
+                      "Cinderoost's station is not cold - Hob never says it is");
+
+                foreach (var line in UiCopy.RestCold)
+                    check(lines(line, 1000f - 40f, 24) <= capacity(76f, 24),
+                          "the cold rest line fits the toast: " + line);
+            }
+
             // ---- the drift ----
             {
                 // Motes spawn in a disc around Amaranth and fall toward it. If that disc does

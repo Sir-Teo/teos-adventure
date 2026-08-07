@@ -413,12 +413,24 @@ namespace Eggverse
             go.transform.position = Vector2.zero;
             nestStation = go.transform;
 
+            // A station that has gone cold looks it. Ori spends the opening brief telling you
+            // Brineholt and Mosswell are dead and that yours has just joined them, and then you
+            // walk ten paces to a pad glowing exactly as warm as every other pad in the game.
+            // Vesper was worse: its own landmark is two dark pads with the straw still in them,
+            // twenty paces from a third one blazing away.
+            bool cold = PlanetDatabase.StationCold(planet.Id) && !dir.Story.HasFlag("beat_amy");
+
+            float halo = cold ? 0.13f : 0.45f;
+            var ringCol = cold ? new Color(0.42f, 0.46f, 0.58f, 0.75f)
+                               : new Color(1f, 0.78f, 0.30f, 0.9f);
+            var hutCol = cold ? new Color(0.62f, 0.66f, 0.76f, 1f) : Color.white;
+
             Spawn("pad", ProcArt.Disc("nestpad", new Color(1f, 0.95f, 0.8f, 1f), new Color(1f, 0.7f, 0.2f, 0f), 1.6f, 128, 64f),
-                  Vector2.zero, 7f, new Color(1f, 1f, 1f, 0.45f), -25, go.transform);
+                  Vector2.zero, 7f, new Color(1f, 1f, 1f, halo), -25, go.transform);
             Spawn("ring", ProcArt.Ring("nestring", Color.white, 0.05f), Vector2.zero, 5.4f,
-                  new Color(1f, 0.78f, 0.30f, 0.9f), -24, go.transform);
+                  ringCol, -24, go.transform);
             Spawn("hut", ProcArt.Disc("nesthut", new Color(1f, 0.88f, 0.62f, 1f), new Color(0.75f, 0.5f, 0.25f, 1f), 1.2f, 128, 64f),
-                  Vector2.zero, 2.6f, Color.white, -20, go.transform);
+                  Vector2.zero, 2.6f, hutCol, -20, go.transform);
 
             AddLabel(go.transform, new Vector2(0f, 2.4f), UiCopy.LabelNestStation, UiCopy.LabelNestHint, 22, NestRange);
         }
@@ -495,6 +507,11 @@ namespace Eggverse
         /// </summary>
         string RestLine(int fainted, int hurt, bool shortOfSupplies)
         {
+            // On a dead pad the news is that it worked at all, which is worth more than which
+            // of your eggs needed mending.
+            if (PlanetDatabase.StationCold(current.Id) && !dir.Story.HasFlag("beat_amy"))
+                return UiCopy.RestCold[restIdle++ % UiCopy.RestCold.Length];
+
             if (fainted > 0)
             {
                 restIdle = 0;

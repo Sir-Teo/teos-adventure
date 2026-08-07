@@ -306,11 +306,14 @@ static class Surface
             }
         }
 
-        // Nest station at the centre, and Teo just below it.
-        Dot(c, 0, 0, 7f, new Col(1f, 0.9f, 0.6f, 0.45f), 0.8f);
-        Dot(c, 0, 0, 5.4f, new Col(1f, 0.78f, 0.30f, 0.55f), 0.10f);
+        // Nest station at the centre, and Teo just below it. A station that has gone cold is
+        // drawn cold - the game says four of them are dead and drew all seventeen the same.
+        bool coldPad = planetId != null && Eggverse.PlanetDatabase.StationCold(planetId);
+        Dot(c, 0, 0, 7f, new Col(1f, 0.9f, 0.6f, coldPad ? 0.13f : 0.45f), 0.8f);
+        Dot(c, 0, 0, 5.4f, coldPad ? new Col(0.42f, 0.46f, 0.58f, 0.55f)
+                                   : new Col(1f, 0.78f, 0.30f, 0.55f), 0.10f);
         Dot(c, 0, 0, 4.9f, Col.Lerp(landC, new Col(0, 0, 0), 0.2f), 0.06f);
-        Dot(c, 0, 0, 2.6f, Col.Hex(0xFFE0A0), 0.2f);
+        Dot(c, 0, 0, 2.6f, coldPad ? Col.Hex(0x9EA8BC) : Col.Hex(0xFFE0A0), 0.2f);
         // Teo, with the dark outline the sprite now carries. On a bright world this is the
         // only thing separating a white suit from the ground.
         float tx = c.Ox, ty = c.Oy - (onLandmark ? 3.2f : 6.5f);

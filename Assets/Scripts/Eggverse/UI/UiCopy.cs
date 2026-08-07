@@ -72,6 +72,19 @@ namespace Eggverse
         /// What a Nest Station says when there was nothing to fix. Authored rather than built,
         /// so the prose pass reads them along with everything else the player can be shown.
         /// </summary>
+        /// <summary>
+        /// Resting at a station that has gone cold. It still works, and the reason is the rule
+        /// Ori sets out in the opening brief: a Nest Station runs warm off the eggs around it.
+        /// Turning up with a full nest is what makes the pad work, so the game says so instead
+        /// of quietly healing you on a dead pad.
+        /// </summary>
+        public static readonly string[] RestCold =
+        {
+            "The pad is cold. It takes a while, and your nest does it between them.",
+            "Cold stone, warm eggs. It works the way Ori said it would.",
+            "The straw is old and the pad is dead. Your six manage it anyway.",
+        };
+
         public static readonly string[] RestIdle =
         {
             "Nothing needed doing. The pad is warm anyway.",
