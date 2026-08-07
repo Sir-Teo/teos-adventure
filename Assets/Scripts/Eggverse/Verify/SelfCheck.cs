@@ -1640,6 +1640,91 @@ namespace Eggverse
                 check(elder.Elder && !ordinary.Elder, "and knows it");
             }
 
+            // ---- the number and the bar say the same thing ----
+            {
+                // TakeDamage lands before AnimateHit runs, and RefreshCards only ran when the
+                // slide finished - so for a third of a second the bar showed a third full
+                // while the text beside it still read 120/135. The two things on the card whose
+                // whole job is saying the same number, saying different ones, on every hit.
+                // Fractions built from whole hit points, because that is the only kind an egg
+                // can have. The first version fed in maxHp 1 with a target of half a bar and the
+                // check duly failed - on a state no egg in the game can be in. Test data made up
+                // out of the air fails the same way a threshold made up out of the air does.
+                //
+                // Sampled at 200 steps, not 20. Planting a small wobble into the lerp went
+                // uncaught at 20: the animation runs about twenty frames, so twenty samples felt
+                // like the honest number, and it is - for what a player sees. It is not enough to
+                // prove a claim about the whole slide, and the claim is what is written down.
+                //
+                // The rise cases end on thirds and sevenths on purpose. Every earlier pair landed
+                // on a whole fraction, where to * maxHp is exact in float and the k >= 1 guard is
+                // unreachable - so removing that guard also went uncaught. 100/135 is where it
+                // earns its place.
+                foreach (int maxHp in new[] { 1, 7, 24, 135, 400 })
+                    foreach (var pair in new[] { (1f, 0f), (1f, 0.5f), (0.5f, 0f), (0.34f, 0.31f),
+                                                 (0.4f, 1f), (1f / 7f, 3f / 7f), (100f / 135f, 134f / 135f),
+                                                 (2f / 3f, 1f / 3f) })
+                    {
+                        int fromHp = Mathf.RoundToInt(pair.Item1 * maxHp);
+                        int toHp = Mathf.RoundToInt(pair.Item2 * maxHp);
+                        float from = fromHp / (float)maxHp, to = toHp / (float)maxHp;
+
+                        int last = BattleMode.HpShown(from, to, 0f, maxHp);
+                        for (int step = 0; step <= 200; step++)
+                        {
+                            float k = step / 200f;
+                            int hp = BattleMode.HpShown(from, to, k, maxHp);
+
+                            check(hp >= 0 && hp <= maxHp,
+                                  "the count stays inside the egg (" + hp + " of " + maxHp + ")");
+
+                            // It only ever moves the way the bar is moving. A number that ticks
+                            // back up mid-slide reads as a second, smaller heal.
+                            if (toHp < fromHp) check(hp <= last, "the count only falls while the bar falls");
+                            else check(hp >= last, "the count only rises while the bar rises");
+                            last = hp;
+
+                            // Which side of the bar it rounds to, said as a property rather than
+                            // named as a function. Swapping Ceil for Floor went uncaught without
+                            // this: the number came out one low all the way down a fall, which
+                            // is not zero and not backwards, so nothing above it noticed.
+                            // Departing value, not arriving - a hit should never under-report
+                            // what the egg still has.
+                            float exact = Mathf.Lerp(from, to, k) * maxHp;
+                            if (toHp < fromHp)
+                                check(hp >= exact - 0.001f,
+                                      "a falling count never reads under the bar (" + hp +
+                                      " against " + exact.ToString("0.00") + ")");
+                            else
+                                check(hp <= exact + 0.001f,
+                                      "a rising count never reads over the bar (" + hp +
+                                      " against " + exact.ToString("0.00") + ")");
+                        }
+
+                        // It lands on the truth, not on a rounding of it. This is the one that
+                        // matters: the last frame of the slide and the RefreshCards after it
+                        // must agree, or the number twitches once the animation stops.
+                        check(BattleMode.HpShown(from, to, 1f, maxHp) == toHp,
+                              "the count ends on the egg's real health (" + maxHp + " hp, " +
+                              fromHp + " to " + toHp + ")");
+
+                        // And nothing reads zero before the bar is empty. An egg showing 0 HP
+                        // and still standing is the game telling a player it has fainted when it
+                        // has not.
+                        //
+                        // Falling slides only. On a heal the number lags behind the fill by
+                        // design - it rounds toward the value being left - so mending a fainted
+                        // egg genuinely reads 0 until the first whole point is back, which is
+                        // true rather than a lie. The check said "never zero" and had to mean
+                        // "never zero while it is being hurt".
+                        if (toHp > 0 && toHp < fromHp)
+                            for (int step = 0; step < 200; step++)
+                                check(BattleMode.HpShown(from, to, step / 200f, maxHp) > 0,
+                                      "a surviving egg never shows zero mid-slide (" +
+                                      fromHp + " to " + toHp + " of " + maxHp + ")");
+                    }
+            }
+
             // ---- the XP bar takes the path the egg actually took ----
             {
                 // The HP bar has eased since it was written; the XP bar under it snapped, and

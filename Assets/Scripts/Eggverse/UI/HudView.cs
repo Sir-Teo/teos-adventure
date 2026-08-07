@@ -19,6 +19,36 @@ namespace Eggverse
         Canvas canvas;
 
         readonly List<PartySlot> slots = new List<PartySlot>();
+
+        // Where each party egg's bar started when the pad lit, and how far along the fill is.
+        readonly List<float> warmingFrom = new List<float>();
+        float warming;
+
+        /// <summary>
+        /// Remembers where every bar is, so the strip can be filled from there rather than
+        /// jumping to the healed value. Call before HealAll.
+        /// </summary>
+        public void BeginWarming(GameState state)
+        {
+            warmingFrom.Clear();
+            for (int i = 0; i < state.Party.Count; i++) warmingFrom.Add(state.Party[i].HPFraction);
+            warming = 0f;
+        }
+
+        /// <summary>Drives the fill, 0 to 1, on the same envelope the eggs rise on.</summary>
+        public void SetWarming(float amount)
+        {
+            warming = Mathf.Clamp01(amount);
+            Refresh();
+        }
+
+        /// <summary>Hands the bars back to the eggs' real health.</summary>
+        public void EndWarming()
+        {
+            warming = 0f;
+            warmingFrom.Clear();
+            Refresh();
+        }
         Text objectiveText, cartonText, promptText, toastText, planetText;
         RectTransform promptPanel, toastPanel, partyStrip, objectivePanel;
         RectTransform titlePanel, collectionPanel, victoryPanel;
@@ -506,8 +536,15 @@ namespace Eggverse
                 var dotRect = slot.Dot.rectTransform;
                 dotRect.sizeDelta = new Vector2(dotRect.sizeDelta.x,
                                                 ReferenceEquals(egg, state.Leader) ? 44f : 34f);
-                slot.Hp.SetFraction(egg.HPFraction);
-                slot.Hp.SetFillColor(UIKit.HealthColor(egg.HPFraction));
+                // While a nest station is warming them, the strip shows the eggs filling rather
+                // than the answer. HealAll() runs before the animation does - it has to, the
+                // save happens on the same frame - so without this the bars snap to full and
+                // then six eggs float out and glow about something that already finished.
+                float shownHp = warming > 0f && i < warmingFrom.Count
+                    ? Mathf.Lerp(warmingFrom[i], egg.HPFraction, warming)
+                    : egg.HPFraction;
+                slot.Hp.SetFraction(shownHp);
+                slot.Hp.SetFillColor(UIKit.HealthColor(shownHp));
             }
 
             var beat = dir.Story.Current;

@@ -1195,8 +1195,13 @@ namespace Eggverse
                     shown[i].transform.localPosition = new Vector3(p0.x, p0.y + bob * Time.deltaTime * 12f, p0.z);
                 }
                 if (flush != null) flush.color = new Color(1f, 0.86f, 0.55f, a * 0.30f);
+
+                // The strip fills as they rise, and stays full once they are up - it is a
+                // recovery, not something that fades back out with the glow.
+                dir.Hud.SetWarming(Mathf.Clamp01(t / rise));
                 yield return null;
             }
+            dir.Hud.EndWarming();
 
             for (int i = 0; i < shown.Count; i++) if (shown[i] != null) Destroy(shown[i].gameObject);
             if (flush != null) Destroy(flush.gameObject);
@@ -1391,6 +1396,9 @@ namespace Eggverse
                     foreach (var e in st.Party) { if (e.IsFainted) fainted++; else if (e.CurrentHP < e.MaxHP) hurt++; }
                     bool shortOfSupplies = st.Cartons < st.MaxCartons || st.Salves < GameState.MaxSalves;
 
+                    // Where the bars are now, before HealAll moves them. The warming ring fills
+                    // them from here, so what the animation shows is what it is doing.
+                    dir.Hud.BeginWarming(st);
                     st.HealAll();
                     dir.Hud.Toast(RestLine(fainted, hurt, shortOfSupplies));
                     dir.Audio.Play(Sfx.Heal);

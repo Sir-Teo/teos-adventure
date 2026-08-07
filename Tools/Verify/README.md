@@ -176,6 +176,25 @@ than the rest. Planting the old `LevelUp` back in scores 0.113 — which passes 
 fails the adjacency one. A flat threshold cannot tell `Liftoff` against `Inscription`, heard on
 opposite sides of the game, from two sounds that land in the same second.
 
+## Checks that pass and prove nothing
+
+Three faults planted at the HP counter all escaped, and only one of them was a no-op:
+
+- **Twenty samples.** The slide runs about twenty frames, so twenty samples felt like the honest
+  number — and it is, for what a player sees. It is not enough to prove a claim about the whole
+  slide, and the claim is what gets written down. A wobble injected into the lerp passed. Two
+  hundred samples catches it.
+- **Test data that made a branch unreachable.** Every pair landed on a whole fraction, where
+  `to * maxHp` is exact in float, so the `k >= 1` guard could be deleted with nothing noticing.
+  The rise cases end on thirds and sevenths now.
+- **A property named instead of stated.** Swapping `Ceil` for `Floor` left the number one low all
+  the way down a fall — not zero, not backwards, so nothing above it fired. What was meant is
+  *a falling count never reads under the bar*, and that is now what is asserted.
+
+Related: test data invented out of the air fails the same way a threshold invented out of the air
+does. The first version of this block fed in `maxHp 1` with a target of half a bar and duly
+failed — on a state no egg in the game can be in. Fractions are built from whole hit points now.
+
 ## What only looking finds
 
 Rendering has now found, in things that had passed every assertion:

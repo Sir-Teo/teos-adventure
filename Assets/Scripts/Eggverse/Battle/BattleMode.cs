@@ -1025,6 +1025,19 @@ namespace Eggverse
             }
         }
 
+        /// <summary>
+        /// The HP number partway through a bar's slide. Rounds toward the value being left, so a
+        /// hit that takes an egg to zero never shows 0 until the bar is actually empty - and the
+        /// last frame is the real number rather than a rounding of it.
+        /// </summary>
+        public static int HpShown(float from, float to, float k, int maxHp)
+        {
+            if (k >= 1f) return Mathf.RoundToInt(to * maxHp);
+            float f = Mathf.Lerp(from, to, k);
+            int hp = to < from ? Mathf.CeilToInt(f * maxHp) : Mathf.FloorToInt(f * maxHp);
+            return Mathf.Clamp(hp, 0, maxHp);
+        }
+
         IEnumerator AnimateHit(Image victim, BarWidget bar, EggInstance target)
         {
             float from = bar.FillRect.anchorMax.x;
@@ -1038,6 +1051,14 @@ namespace Eggverse
                 float k = Mathf.Clamp01(t / 0.34f);
                 bar.SetFraction(Mathf.Lerp(from, to, k));
                 bar.SetFillColor(UIKit.HealthColor(Mathf.Lerp(from, to, k)));
+
+                // The number counts down with the bar. TakeDamage lands before this runs and
+                // RefreshCards only ran at the end, so for a third of a second the bar showed a
+                // third full while the text beside it still read 120/135 - the two things that
+                // say the same thing, saying different things, on every hit in the game.
+                if (target == Mine)
+                    myHpText.text = UiCopy.Health(HpShown(from, to, k, target.MaxHP), target.MaxHP);
+
                 float shake = State.ScreenMotion ? (1f - k) * 16f : 0f;
                 victim.rectTransform.anchoredPosition = home + new Vector2(Mathf.Sin(t * 60f) * shake, 0f);
                 victim.color = Color.Lerp(new Color(1f, 0.55f, 0.55f, 1f), Color.white, k);
@@ -1048,7 +1069,7 @@ namespace Eggverse
             victim.color = Color.white;
             bar.SetFraction(to);
             bar.SetFillColor(UIKit.HealthColor(to));
-            RefreshCards(false);
+            RefreshCards(false);   // lands on the true value, which HpShown is pinned to at k=1
 
             if (target.IsFainted)
             {
