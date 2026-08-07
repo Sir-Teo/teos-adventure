@@ -383,6 +383,33 @@ namespace Eggverse
 
         /// <summary>Roughly one in twelve wild eggs. Never on the boss world.</summary>
         public const float ElderChance = 0.085f;
+
+        /// <summary>
+        /// What the Belt does to the odds of meeting an Elder.
+        ///
+        /// Garrow says it on Cairnhold, and it matters enormously that he says it *after* Amy:
+        /// "The old ones are coming out of the rock again. Big, lit up round the shell. Years
+        /// since the Belt had Elders in it."
+        ///
+        /// So the Belt is not Elder-rich. It is the sector nearest the thing draining the
+        /// sector, it has been stripped for eleven years, and the old ones come back when the
+        /// warmth does. I built this the other way round first, on the strength of half-
+        /// remembering the line, and it would have contradicted the one character who mentions
+        /// it - before Amy, in the place he is standing, saying the opposite.
+        /// </summary>
+        public const float BeltElderDrought = 0.35f;
+        public const float BeltElderReturn = 2.1f;
+
+        /// <summary>The chance a wild egg on this world is an Elder.</summary>
+        public static float ElderChanceOn(PlanetDef world, bool warmthReturned)
+        {
+            if (world == null) return ElderChance;
+            bool belt = world.Sector == Sector.ShatteredBelt || world.IsBossWorld;
+            if (!belt) return ElderChance;
+            return warmthReturned
+                ? Mathf.Min(0.30f, ElderChance * BeltElderReturn)
+                : ElderChance * BeltElderDrought;
+        }
         /// <summary>How many levels an Elder is above its neighbours. Garrow says this out
         /// loud on Cairnhold, so it is a constant rather than a literal in two places.</summary>
         public const int ElderLevelBonus = 3;

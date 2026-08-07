@@ -764,7 +764,7 @@ namespace Eggverse
         {
             r.SpeciesId = current.RollSpecies();
             r.Level = current.RollLevel();
-            r.IsElder = dir.State.ElderesAllowed && EggRandom.Value < EggInstance.ElderChance;
+            r.IsElder = dir.State.ElderesAllowed && EggRandom.Value < EggInstance.ElderChanceOn(current, dir.Story.HasFlag("beat_amy"));
             r.Skittish = SpeciesDatabase.IsSkittish(r.SpeciesId);
             var species = SpeciesDatabase.Get(r.SpeciesId);
 
@@ -1250,7 +1250,7 @@ namespace Eggverse
         {
             string speciesId = current.RollSpecies();
             int level = current.RollLevel();
-            return dir.State.ElderesAllowed && EggRandom.Value < EggInstance.ElderChance
+            return dir.State.ElderesAllowed && EggRandom.Value < EggInstance.ElderChanceOn(current, dir.Story.HasFlag("beat_amy"))
                 ? EggInstance.WildElder(speciesId, level)
                 : EggInstance.Wild(speciesId, level);
         }

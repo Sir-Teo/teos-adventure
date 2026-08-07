@@ -1626,6 +1626,52 @@ namespace Eggverse
                 check(elder.Elder && !ordinary.Elder, "and knows it");
             }
 
+            // ---- the Belt is stripped, and then it is not ----
+            {
+                // Garrow, on Cairnhold, after Amy: "The old ones are coming out of the rock
+                // again. Big, lit up round the shell. Years since the Belt had Elders in it."
+                //
+                // Which means the Belt is not Elder-rich - it is the sector nearest the thing
+                // draining the sector, stripped for eleven years, and the old ones come back
+                // when the warmth does. I built it the other way round first, on a half-
+                // remembered line, and it would have contradicted the only character who
+                // mentions Elders at all.
+                var reach = PlanetDatabase.Get("yolkhaven");
+                var belt = PlanetDatabase.Get("cairnhold");
+
+                check(EggInstance.ElderChanceOn(belt, false) < EggInstance.ElderChanceOn(reach, false),
+                      "the Belt has fewer Elders than the Reach while the cold is on");
+                check(EggInstance.ElderChanceOn(belt, true) > EggInstance.ElderChanceOn(reach, true),
+                      "and more of them once the warmth is back");
+                check(Mathf.Approximately(EggInstance.ElderChanceOn(reach, false),
+                                          EggInstance.ElderChanceOn(reach, true)),
+                      "the Reach is unchanged either way - Garrow was talking about his own sector");
+
+                // Commoner is not common: the deeper stir that warns of an Elder has to stay
+                // worth noticing even at the Belt's best.
+                check(EggInstance.ElderChanceOn(belt, true) < 0.25f,
+                      "and are still rare enough for the deep stir to mean something (" +
+                      (EggInstance.ElderChanceOn(belt, true) * 100f).ToString("0") + "%)");
+
+                // The line is his, and it is in the set he says after Amy - not before.
+                var garrow = StoryDatabase.NpcById("garrow");
+                check(PlanetDatabase.Get(garrow.PlanetId).Sector == Sector.ShatteredBelt,
+                      "Garrow lives in the sector he is talking about");
+
+                var after = new StoryState();
+                after.RestoreFrom(new[] { "beat_amy" }, StoryDatabase.Beats.Length - 1);
+                var later = new System.Text.StringBuilder();
+                foreach (var l in StoryDatabase.GetDialogue("garrow", after, new GameState()).Lines)
+                    later.Append(l.Text).Append(' ');
+                check(later.ToString().Contains("Years since the Belt had Elders"),
+                      "and says it after Amy, which is what makes the drought the right way round");
+
+                var before = new System.Text.StringBuilder();
+                foreach (var l in StoryDatabase.GetDialogue("garrow", new StoryState(), new GameState()).Lines)
+                    before.Append(l.Text).Append(' ');
+                check(!before.ToString().Contains("coming out of the rock again"),
+                      "and not before it");
+            }
             // ---- the first egg looks like one ----
             {
                 // The title screen's opening line: every world is a piece of shell, the core of
