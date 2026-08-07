@@ -149,6 +149,12 @@ separately, with one egg in the nest against the fifty-six drawn above it. **Two
 screenshot**: a full nest and a footer describing a game that had almost nothing in it. One
 roster now feeds the whole picture.
 
+The navigation chart had **three**. Its markers came from `(visited++ % 3) != 2` — every third
+world unvisited, arbitrarily — its header counted charted worlds off a fully-visited state, and
+its detail panel was built from a third. Each was convincing on its own. One roster there too,
+now a real mid-run save: thirteen charted, the outer sectors still dark, and the header says so
+because it counts the same state.
+
 And a bug in the renderer's own tag parser: a `<` that matched none of `<b>`, `<color=…>` or
 their closers consumed zero characters and looped forever. The record column carries `<size=…>`.
 It presented as "Out of memory" halfway through a render, which is not what an infinite loop

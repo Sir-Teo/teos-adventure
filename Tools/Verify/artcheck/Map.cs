@@ -6,10 +6,66 @@ using UnityEngine;
 /// player reads to decide where to go next, so it is worth looking at rather than assuming.
 static class Map
 {
+    /// The world the detail panel describes. The map and the panel have to agree, or the render
+    /// shows one world highlighted and describes another.
+    const string Selected = "glacierim";
+
+    static System.Collections.Generic.List<(string text, Col col)> Runs(string line, Col baseCol)
+    {
+        var outp = new System.Collections.Generic.List<(string, Col)>();
+        int i = 0;
+        Col current = baseCol;
+        while (i < line.Length)
+        {
+            var m = System.Text.RegularExpressions.Regex.Match(
+                line.Substring(i), @"^<(/?)(b|color)(=#([0-9A-Fa-f]{6}))?>");
+            if (m.Success)
+            {
+                if (m.Groups[1].Value == "/") current = baseCol;
+                else if (m.Groups[2].Value == "color" && m.Groups[4].Success)
+                    current = Col.Hex(Convert.ToInt32(m.Groups[4].Value, 16));
+                i += m.Length;
+                continue;
+            }
+            int next = line.IndexOf('<', i + 1);
+            if (next < 0) next = line.Length;
+            outp.Add((line.Substring(i, next - i), current));
+            i = next;
+        }
+        return outp;
+    }
+
     const float ChartW = 760f, ChartH = 820f, DetailW = 900f;
+
+    /// One state for the whole picture. The markers used to be drawn from a state built inside
+    /// the marker loop and the panel from another built below it - so the chart showed sixteen
+    /// worlds marked "sealed" under a header reading "17 of 17 worlds charted". The collection
+    /// screen had the same fault in its footer. Two states in one screenshot is a render telling
+    /// two different stories, and it is convincing either way round.
+    static Eggverse.GameState Roster()
+    {
+        // A real mid-run save rather than a finished one: thirteen worlds charted, the outer
+        // sectors still dark. The header counts off this same state, so the picture and the
+        // number agree by construction instead of by coincidence.
+        var st = new Eggverse.GameState();
+        int i = 0;
+        foreach (var w in Eggverse.PlanetDatabase.All)
+            if (i++ < 13 || w.Id == Selected) st.Visited.Add(w.Id);
+        st.Landmarks.Add(Selected);
+        return st;
+    }
+
+    static Eggverse.StoryState Chapters()
+    {
+        var story = new Eggverse.StoryState();
+        story.RestoreFrom(new string[0], Eggverse.StoryDatabase.Beats.Length - 1);
+        return story;
+    }
 
     public static Col[] Render()
     {
+        var mstate = Roster();
+        var mstory = Chapters();
         var c = new Battle.Ctx { Px = new Col[Battle.W * Battle.H] };
         for (int i = 0; i < c.Px.Length; i++) c.Px[i] = Col.Hex(0x060711);
 
@@ -49,11 +105,20 @@ static class Map
             var cp = GalaxyMapView.WorldToChart(def.SpacePosition);
             float px = ccx + cp.x, py = ccy + cp.y;
             float dot = Math.Min(62f, Math.Max(18f, def.SpaceRadius * 2f * scale));
-            bool seen = (visited++ % 3) != 2;          // a plausible mid-run save
+            // From the roster, not from an arithmetic pattern. This read
+            // "(visited++ % 3) != 2" - every third world unvisited, arbitrarily - under a header
+            // counting charted worlds off a fully-visited state and beside a panel built from a
+            // third one. Three states in one screenshot, each of them convincing.
+            bool seen = mstate.Visited.Contains(def.Id);
             var land = new Col(def.Land.r, def.Land.g, def.Land.b, 1f);
             var atmo = new Col(def.Atmosphere.r, def.Atmosphere.g, def.Atmosphere.b, 0.30f);
             if (seen)
             {
+                // The halo goes behind the world, which is where the view puts it in sibling
+                // order. Drawn on top it turned Glacierim's ice-blue brown - a selection marker
+                // that hides the thing it is selecting.
+                if (def.Id == Selected)
+                    Battle.Disc(c, px, py, dot * 1.25f, new Col(1f, 0.76f, 0.30f, 0.55f), 0.85f);
                 Battle.Disc(c, px, py, dot * 0.90f, atmo, 1.3f);
                 Battle.Disc(c, px, py, dot * 0.52f, land, 0.08f);
 
@@ -78,29 +143,36 @@ static class Map
                                    px + (float)Math.Cos(t)*dot*0.52f + 2, py + (float)Math.Sin(t)*dot*0.52f + 2,
                                    new Col(0.50f, 0.54f, 0.68f, 0.8f));
                 }
-            Battle.TextCentre(c, def.Name, px, py - dot * 0.66f - 6, 18,
-                              seen ? Battle.Ink : Battle.InkDim);
-
-            // The suffix line under each name, at the size the chart draws it.
-            if (seen)
+            // Name and suffix from GalaxyMapView.MarkerLabel, which is what the chart draws.
+            // This laid the two lines out itself - its own colour for the name, its own
+            // "Lv a-b ABBR", its own ring - so when the selected world grew a caret the render
+            // could not have shown it, and the halo behind the selected dot had never been drawn
+            // here at all. Two ways of missing the same thing.
             {
-                var owing = new Eggverse.GameState();
-                int owed = 0;
-                foreach (var sp in def.Spawns)
-                    if (Eggverse.SpeciesDatabase.Get(sp.SpeciesId).CatchRate >=
-                            Eggverse.SpeciesDatabase.CatchableThreshold &&
-                        !owing.Caught.Contains(sp.SpeciesId)) owed++;
+                bool picked = def.Id == Selected;
 
-                // The level in dim ink and the ring in accent, as the chart draws them. Drawing
-                // the whole suffix in one colour made the mark look like part of the number.
-                string lv = "Lv " + def.MinLevel + "-" + def.MaxLevel + "  " + Eggverse.TypeChart.Abbrev(def.Theme);
-                string ring = owed > 0 ? "  \u25cb" : "";
-                float wholeW = Battle.TextWidth(lv + ring, 15);
-                float left = px - wholeW * 0.5f;
-                float subY = py - dot * 0.66f - 26;
-                Battle.Text(c, lv, left, subY, 15, Battle.InkDim);
-                if (ring.Length > 0)
-                    Battle.Text(c, ring, left + Battle.TextWidth(lv, 15), subY, 15, Battle.Accent);
+                string suffix = seen
+                    ? Eggverse.GalaxyMapView.MarkerSuffix(def, mstate, mstory,
+                          Eggverse.GalaxyMapView.Presence.Elsewhere)
+                    : "";
+                string label = Eggverse.GalaxyMapView.MarkerLabel(def, suffix, seen, picked);
+
+                var rows = label.Replace("<size=15>", "").Replace("</size>", "").Split('\n');
+                for (int li = 0; li < rows.Length; li++)
+                {
+                    int size = li == 0 ? 18 : 15;
+                    var runs = Runs(rows[li], seen ? Battle.Ink : Battle.InkDim);
+                    float wide = 0f;
+                    foreach (var r in runs) wide += Battle.TextWidth(r.text, size);
+                    float pen = px - wide * 0.5f;
+                    float ly = py - dot * 0.66f - 6 - li * 20f;
+                    foreach (var r in runs)
+                    {
+                        if (r.text.Trim().Length > 0)
+                            Battle.Text(c, r.text.ToUpperInvariant(), pen, ly, size, r.col);
+                        pen += Battle.TextWidth(r.text, size);
+                    }
+                }
             }
         }
 
@@ -111,11 +183,9 @@ static class Map
         // entirely convincing, which is exactly the problem: the render was reassuring me about
         // a screen that did not exist.
         {
-            var def = Eggverse.PlanetDatabase.Get("glacierim");
-            var state = new Eggverse.GameState();
-            var story = new Eggverse.StoryState();
-            story.RestoreFrom(new string[0], Eggverse.StoryDatabase.Beats.Length - 1);
-            foreach (var w in Eggverse.PlanetDatabase.All) state.Visited.Add(w.Id);
+            var def = Eggverse.PlanetDatabase.Get(Selected);
+            var state = mstate;
+            var story = mstory;
             foreach (var sp in Eggverse.SpeciesDatabase.All) state.Seen.Add(sp.Id);
             state.Caught.Add("snowpoach");
             state.Landmarks.Add("glacierim");

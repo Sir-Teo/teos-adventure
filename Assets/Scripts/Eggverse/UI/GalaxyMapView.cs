@@ -321,13 +321,17 @@ namespace Eggverse
 
                 string suffix = MarkerSuffix(m.Def, state, story, PresenceAt(m.Def));
 
-                string nameColor = sectorOpen ? "#F2F5FA" : "#5A6072";
-                m.Label.text = "<color=" + nameColor + ">" + m.Def.Name + "</color>\n<size=15>" + suffix + "</size>";
-
                 bool isSelected = i == selected;
-                m.Halo.color = isSelected
-                    ? new Color(TypeChart.ColorOf(m.Def.Theme).r, TypeChart.ColorOf(m.Def.Theme).g, TypeChart.ColorOf(m.Def.Theme).b, 0.95f)
-                    : new Color(1f, 1f, 1f, 0f);
+                m.Label.text = MarkerLabel(m.Def, suffix, sectorOpen, isSelected);
+
+                // Amber, and a caret. The halo used to be the world's own theme colour at full
+                // alpha - so "selected" was a slightly brighter blur of the colour already
+                // there, and on a chart of pale worlds it read as almost nothing. Worse, it was
+                // hue and only hue, on a screen whose entire job is picking one of seventeen
+                // things. This game's rule everywhere else is that nothing is carried by colour
+                // alone, and amber is what a cursor is: the pause caret, the collection caret,
+                // the party leader's arrow.
+                m.Halo.color = isSelected ? UIKit.Accent : new Color(1f, 1f, 1f, 0f);
             }
 
             // Where Teo actually is.
@@ -337,6 +341,19 @@ namespace Eggverse
             teoMarker.rectTransform.anchoredPosition = WorldToChart(teoWorld) + new Vector2(0f, 34f);
 
             RefreshDetail();
+        }
+
+        /// <summary>
+        /// A marker's two lines. The caret is the non-chromatic half of "this is the one you
+        /// have selected" - a halo in the world's own colour said it in hue and nothing else,
+        /// which on this chart is not saying it.
+        /// </summary>
+        public static string MarkerLabel(PlanetDef def, string suffix, bool sectorOpen, bool selected)
+        {
+            string nameColor = sectorOpen ? "#F2F5FA" : "#5A6072";
+            return (selected ? "<color=#FFC24D>\u25b8</color> " : "")
+                 + "<color=" + nameColor + ">" + def.Name + "</color>"
+                 + "\n<size=15>" + suffix + "</size>";
         }
 
         /// <summary>

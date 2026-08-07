@@ -1671,6 +1671,49 @@ namespace Eggverse
                 check(elder.Elder && !ordinary.Elder, "and knows it");
             }
 
+            // ---- the selected world says so in more than colour ----
+            {
+                // The chart's whole job is picking one of seventeen things, and the halo that
+                // said which was tinted in that world's own theme colour. So "selected" was a
+                // slightly brighter blur of the colour already there - hue, and only hue, on
+                // the one screen where getting it wrong sends you to the wrong planet.
+                //
+                // Every other list in the game marks its cursor in amber and with a caret. The
+                // party strip even runs the leader's dot to full row height so the mark is not
+                // colour either. This is that rule, applied to the screen that needed it most.
+                var stM = new GameState();
+                var storyM = new StoryState();
+                foreach (var w in PlanetDatabase.All)
+                {
+                    string suffix = GalaxyMapView.MarkerSuffix(w, stM, storyM,
+                                                               GalaxyMapView.Presence.Elsewhere);
+                    string off = GalaxyMapView.MarkerLabel(w, suffix, true, false);
+                    string on  = GalaxyMapView.MarkerLabel(w, suffix, true, true);
+
+                    check(off != on, w.Name + "'s marker changes when it is selected");
+
+                    // The falsifiable half: strip every colour tag and the two must still
+                    // differ. A selection that survives only in the tags is a selection a
+                    // dichromat player cannot see, and the halo was exactly that.
+                    string plainOff = System.Text.RegularExpressions.Regex.Replace(off, "<[^>]+>", "");
+                    string plainOn  = System.Text.RegularExpressions.Regex.Replace(on,  "<[^>]+>", "");
+                    // Trimmed. Whitespace is not a mark: deleting the caret and leaving the
+                    // empty colour tags behind still changed the string, by one space, and this
+                    // passed. A difference a player cannot see is not a difference.
+                    check(plainOff.Trim() != plainOn.Trim(),
+                          w.Name + "'s selection survives having the colour taken out of it");
+
+                    // And the mark is the one every other cursor in the game uses.
+                    check(on.Contains("\u25b8"), w.Name + " is marked with the same caret as everything else");
+                    check(on.Contains("#FFC24D"), w.Name + " is marked in the same amber as everything else");
+
+                    // The label still has to fit the space under a marker.
+                    foreach (var line in plainOn.Split('\n'))
+                        check(lines(line, 420f, 22) == 1,
+                              w.Name + "'s selected marker still fits: \"" + line + "\"");
+                }
+            }
+
             // ---- the nest can be reordered without losing track of an egg ----
             {
                 // Fifty-odd eggs in the order you happened to catch them is the one arrangement
