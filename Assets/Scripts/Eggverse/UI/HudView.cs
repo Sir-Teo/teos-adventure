@@ -345,7 +345,7 @@ namespace Eggverse
                              (dir.State.Landmarks.Count >= LandmarkDatabase.Count
                                   ? UiCopy.VictoryCoda : "") +
                              UiCopy.VictoryTally(dir.State.TotalCollected,
-                                                 dir.State.Caught.Count,
+                                                 dir.State.RecordedCatchable,
                                                  SpeciesDatabase.CatchableCount,
                                                  dir.State.DistinctTypesHeld);
                 }
@@ -383,6 +383,30 @@ namespace Eggverse
         /// A fainted egg is never the leader, so the arrow and OUT can never appear together and
         /// the row has room for whichever it needs.
         /// </summary>
+        /// <summary>
+        /// The supplies strip. Terse on purpose: a fixed 524px that cannot wrap.
+        ///
+        /// Every figure on it used to be the same dim grey, so "Cartons 0/12" looked exactly
+        /// like "Cartons 12/12" - the one number that stops the core loop working, displayed
+        /// identically empty and full. Running out now says so in words rather than in a zero,
+        /// because a word is legible to somebody the colour is not.
+        /// </summary>
+        public static string SuppliesLine(GameState state)
+        {
+            return Supply("Cartons", state.Cartons, state.MaxCartons) +
+                   " · " + Supply("Salves", state.Salves, GameState.MaxSalves) + "\n" +
+                   "Nest " + state.TotalCollected +
+                   " · Types " + state.DistinctTypesHeld + "/8" +
+                   " · Record " + state.RecordedCatchable + "/" + SpeciesDatabase.CatchableCount;
+        }
+
+        static string Supply(string label, int have, int max)
+        {
+            if (have == 0) return "<color=#E55555>" + label + " none</color>";
+            if (have <= 2) return "<color=#FFC24D>" + label + " " + have + "/" + max + "</color>";
+            return label + " " + have + "/" + max;
+        }
+
         public static string PartyRow(EggInstance egg, bool leads)
         {
             return (leads ? "<color=#FFC24D>\u25b8</color> " : "") +
@@ -422,12 +446,7 @@ namespace Eggverse
                 beat.Objective +
                 (blocker != null ? "\n<color=#A8B2C4>Still needed: " + blocker + "</color>" : "");
 
-            // Terse on purpose: this is a fixed 524px strip that cannot wrap.
-            cartonText.text = "Cartons " + state.Cartons + "/" + state.MaxCartons +
-                              " · Salves " + state.Salves + "/" + GameState.MaxSalves + "\n" +
-                              "Nest " + state.TotalCollected +
-                              " · Types " + state.DistinctTypesHeld + "/8" +
-                              " · Record " + state.Caught.Count + "/" + SpeciesDatabase.CatchableCount;
+            cartonText.text = SuppliesLine(state);
 
             if (dir.CurrentPlanet != null)
             {
@@ -631,7 +650,7 @@ namespace Eggverse
 
             var dex = new System.Text.StringBuilder();
             dex.Append("<b><color=#FFC24D>FIELD RECORD</color></b>   <color=#A8B2C4>")
-               .Append(state.Caught.Count).Append("/").Append(SpeciesDatabase.CatchableCount)
+               .Append(state.RecordedCatchable).Append("/").Append(SpeciesDatabase.CatchableCount)
                .Append(" caught  ·  ").Append(state.Seen.Count).Append("/").Append(SpeciesDatabase.Count)
                .Append(" seen</color>\n\n");
 

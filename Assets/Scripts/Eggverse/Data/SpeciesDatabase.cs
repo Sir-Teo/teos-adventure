@@ -113,13 +113,16 @@ namespace Eggverse
             return sp != null && sp.BaseSpd > MedianBaseSpeed;
         }
 
+        /// <summary>Below this a species exists only by evolving one.</summary>
+        public const int CatchableThreshold = 20;
+
         public static int CatchableCount
         {
             get
             {
                 int n = 0;
                 for (int i = 0; i < ordered.Count; i++)
-                    if (ordered[i].CatchRate >= 20) n++;
+                    if (ordered[i].CatchRate >= CatchableThreshold) n++;
                 return n;
             }
         }

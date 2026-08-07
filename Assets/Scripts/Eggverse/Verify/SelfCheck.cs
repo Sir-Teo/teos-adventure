@@ -983,6 +983,61 @@ namespace Eggverse
                     }
             }
 
+            // ---- the record cannot exceed its own maximum ----
+            {
+                // Evolution registers the grown form, and some grown forms cannot be caught -
+                // they exist only by evolving one. That pushed a completionist's counter past
+                // the total it was counting toward: "Record 28/24".
+                var everything = new GameState(false);
+                foreach (var sp in SpeciesDatabase.All) everything.RegisterSpecies(EggInstance.Wild(sp.Id, 5));
+
+                check(everything.RecordedCatchable == SpeciesDatabase.CatchableCount,
+                      "a full record reads " + SpeciesDatabase.CatchableCount + "/" +
+                      SpeciesDatabase.CatchableCount + ", not " + everything.Caught.Count);
+                check(everything.Caught.Count > SpeciesDatabase.CatchableCount,
+                      "and there really are species you can only get by evolving one (" +
+                      (everything.Caught.Count - SpeciesDatabase.CatchableCount) + " of them)");
+
+                // Every counter in the game shows the same figure.
+                check(HudView.SuppliesLine(everything).Contains(
+                          "Record " + SpeciesDatabase.CatchableCount + "/" + SpeciesDatabase.CatchableCount),
+                      "the supplies strip agrees: " + HudView.SuppliesLine(everything).Split('\n')[1]);
+            }
+
+            // ---- the supplies strip ----
+            {
+                // 524px at font 19, two rows, and it cannot wrap. The widest state is a full
+                // record with every cache dug up, which is also the state a player reaches
+                // last and is least likely to have been looked at.
+                var rich = new GameState(false);
+                foreach (var id in PlanetDatabase.CacheWorlds.Keys) rich.Caches.Add(id);
+                foreach (var sp in SpeciesDatabase.All) { rich.Seen.Add(sp.Id); rich.Caught.Add(sp.Id); }
+                rich.Cartons = rich.MaxCartons;
+                for (int i = 0; i < GameState.PartySize; i++) rich.Party.Add(EggInstance.Wild("sprouteg", 5));
+
+                foreach (int carts in new[] { 0, 1, 3, rich.MaxCartons })
+                    foreach (int salves in new[] { 0, 1, GameState.MaxSalves })
+                    {
+                        rich.Cartons = carts; rich.Salves = salves;
+                        foreach (var row in HudView.SuppliesLine(rich).Split('\n'))
+                            check(lines(row, 524f, 19) == 1,
+                                  "the supplies strip fits at " + carts + " cartons and " +
+                                  salves + " salves: " + row);
+                    }
+
+                // Empty says so in a word. A zero among other numbers is the easiest thing on
+                // a HUD to read straight past.
+                rich.Cartons = 0; rich.Salves = 0;
+                string empty = HudView.SuppliesLine(rich);
+                check(empty.Contains("Cartons none"), "an empty carton count says none: " + empty);
+                check(empty.Contains("Salves none"), "an empty salve count says none");
+                check(!empty.Contains("Cartons 0"), "and never shows a bare zero");
+
+                rich.Cartons = 12; rich.Salves = 5;
+                check(!HudView.SuppliesLine(rich).Contains("none"),
+                      "a stocked player is not told they are empty");
+            }
+
             // ---- the party strip ----
             {
                 // 300px at font 18. The row has to fit with the lead arrow on it and with OUT

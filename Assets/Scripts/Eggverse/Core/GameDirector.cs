@@ -164,7 +164,7 @@ namespace Eggverse
         /// </summary>
         void NudgeRecordMilestone()
         {
-            int recorded = State.Caught.Count;
+            int recorded = State.RecordedCatchable;
             int catchable = SpeciesDatabase.CatchableCount;
 
             if (recorded >= catchable && !Story.HasFlag("ori_record_full"))

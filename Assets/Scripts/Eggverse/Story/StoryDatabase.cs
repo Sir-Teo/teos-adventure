@@ -594,7 +594,7 @@ namespace Eggverse
             // so he is the one who notices when your record starts getting serious.
             if (story.HasFlag("ori_briefed"))
             {
-                int recorded = state.Caught.Count;
+                int recorded = state.RecordedCatchable;
                 int catchable = SpeciesDatabase.CatchableCount;
 
                 if (recorded >= catchable && !story.HasFlag("ori_record_full"))

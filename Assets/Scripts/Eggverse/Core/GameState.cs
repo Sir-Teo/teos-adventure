@@ -143,6 +143,29 @@ namespace Eggverse
             }
         }
 
+        /// <summary>
+        /// How many catchable species the record holds, which is what every counter in the
+        /// game shows against SpeciesDatabase.CatchableCount.
+        ///
+        /// Caught also picks up species you can only reach by evolving one - RegisterSpecies
+        /// runs on evolution to keep the dex in step - and those are not catchable, so a
+        /// completionist's counter read "Record 28/24". A tally above its own maximum is the
+        /// sort of thing a player screenshots.
+        /// </summary>
+        public int RecordedCatchable
+        {
+            get
+            {
+                int n = 0;
+                foreach (var id in Caught)
+                {
+                    var sp = SpeciesDatabase.Get(id);
+                    if (sp != null && sp.CatchRate >= SpeciesDatabase.CatchableThreshold) n++;
+                }
+                return n;
+            }
+        }
+
         /// <summary>Records a species in the field record. Safe to call repeatedly.</summary>
         public void RegisterSpecies(EggInstance egg)
         {
