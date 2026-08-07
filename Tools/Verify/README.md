@@ -97,6 +97,24 @@ decor blobs, so the one made thing on the world looked like more scenery.
 
 ## A warning about the mocks
 
+Every panel whose text was transcribed into the renderer rather than read from the game turned
+out to be wrong, without exception — five screens, five faults:
+
+| Screen | What the render showed | What the game shows |
+|---|---|---|
+| Navigation chart | `RECORDED HERE`, `NEST STATION  YES`, `TRAVEL  1.5S` | tagline, spawn list, distance, cache, landmark |
+| Battle move cards | no effectiveness arrows at all | `▲` / `▼` on every card |
+| Battle message box | the root prompt, while the move menu was open | the highlighted move and its rider |
+| Field record lore | the blurb only | matchups, base stats, evolution, found-on |
+| Egg panel | no `STATS` heading; `AHEAD` above `CONDITION` | `CONDITION`, `STATS`, `AHEAD`, `MOVES` |
+
+All five looked entirely convincing. That is the point: a transcription is written once, from a
+correct reading, and then the game moves and it does not. The fix each time was to extract the
+text builder from the view — `GalaxyMapView.DetailBody`, `BattleMode.MoveCardText`,
+`HudView.DexLoreText`, `HudView.EggLoreText` — so the renderer and the checks both read the game.
+
+If you add a panel to a render, do not type its contents.
+
 `artcheck` reimplements the game's *drawing*, not its data. That reimplementation has produced
 false alarms four times: a font metric that overstated every label by two thirds, sector captions
 placed by an older algorithm than the game's, a truncating text wrap that hid the overflow it

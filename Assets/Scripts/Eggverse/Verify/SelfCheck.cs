@@ -983,6 +983,49 @@ namespace Eggverse
                     }
             }
 
+            // ---- your own egg's panel ----
+            {
+                // The worst case for this panel is an egg that has everything to say at once:
+                // a nickname beside a long species name, an elder tag, four moves, and an
+                // evolution still ahead of it. It is 300x160 for the header and 450x600 for the
+                // numbers, and nothing had ever measured the numbers.
+                var st = new GameState();
+                foreach (var sp0 in SpeciesDatabase.All) { st.Seen.Add(sp0.Id); st.Caught.Add(sp0.Id); }
+
+                foreach (var sp in SpeciesDatabase.All)
+                    foreach (int lv in new[] { 5, sp.EvolveLevel > 0 ? sp.EvolveLevel : 30, EggInstance.MaxLevel })
+                    {
+                        // An elder, because the ELDER tag is the widest the header ever gets.
+                        var egg = EggInstance.WildElder(sp.Id, Mathf.Clamp(lv, 1, EggInstance.MaxLevel - 3));
+                        egg.Nickname = "Bartholomew";        // the longest a player can enter
+
+                        var rows = HudView.EggDetailText(egg).Split('\n');
+                        int usedH = 0;
+                        foreach (var row in rows) usedH += lines(row, 300f, 19);
+                        check(usedH <= capacity(160f, 19),
+                              "egg header fits for " + sp.Name + " at Lv " + egg.Level +
+                              " (" + usedH + " of " + capacity(160f, 19) + " lines)");
+
+                        int usedL = 0;
+                        foreach (var row in HudView.EggLoreText(egg, st).Split('\n'))
+                            usedL += lines(row, 450f, 19);
+                        check(usedL <= capacity(600f, 19),
+                              "egg numbers fit for " + sp.Name + " at Lv " + egg.Level +
+                              " (" + usedL + " of " + capacity(600f, 19) + " lines)");
+                    }
+
+                // A fainted egg says so instead of showing an HP line, and a fully grown one
+                // says so instead of an XP target it can never reach.
+                var top = new EggInstance(SpeciesDatabase.All[0], EggInstance.MaxLevel);
+                check(HudView.EggLoreText(top, st).Contains("fully grown"),
+                      "a maxed egg is not asked for XP it cannot earn");
+
+                var down = new EggInstance(SpeciesDatabase.All[0], 20);
+                down.CurrentHP = 0;
+                check(HudView.EggLoreText(down, st).Contains("Out cold"),
+                      "a fainted egg says so where its HP would be");
+            }
+
             // ---- the field record's lore column ----
             {
                 // 450x600 at font 19 - 27 lines for matchups, stats, where it is found, the

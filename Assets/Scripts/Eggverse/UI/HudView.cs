@@ -641,15 +641,24 @@ namespace Eggverse
         /// <summary>Right column: one of your own eggs, with the numbers behind it.</summary>
         void RefreshEggDetail(EggInstance egg, GameState state)
         {
-            string hex = ColorUtility.ToHtmlStringRGB(TypeChart.ColorOf(egg.Type));
             dexPortrait.sprite = ProcArt.Egg(egg.Species, 128);
             dexPortrait.color = Color.white;
+            dexDetail.text = EggDetailText(egg);
+            dexLore.text = EggLoreText(egg, state);
+        }
 
+        /// <summary>
+        /// The header block for one of your own eggs: name, type, level, trait. 300x160 at
+        /// mixed sizes.
+        /// </summary>
+        public static string EggDetailText(EggInstance egg)
+        {
+            string hex = ColorUtility.ToHtmlStringRGB(TypeChart.ColorOf(egg.Type));
             string title = egg.Name;
             if (!string.IsNullOrEmpty(egg.Nickname))
                 title += "  <size=17><color=#7A8090>" + egg.Species.Name + "</color></size>";
 
-            dexDetail.text =
+            return
                 "<size=26><b>" + title + "</b></size>\n" +
                 "<color=#" + hex + ">" + TypeChart.Name(egg.Type) + "</color>" +
                 "   <color=#A8B2C4>Lv " + egg.Level + "</color>" +
@@ -657,6 +666,16 @@ namespace Eggverse
                 "<color=#FFC24D>" + TypeChart.TraitName(egg.Trait) + "</color>\n" +
                 "<color=#A8B2C4>" + TypeChart.TraitBlurb(egg.Trait) + "</color>";
 
+        }
+
+        /// <summary>
+        /// The numbers behind one of your own eggs: condition, stats, what it still has ahead of
+        /// it, and its moves. Extracted alongside the species entry so the renderer draws it and
+        /// the checks measure it - the render's transcription of this panel was missing the
+        /// STATS heading and the whole AHEAD section.
+        /// </summary>
+        public static string EggLoreText(EggInstance egg, GameState state)
+        {
             var sb = new System.Text.StringBuilder();
             sb.Append("<color=#FFC24D>CONDITION</color>\n");
             sb.Append(egg.IsFainted
@@ -702,7 +721,7 @@ namespace Eggverse
                   .Append(slot.Move.IsStatus ? "status" : "pwr " + slot.Move.Power)
                   .Append("  ").Append(slot.PP).Append("/").Append(slot.Move.MaxPP).Append(" pp</color>\n");
             }
-            dexLore.text = sb.ToString();
+            return sb.ToString();
         }
 
         /// <summary>Right column: everything known about the species under the dex cursor.</summary>

@@ -92,34 +92,42 @@ static class Collection
         // With the cursor on your own eggs the panel shows that egg instead of the species entry.
         if (showEgg)
         {
+            // The game's own egg panel. The transcription this replaces was missing the STATS
+            // heading, missing nothing else visible - and had AHEAD above CONDITION, where the
+            // game puts it below STATS. Five renders in a row have had a fault like this.
+            var shown = Eggverse.EggInstance.WildElder("glacegg", 21);
+            shown.Nickname = "Frosty";
+            var estate = new Eggverse.GameState();
+            foreach (var sp in Eggverse.SpeciesDatabase.All) { estate.Seen.Add(sp.Id); estate.Caught.Add(sp.Id); }
+
             float ex2 = x0 + 1280, ey2 = y1 - 92;
-            Battle.Ellipse(c, ex2 + 75, ey2 - 75, 54, 72, Col.Hex(0x8FE3F2));
+            Battle.Ellipse(c, ex2 + 75, ey2 - 75, 54, 72, Col.Hex(TypeHex(shown.Type)));
             Battle.Ellipse(c, ex2 + 95, ey2 - 50, 34, 44, new Col(0, 0, 0, 0.20f), 0.9f);
-            float tx2 = x0 + 1450;
-            Battle.Text(c, "FROSTY  GLACEGG", tx2, ey2, 26, Battle.Ink);
-            Battle.Text(c, "FROST   LV 24   ELDER", tx2, ey2 - 34, 19, Col.Hex(0x8FE3F2));
-            Battle.Text(c, "TOUGH SHELL", tx2, ey2 - 76, 19, Battle.Accent);
-            Battle.Text(c, "TAKES A QUARTER LESS FROM", tx2, ey2 - 102, 19, dim);
-            Battle.Text(c, "SUPER-EFFECTIVE HITS.", tx2, ey2 - 124, 19, dim);
+
+            float tx2 = x0 + 1450, ty2 = ey2;
+            foreach (var raw in Eggverse.HudView.EggDetailText(shown).Split('\n'))
+            {
+                var plain = Strip(raw);
+                if (plain.Length == 0) { ty2 -= step19; continue; }
+                foreach (var line in WrapLines(plain, 28))
+                {
+                    Battle.Text(c, line.ToUpperInvariant(), tx2, ty2, 19, FirstCol(raw, Battle.Ink));
+                    ty2 -= step19;
+                }
+            }
 
             float lx3 = x0 + 1280, ly3 = y1 - 262;
-            var block = new[]
+            foreach (var raw in Eggverse.HudView.EggLoreText(shown, estate).Split('\n'))
             {
-                ("AHEAD", Battle.Accent), ("BECOMES SNOWPOACH AT LEVEL 26.", Battle.Ink), ("", dim),
-                ("CONDITION", Battle.Accent), ("HP  96 / 96", Battle.Ink),
-                ("XP  180 / 600 TO LEVEL 25", Battle.Ink), ("", dim),
-                ("STATS", Battle.Accent), ("ATK  73     DEF  81     SPD  62", Battle.Ink), ("", dim),
-                ("MOVES", Battle.Accent),
-                ("FROST CRACK  PWR 75  15/15 PP", Col.Hex(0x8FE3F2)),
-                ("CHILL SHELL  PWR 45  25/25 PP", Col.Hex(0x8FE3F2)),
-                ("COLD SNAP  PWR 55  15/15 PP", Col.Hex(0x8FE3F2)),
-                ("SHELL BASH  PWR 40  35/35 PP", Battle.InkDim),
-            };
-            foreach (var (line, col) in block)
-            {
-                if (line.Length > 0) Battle.Text(c, line, lx3, ly3, 19, col);
-                ly3 -= 19f * 1.16f;
+                var plain = Strip(raw);
+                if (plain.Length == 0) { ly3 -= step19; continue; }
+                foreach (var line in WrapLines(plain, 46))
+                {
+                    Battle.Text(c, line.ToUpperInvariant(), lx3, ly3, 19, FirstCol(raw, Battle.Ink));
+                    ly3 -= step19;
+                }
             }
+
             Battle.TextCentre(c, "LEFT/RIGHT PICK A COLUMN · UP/DOWN MOVE · ENTER SWAPS A NEST EGG IN · 1-6 LEADS · TAB CLOSES",
                               Battle.W / 2f, y0 + 40, 20, dim);
             return c.Px;
@@ -189,5 +197,14 @@ static class Collection
     {
         var col = TypeChart.ColorOf(t);
         return ((int)(col.r * 255) << 16) | ((int)(col.g * 255) << 8) | (int)(col.b * 255);
+    }
+
+    static string Strip(string t) =>
+        System.Text.RegularExpressions.Regex.Replace(t, "<[^>]+>", "");
+
+    static Col FirstCol(string rich, Col fallback)
+    {
+        var m = System.Text.RegularExpressions.Regex.Match(rich, "<color=#([0-9A-Fa-f]{6})>");
+        return m.Success ? Col.Hex(Convert.ToInt32(m.Groups[1].Value, 16)) : fallback;
     }
 }
