@@ -125,9 +125,18 @@ namespace Eggverse
             "Neither will this.</color>\n\n";
 
         /// <summary>The run's numbers, appended under the ending card.</summary>
-        public static string VictoryTally(int collected, int recorded, int catchable, int types) =>
+        /// <summary>
+        /// What the run came to. Two lines rather than one: the game keeps track of inscriptions
+        /// read and caches dug and the tally mentioned neither, so a player who had walked every
+        /// world end to end got the same closing line as one who flew straight through.
+        /// </summary>
+        public static string VictoryTally(int collected, int recorded, int catchable, int types,
+                                          int inscriptions, int inscriptionsTotal,
+                                          int caches, int cachesTotal) =>
             "<color=#A8B2C4>Eggs collected: " + collected +
             "   ·   Species recorded: " + recorded + " / " + catchable +
-            "   ·   Types held: " + types + " / 8</color>";
+            "   ·   Types held: " + types + " / 8</color>\n" +
+            "<color=#7A8090>Inscriptions read: " + inscriptions + " / " + inscriptionsTotal +
+            "   ·   Caches recovered: " + caches + " / " + cachesTotal + "</color>";
     }
 }

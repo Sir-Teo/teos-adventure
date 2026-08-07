@@ -88,7 +88,8 @@ static class Prose
         Add("begin hint", UiCopy.BeginHint);
         Add("ending heading", UiCopy.VictoryHeading);
         AddLayout("ending body", UiCopy.VictoryBody);
-        AddLayout("ending tally", UiCopy.VictoryTally(120, 24, 24, 8));
+        AddLayout("ending tally", UiCopy.VictoryTally(120, 24, 24, 8, LandmarkDatabase.Count, LandmarkDatabase.Count,
+                                           PlanetDatabase.CacheWorlds.Count, PlanetDatabase.CacheWorlds.Count));
         AddLayout("ending coda", UiCopy.VictoryCoda);
         for (int i = 0; i < UiCopy.RestIdle.Length; i++) Add("rest line " + i, UiCopy.RestIdle[i]);
         for (int i = 0; i < UiCopy.RestCold.Length; i++) Add("cold rest line " + i, UiCopy.RestCold[i]);

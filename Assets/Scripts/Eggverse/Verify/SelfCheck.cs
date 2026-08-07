@@ -2756,7 +2756,8 @@ namespace Eggverse
                 // the whole string as one ignores every newline in it.
                 foreach (var coda in new[] { "", UiCopy.VictoryCoda })
                 {
-                    string ending = UiCopy.VictoryBody + coda + UiCopy.VictoryTally(120, 24, 24, 8);
+                    string ending = UiCopy.VictoryBody + coda + UiCopy.VictoryTally(120, 24, 24, 8, LandmarkDatabase.Count, LandmarkDatabase.Count,
+                                        PlanetDatabase.CacheWorlds.Count, PlanetDatabase.CacheWorlds.Count);
                     int used = 0;
                     foreach (var row in ending.Split('\n')) used += lines(row, 1300f, 28);
                     check(used <= capacity(460f, 28),

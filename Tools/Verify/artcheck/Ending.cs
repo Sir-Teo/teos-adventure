@@ -23,7 +23,8 @@ static class Ending
         // Body: 1300x460 anchored at -140, drawn from the top of that box, font 28.
         string text = UiCopy.VictoryBody
                     + (readEverything ? UiCopy.VictoryCoda : "")
-                    + UiCopy.VictoryTally(120, 24, 24, 8);
+                    + UiCopy.VictoryTally(120, 24, 24, 8, LandmarkDatabase.Count, LandmarkDatabase.Count,
+                                        PlanetDatabase.CacheWorlds.Count, PlanetDatabase.CacheWorlds.Count);
 
         // uGUI centres the block in the box, so the block is laid out from its own height -
         // the same arithmetic the move buttons need. Drawing from a fixed top made the shorter

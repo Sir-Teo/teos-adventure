@@ -392,7 +392,11 @@ namespace Eggverse
                              UiCopy.VictoryTally(dir.State.TotalCollected,
                                                  dir.State.RecordedCatchable,
                                                  SpeciesDatabase.CatchableCount,
-                                                 dir.State.DistinctTypesHeld);
+                                                 dir.State.DistinctTypesHeld,
+                                                 dir.State.Landmarks.Count,
+                                                 LandmarkDatabase.Count,
+                                                 dir.State.Caches.Count,
+                                                 PlanetDatabase.CacheWorlds.Count);
                 }
             }
             victoryPanel.gameObject.SetActive(true);
