@@ -11,13 +11,14 @@ static class Surface
         public Col[] Px;
         public int Size;
         public float Scale;           // pixels per world unit
+        public float Ox, Oy;          // world point the camera is centred on
     }
 
     static void Dot(Ctx c, float wx, float wy, float diameter, Col col, float soft = 0.12f)
     {
         // World -> pixel, y up.
-        float cx = c.Size * 0.5f + wx * c.Scale;
-        float cy = c.Size * 0.5f + wy * c.Scale;
+        float cx = c.Size * 0.5f + (wx - c.Ox) * c.Scale;
+        float cy = c.Size * 0.5f + (wy - c.Oy) * c.Scale;
         float rad = diameter * 0.5f * c.Scale;
         int x0 = (int)(cx - rad - 2), x1 = (int)(cx + rad + 2);
         int y0 = (int)(cy - rad - 2), y1 = (int)(cy + rad + 2);
@@ -32,7 +33,7 @@ static class Surface
 
     static void Ellipse(Ctx c, float wx, float wy, float dw, float dh, Col col, float soft = 0.15f)
     {
-        float cx = c.Size * 0.5f + wx * c.Scale, cy = c.Size * 0.5f + wy * c.Scale;
+        float cx = c.Size * 0.5f + (wx - c.Ox) * c.Scale, cy = c.Size * 0.5f + (wy - c.Oy) * c.Scale;
         float rx = dw * 0.5f * c.Scale, ry = dh * 0.5f * c.Scale;
         for (int y = Math.Max(0, (int)(cy - ry - 2)); y < Math.Min(c.Size, (int)(cy + ry + 2)); y++)
             for (int x = Math.Max(0, (int)(cx - rx - 2)); x < Math.Min(c.Size, (int)(cx + rx + 2)); x++)
@@ -63,11 +64,107 @@ static class Surface
             }
     }
 
-    public static Col[] Render(int size, int ocean, int land, int atmo, string theme, int seed, string layout, float viewUnits = 0f, string planetId = null)
+    static void Bar(Ctx c, float wx, float wy, float bw, float bh, Col col, float deg = 0f)
+    {
+        float cx = c.Size * 0.5f + (wx - c.Ox) * c.Scale, cy = c.Size * 0.5f + (wy - c.Oy) * c.Scale;
+        float hw = bw * 0.5f * c.Scale, hh = bh * 0.5f * c.Scale;
+        double rad = deg * Math.PI / 180.0;
+        float cs = (float)Math.Cos(rad), sn = (float)Math.Sin(rad);
+        int reach = (int)(Math.Max(hw, hh) + 2);
+        for (int y = Math.Max(0, (int)cy - reach); y < Math.Min(c.Size, (int)cy + reach); y++)
+            for (int x = Math.Max(0, (int)cx - reach); x < Math.Min(c.Size, (int)cx + reach); x++)
+            {
+                float dx = x - cx, dy = y - cy;
+                float lx = dx * cs - dy * sn, ly = dx * sn + dy * cs;
+                if (Math.Abs(lx) <= hw && Math.Abs(ly) <= hh)
+                    Program.OverPublic(c.Px, y * c.Size + x, col, col.a);
+            }
+    }
+
+    static void RingAt(Ctx c, float wx, float wy, float d, float thick, Col col)
+    {
+        float cx = c.Size * 0.5f + (wx - c.Ox) * c.Scale, cy = c.Size * 0.5f + (wy - c.Oy) * c.Scale;
+        float rad = d * 0.5f * c.Scale, t = Math.Max(1f, thick * d * c.Scale);
+        for (int y = Math.Max(0, (int)(cy - rad - 2)); y < Math.Min(c.Size, (int)(cy + rad + 2)); y++)
+            for (int x = Math.Max(0, (int)(cx - rad - 2)); x < Math.Min(c.Size, (int)(cx + rad + 2)); x++)
+            {
+                float r = (float)Math.Sqrt((x - cx) * (x - cx) + (y - cy) * (y - cy));
+                float a = M.Clamp01(1f - Math.Abs(r - rad + t * 0.5f) / (t * 0.5f));
+                if (a > 0f) Program.OverPublic(c.Px, y * c.Size + x, col, a * col.a);
+            }
+    }
+
+    /// Mirrors SurfaceMode.BuildLandmarkForm. This is the only place the mocks draw a landmark -
+    /// there were briefly two, and the one embedded in the world render was a generic grey stone
+    /// that had never heard of the six forms.
+    static void DrawForm(Ctx c, float lx, float ly, Eggverse.LandmarkForm form, Col stone)
+    {
+        var dark = new Col(stone.r * 0.66f, stone.g * 0.66f, stone.b * 0.72f, 1f);
+        var outline = new Col(0.07f, 0.08f, 0.13f, 0.85f);
+
+        if (form != Eggverse.LandmarkForm.Seam)
+            Dot(c, lx, ly - 1.0f, 3.4f, new Col(dark.r, dark.g, dark.b, 0.55f), 0.5f);
+
+        switch (form)
+        {
+            case Eggverse.LandmarkForm.Post:
+                Bar(c, lx, ly + 0.55f, 1.06f, 3.66f, outline);
+                Bar(c, lx, ly + 0.55f, 0.82f, 3.4f, stone);
+                Bar(c, lx, ly + 2.3f, 1.74f, 0.86f, outline);
+                Bar(c, lx, ly + 2.3f, 1.5f, 0.62f, stone);
+                Dot(c, lx, ly + 2.5f, 2.8f, new Col(1f, 0.92f, 0.7f, 0.26f), 0.9f);
+                break;
+
+            case Eggverse.LandmarkForm.Frame:
+                Bar(c, lx - 1.0f, ly + 0.5f, 0.58f, 3.24f, outline);
+                Bar(c, lx + 1.0f, ly + 0.5f, 0.58f, 3.24f, outline);
+                Bar(c, lx, ly + 1.9f, 2.84f, 0.54f, outline);
+                Bar(c, lx - 1.0f, ly + 0.5f, 0.34f, 3.0f, stone);
+                Bar(c, lx + 1.0f, ly + 0.5f, 0.34f, 3.0f, stone);
+                Bar(c, lx, ly + 1.9f, 2.6f, 0.3f, stone);
+                Dot(c, lx, ly + 1.0f, 1.42f, outline, 0.16f);
+                Dot(c, lx, ly + 1.0f, 1.15f, dark, 0.16f);
+                break;
+
+            case Eggverse.LandmarkForm.Stones:
+                for (int i = 0; i < 5; i++)
+                {
+                    float t = (i - 2f) * 1.18f, h = 1.5f - Math.Abs(i - 2f) * 0.26f;
+                    Dot(c, lx + t, ly + h * 0.34f, h * 1.22f, outline, 0.14f);
+                    Dot(c, lx + t, ly + h * 0.34f, h, stone, 0.14f);
+                }
+                break;
+
+            case Eggverse.LandmarkForm.Hollow:
+                RingAt(c, lx, ly, 3.5f, 0.26f, outline);
+                RingAt(c, lx, ly, 3.2f, 0.20f, stone);
+                Dot(c, lx, ly, 2.1f, new Col(0.04f, 0.05f, 0.09f, 0.92f), 0.06f);
+                break;
+
+            case Eggverse.LandmarkForm.Hulk:
+                Dot(c, lx, ly + 0.5f, 4.0f, outline, 0.16f);
+                Dot(c, lx, ly + 0.5f, 3.6f, dark, 0.16f);
+                Bar(c, lx + 0.75f, ly + 1.85f, 3.5f, 0.78f, outline, 26f);
+                Bar(c, lx + 0.75f, ly + 1.85f, 3.2f, 0.5f, stone, 26f);
+                break;
+
+            case Eggverse.LandmarkForm.Seam:
+                Bar(c, lx, ly, 7.0f, 0.26f, new Col(0.05f, 0.05f, 0.09f, 0.9f));
+                Bar(c, lx, ly + 0.02f, 6.6f, 0.13f, new Col(stone.r, stone.g, stone.b, 0.8f));
+                break;
+        }
+    }
+
+    public static Col[] Render(int size, int ocean, int land, int atmo, string theme, int seed, string layout, float viewUnits = 0f, string planetId = null, bool onLandmark = false)
     {
         // viewUnits > 0 renders the in-game camera framing (30 units tall) rather than the disc.
         float span = viewUnits > 0f ? viewUnits : R * 2.25f;
         var c = new Ctx { Px = new Col[size * size], Size = size, Scale = size / span };
+        if (onLandmark && planetId != null)
+        {
+            var focus = Eggverse.SurfaceLayout.LandmarkPosition(Eggverse.PlanetDatabase.Get(planetId));
+            c.Ox = focus.x; c.Oy = focus.y;
+        }
         var bg = Col.Hex(0x05060E);
         for (int i = 0; i < c.Px.Length; i++) c.Px[i] = bg;
 
@@ -205,10 +302,7 @@ static class Surface
                 float lum3 = 0.2126f * landC.r + 0.7152f * landC.g + 0.0722f * landC.b;
                 var toward = lum3 > 0.5f ? new Col(0, 0, 0) : new Col(1, 1, 1);
                 var stone = Col.Lerp(Col.Lerp(new Col(0.62f, 0.64f, 0.72f), landC, 0.5f), toward, 0.42f);
-
-                Dot(c, lx, ly - 0.9f, 3.4f, new Col(stone.r * 0.7f, stone.g * 0.7f, stone.b * 0.75f, 0.9f), 0.3f);
-                Dot(c, lx, ly + 1.5f, 2.6f, new Col(1f, 0.92f, 0.7f, 0.28f), 0.9f);
-                Ellipse(c, lx, ly, 1.5f, 1.5f, new Col(stone.r, stone.g, stone.b, 1f), 0.08f);
+                DrawForm(c, lx, ly, lm.Form, stone);
             }
         }
 
@@ -219,15 +313,16 @@ static class Surface
         Dot(c, 0, 0, 2.6f, Col.Hex(0xFFE0A0), 0.2f);
         // Teo, with the dark outline the sprite now carries. On a bright world this is the
         // only thing separating a white suit from the ground.
-        Dot(c, 0, -6.5f, 1.6f * 1.30f, Col.Hex(0x141824), 0.30f);
-        Dot(c, 0, -6.5f, 1.6f, Col.Hex(0xECF1F7), 0.25f);
-        Dot(c, 0, -6.9f, 0.9f, Col.Hex(0x142A4A), 0.35f);
+        float tx = c.Ox, ty = c.Oy - (onLandmark ? 3.2f : 6.5f);
+        Dot(c, tx, ty, 1.6f * 1.30f, Col.Hex(0x141824), 0.30f);
+        Dot(c, tx, ty, 1.6f, Col.Hex(0xECF1F7), 0.25f);
+        Dot(c, tx, ty - 0.4f, 0.9f, Col.Hex(0x142A4A), 0.35f);
 
         // Horizon ring.
         for (int y = 0; y < size; y++)
             for (int x = 0; x < size; x++)
             {
-                float nx = (x - size * 0.5f) / c.Scale, ny = (y - size * 0.5f) / c.Scale;
+                float nx = (x - size * 0.5f) / c.Scale + c.Ox, ny = (y - size * 0.5f) / c.Scale + c.Oy;
                 float r = (float)Math.Sqrt(nx * nx + ny * ny);
                 float a = M.Clamp01(1f - Math.Abs(r - R) / 0.5f);
                 if (a > 0f) Program.OverPublic(c.Px, y * size + x, atmoC, a * 0.55f);

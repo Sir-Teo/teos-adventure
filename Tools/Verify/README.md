@@ -85,8 +85,15 @@ A check that has never failed is a check nobody has verified.
 
 Landmarks are the clearest case for rendering. All seventeen were drawn as one identical grey
 disc — every assertion passed, and a bell, a ship's bow and nine hundred cairns were the same
-rock. `landmarks.png` puts the six forms side by side at the camera's own scale with Teo in each
-cell for size, which is the only way that was ever going to show up.
+rock. `landmarks.png` puts the six forms side by side at the camera's own scale, each standing on
+the world it actually belongs to with Teo below it for size.
+
+That sheet used to draw the forms itself on flat colour swatches, which meant two mock
+implementations of the same shapes — and the other one, buried in the world render, was still a
+generic stone that had never heard of the six forms. It composites real `Surface` renders now, so
+the shapes are judged against real terrain and real decor. That immediately showed a form failing
+in a way flat swatches could not: on Brineholt the five set stones were dark blobs among dark
+decor blobs, so the one made thing on the world looked like more scenery.
 
 ## A warning about the mocks
 

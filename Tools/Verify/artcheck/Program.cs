@@ -344,13 +344,19 @@ static class Program
             var pxw = Surface.Render(560, ToHex(d.Ocean), ToHex(d.Land), ToHex(d.Atmosphere),
                                      d.Theme.ToString(), d.Seed, "Scattered", 30f, id);
             WriteBmp(pxw, 560, "teo-" + id + ".bmp");
+
+            // And the same camera standing at the landmark, which is the only place the form,
+            // the ground it is on and the decor around it are ever seen together.
+            var pxl = Surface.Render(560, ToHex(d.Ocean), ToHex(d.Land), ToHex(d.Atmosphere),
+                                     d.Theme.ToString(), d.Seed, "Scattered", 30f, id, true);
+            WriteBmp(pxl, 560, "landmark-" + id + ".bmp");
         }
 
         {
             // The six landmark forms, at camera scale, with Teo for size.
             var (lpx, lw, lh) = Landmarks.Render();
             WriteBmpRect(lpx, lw, lh, "landmarks.bmp");
-            Console.WriteLine("  landmark forms rendered: 6");
+            Console.WriteLine(Landmarks.Coverage());
         }
 
         foreach (var kv in Eggverse.PlanetDatabase.CacheWorlds)
@@ -392,6 +398,8 @@ static class Program
         Battle.Report();
     }
 
+
+    public static int ToHexPublic(UnityEngine.Color c) => ToHex(c);
 
     static int ToHex(UnityEngine.Color c) =>
         ((int)(c.r * 255) << 16) | ((int)(c.g * 255) << 8) | (int)(c.b * 255);

@@ -594,8 +594,12 @@ namespace Eggverse
                         float h = 1.5f - Mathf.Abs(i - 2f) * 0.26f;
                         Spawn("stoneEdge" + i, ProcArt.Blob("lmstone", Color.white, i * 3 + 1),
                               new Vector2(t, h * 0.34f), h * 1.22f, outline, -20 - i, parent);
+                        // All five in the light stone, not four dark ones around a light middle.
+                        // On a world whose decor is dark rounded blobs - Brineholt, Tidewrack -
+                        // dark stones read as more scenery, and the whole point of a landmark is
+                        // that somebody set it there.
                         Spawn("stone" + i, ProcArt.Blob("lmstone", Color.white, i * 3 + 1),
-                              new Vector2(t, h * 0.34f), h, i == 2 ? stone : dark, -19 - i, parent);
+                              new Vector2(t, h * 0.34f), h, stone, -19 - i, parent);
                     }
                     break;
 

@@ -84,6 +84,10 @@ static class Map
 
             Battle.Text(c, def.Name.ToUpperInvariant(), dx0 + 26, cy1 - 26, 30, Battle.Ink);
 
+            // The header tally, right-aligned against the same edge the detail panel ends on.
+            string tally = Strip(Eggverse.GalaxyMapView.Tally(state));
+            Battle.Text(c, tally, 1850 - Battle.TextWidth(tally, 22), 1080 - 46 - 11, 22, Battle.InkDim);
+
             string text = Eggverse.GalaxyMapView.DetailBody(
                 def, state, story, Eggverse.PlanetDatabase.Get("brineholt"),
                 Eggverse.GalaxyMapView.Presence.Elsewhere);
