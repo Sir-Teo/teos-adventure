@@ -503,7 +503,73 @@ namespace Eggverse
             }
             collectionDex.text = dex.ToString();
 
-            RefreshDexDetail(all[dexCursor], state);
+            // The right column follows the cursor. Browsing the record it shows the species
+            // entry; browsing your own eggs it shows that egg - which is the only place in the
+            // game the actual numbers appear. Levelling up has always announced "ATK +2" without
+            // anywhere to go and see what ATK is.
+            if (nestFocus)
+            {
+                var egg = EggUnderCursor(state);
+                if (egg != null) RefreshEggDetail(egg);
+                else RefreshDexDetail(all[dexCursor], state);
+            }
+            else RefreshDexDetail(all[dexCursor], state);
+        }
+
+        /// <summary>The egg the party/nest cursor is sitting on, or null.</summary>
+        EggInstance EggUnderCursor(GameState state)
+        {
+            if (nestCursor < state.Party.Count) return state.Party[nestCursor];
+            int i = nestCursor - state.Party.Count;
+            return i >= 0 && i < state.Nest.Count ? state.Nest[i] : null;
+        }
+
+        /// <summary>Right column: one of your own eggs, with the numbers behind it.</summary>
+        void RefreshEggDetail(EggInstance egg)
+        {
+            string hex = ColorUtility.ToHtmlStringRGB(TypeChart.ColorOf(egg.Type));
+            dexPortrait.sprite = ProcArt.Egg(egg.Species, 128);
+            dexPortrait.color = Color.white;
+
+            string title = egg.Name;
+            if (!string.IsNullOrEmpty(egg.Nickname))
+                title += "  <size=17><color=#7A8090>" + egg.Species.Name + "</color></size>";
+
+            dexDetail.text =
+                "<size=26><b>" + title + "</b></size>\n" +
+                "<color=#" + hex + ">" + TypeChart.Name(egg.Type) + "</color>" +
+                "   <color=#A8B2C4>Lv " + egg.Level + "</color>" +
+                (egg.Elder ? "   <color=#FFC24D>ELDER</color>" : "") + "\n\n" +
+                "<color=#FFC24D>" + TypeChart.TraitName(egg.Trait) + "</color>\n" +
+                "<color=#A8B2C4>" + TypeChart.TraitBlurb(egg.Trait) + "</color>";
+
+            var sb = new System.Text.StringBuilder();
+            sb.Append("<color=#FFC24D>CONDITION</color>\n");
+            sb.Append(egg.IsFainted
+                ? "<color=#E55555>Out cold. Rest at a Nest Station.</color>\n"
+                : "<color=#A8B2C4>HP</color>  " + egg.CurrentHP + " / " + egg.MaxHP + "\n");
+            sb.Append("<color=#A8B2C4>XP</color>  ")
+              .Append(egg.Level >= EggInstance.MaxLevel
+                      ? "fully grown"
+                      : egg.Xp + " / " + egg.XpToNext + " to level " + (egg.Level + 1))
+              .Append("\n\n");
+
+            sb.Append("<color=#FFC24D>STATS</color>\n");
+            sb.Append("<color=#A8B2C4>ATK</color>  ").Append(egg.Atk)
+              .Append("     <color=#A8B2C4>DEF</color>  ").Append(egg.Def)
+              .Append("     <color=#A8B2C4>SPD</color>  ").Append(egg.Spd).Append("\n\n");
+
+            sb.Append("<color=#FFC24D>MOVES</color>\n");
+            for (int i = 0; i < egg.Moves.Count; i++)
+            {
+                var slot = egg.Moves[i];
+                string mhex = ColorUtility.ToHtmlStringRGB(TypeChart.ColorOf(slot.Move.Type));
+                sb.Append("<color=#").Append(mhex).Append(">").Append(slot.Move.Name).Append("</color>")
+                  .Append("  <color=#A8B2C4>")
+                  .Append(slot.Move.IsStatus ? "status" : "pwr " + slot.Move.Power)
+                  .Append("  ").Append(slot.PP).Append("/").Append(slot.Move.MaxPP).Append(" pp</color>\n");
+            }
+            dexLore.text = sb.ToString();
         }
 
         /// <summary>Right column: everything known about the species under the dex cursor.</summary>

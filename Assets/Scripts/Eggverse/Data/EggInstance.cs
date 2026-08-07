@@ -203,16 +203,40 @@ namespace Eggverse
             while (Level < MaxLevel && Xp >= XpToNext)
             {
                 Xp -= XpToNext;
-                int hpBefore = MaxHP;
+                int hpBefore = MaxHP, atkBefore = RawAtk, defBefore = RawDef, spdBefore = RawSpd;
                 Level++;
                 // Levelling up grants the HP difference so the egg is not suddenly hurt.
                 CurrentHP += MaxHP - hpBefore;
-                if (log != null) log.Add(Name + " grew to level " + Level + "!");
+
+                // Say what actually improved. "Grew to level 12!" is the payoff for every fight
+                // in the game and it used to report nothing about the payoff - and because the
+                // stats step on integer division, some levels genuinely move only one of them.
+                if (log != null)
+                {
+                    log.Add(Name + " grew to level " + Level + "!");
+                    string gains = StatGains(MaxHP - hpBefore, RawAtk - atkBefore,
+                                             RawDef - defBefore, RawSpd - spdBefore);
+                    if (gains.Length > 0) log.Add(gains);
+                }
                 LearnMovesForLevel(Level, log);
                 TryEvolve(log);
             }
 
             if (Level >= MaxLevel) Xp = 0;
+        }
+
+        /// <summary>
+        /// The one-line stat report shown under a level-up. Only what moved is listed, so a
+        /// level that lifts a single stat reads as exactly that rather than a wall of "+0".
+        /// </summary>
+        static string StatGains(int hp, int atk, int def, int spd)
+        {
+            var parts = new List<string>();
+            if (hp > 0) parts.Add("HP +" + hp);
+            if (atk > 0) parts.Add("ATK +" + atk);
+            if (def > 0) parts.Add("DEF +" + def);
+            if (spd > 0) parts.Add("SPD +" + spd);
+            return parts.Count == 0 ? "" : string.Join("   ", parts.ToArray());
         }
 
         /// <summary>True on the level-up where this egg changed species.</summary>

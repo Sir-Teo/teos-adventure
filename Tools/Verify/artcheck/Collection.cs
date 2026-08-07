@@ -7,7 +7,7 @@ static class Collection
 {
     const float PW = 1760f, PH = 940f;
 
-    public static Col[] Render(int cursor, int caughtCount, bool fresh = false)
+    public static Col[] Render(int cursor, int caughtCount, bool fresh = false, bool showEgg = false)
     {
         var c = new Battle.Ctx { Px = new Col[Battle.W * Battle.H] };
         for (int i = 0; i < c.Px.Length; i++) c.Px[i] = Col.Hex(0x05060E);
@@ -89,6 +89,41 @@ static class Collection
         }
 
         // ---- column 3: detail on the cursor ----
+        // With the cursor on your own eggs the panel shows that egg instead of the species entry.
+        if (showEgg)
+        {
+            float ex2 = x0 + 1280, ey2 = y1 - 92;
+            Battle.Ellipse(c, ex2 + 75, ey2 - 75, 54, 72, Col.Hex(0x8FE3F2));
+            Battle.Ellipse(c, ex2 + 95, ey2 - 50, 34, 44, new Col(0, 0, 0, 0.20f), 0.9f);
+            float tx2 = x0 + 1450;
+            Battle.Text(c, "FROSTY  GLACEGG", tx2, ey2, 26, Battle.Ink);
+            Battle.Text(c, "FROST   LV 24   ELDER", tx2, ey2 - 34, 19, Col.Hex(0x8FE3F2));
+            Battle.Text(c, "TOUGH SHELL", tx2, ey2 - 76, 19, Battle.Accent);
+            Battle.Text(c, "TAKES A QUARTER LESS FROM", tx2, ey2 - 102, 19, dim);
+            Battle.Text(c, "SUPER-EFFECTIVE HITS.", tx2, ey2 - 124, 19, dim);
+
+            float lx3 = x0 + 1280, ly3 = y1 - 262;
+            var block = new[]
+            {
+                ("CONDITION", Battle.Accent), ("HP  96 / 96", Battle.Ink),
+                ("XP  180 / 600 TO LEVEL 25", Battle.Ink), ("", dim),
+                ("STATS", Battle.Accent), ("ATK  73     DEF  81     SPD  62", Battle.Ink), ("", dim),
+                ("MOVES", Battle.Accent),
+                ("FROST CRACK  PWR 75  15/15 PP", Col.Hex(0x8FE3F2)),
+                ("CHILL SHELL  PWR 45  25/25 PP", Col.Hex(0x8FE3F2)),
+                ("COLD SNAP  PWR 55  15/15 PP", Col.Hex(0x8FE3F2)),
+                ("SHELL BASH  PWR 40  35/35 PP", Battle.InkDim),
+            };
+            foreach (var (line, col) in block)
+            {
+                if (line.Length > 0) Battle.Text(c, line, lx3, ly3, 19, col);
+                ly3 -= 19f * 1.16f;
+            }
+            Battle.TextCentre(c, "LEFT/RIGHT PICK A COLUMN · UP/DOWN MOVE · ENTER SWAPS A NEST EGG IN · 1-6 LEADS · TAB CLOSES",
+                              Battle.W / 2f, y0 + 40, 20, dim);
+            return c.Px;
+        }
+
         var cur = all[Math.Min(cursor, all.Count - 1)];
         float ex = x0 + 1280, ey = y1 - 92;
         // portrait

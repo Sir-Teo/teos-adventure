@@ -447,6 +447,58 @@ namespace Eggverse
             check(lines("Cartons 12/12 · Salves 4/4", 524f, 19) == 1, "the HUD supply line wraps");
             check(lines("Nest 240 · Types 8/8 · Record 24/24", 524f, 19) == 1, "the HUD collection line wraps");
 
+            // ---- the egg detail panel ----
+            // Shows one of your own eggs in the 280x160 header and the 450x600 body. Worst case
+            // is a nicknamed Elder at max level with four long moves.
+            {
+                foreach (var sp in SpeciesDatabase.All)
+                {
+                    var egg = EggInstance.Wild(sp.Id, 30);
+                    egg.Nickname = "Marmalade";                 // a long nickname
+                    string header = egg.Name + "  " + sp.Name + "\n" +
+                                    TypeChart.Name(egg.Type) + "   Lv " + egg.Level + "   ELDER\n\n" +
+                                    TypeChart.TraitName(egg.Trait) + "\n" + TypeChart.TraitBlurb(egg.Trait);
+                    check(lines(header, 280f, 19) <= capacity(160f, 19),
+                          sp.Name + "'s egg header fits (" + lines(header, 280f, 19) + " of " +
+                          capacity(160f, 19) + " lines)");
+
+                    var body = new StringBuilder();
+                    body.Append("CONDITION\nHP  ").Append(egg.CurrentHP).Append(" / ").Append(egg.MaxHP)
+                        .Append("\nXP  fully grown\n\nSTATS\nATK  ").Append(egg.Atk)
+                        .Append("     DEF  ").Append(egg.Def).Append("     SPD  ").Append(egg.Spd)
+                        .Append("\n\nMOVES\n");
+                    foreach (var slot in egg.Moves)
+                        body.Append(slot.Move.Name).Append("  pwr ").Append(slot.Move.Power)
+                            .Append("  ").Append(slot.Move.MaxPP).Append("/").Append(slot.Move.MaxPP)
+                            .Append(" pp\n");
+                    check(lines(body.ToString(), 450f, 19) <= capacity(600f, 19),
+                          sp.Name + "'s egg body fits (" + lines(body.ToString(), 450f, 19) + " of " +
+                          capacity(600f, 19) + " lines)");
+                }
+            }
+
+            // ---- what a level-up reports ----
+            // The payoff for every fight in the game. It has to fit the message box, and it must
+            // never come up blank - HP grows on every level by construction, so a silent level-up
+            // would mean the reporting broke rather than that nothing improved.
+            foreach (var sp in SpeciesDatabase.All)
+            {
+                var egg = EggInstance.Wild(sp.Id, 5);
+                var log = new List<string>();
+                egg.GainXp(100000, log);                       // run it all the way up
+
+                int levelUps = 0, gainLines = 0;
+                foreach (var line in log)
+                {
+                    if (line.Contains("grew to level")) levelUps++;
+                    if (line.StartsWith("HP +")) gainLines++;
+                    check(line.Length <= 60, sp.Name + "'s level-up line fits the message box: \"" + line + "\"");
+                }
+                check(levelUps > 0, sp.Name + " levels up at all");
+                check(gainLines == levelUps,
+                      sp.Name + " reports gains on every level (" + gainLines + " of " + levelUps + ")");
+            }
+
             // ---- the catch toast ----
             // The most repeated message in the game. It has to fit the 1000px toast bar for the
             // longest name in the roster, in every combination of Elder and new-to-the-record.
