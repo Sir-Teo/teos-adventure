@@ -230,7 +230,11 @@ namespace Eggverse
             UIKit.Place(heading.rectTransform, new Vector2(0.5f, 0.5f), new Vector2(0.5f, 0.5f), new Vector2(0f, 250f), new Vector2(1200f, 120f));
 
             var sub = UIKit.Label(titlePanel, "Sub", UiCopy.Subtitle, 34, UIKit.Ink, TextAnchor.MiddleCenter);
-            UIKit.Place(sub.rectTransform, new Vector2(0.5f, 0.5f), new Vector2(0.5f, 0.5f), new Vector2(0f, 170f), new Vector2(1200f, 50f));
+            // 158, not 170: the heading's box runs down to +190 and the subtitle's ran up to
+            // +195, so they overlapped by 5px. The glyphs are centred inside their boxes so it
+            // never showed, which is exactly the kind of thing that stops being invisible the
+            // moment a font or a size changes.
+            UIKit.Place(sub.rectTransform, new Vector2(0.5f, 0.5f), new Vector2(0.5f, 0.5f), new Vector2(0f, 158f), new Vector2(1200f, 50f));
 
             var body = UIKit.Label(titlePanel, "Body", UiCopy.TitleBody,
                 24, UIKit.Ink, TextAnchor.UpperCenter);

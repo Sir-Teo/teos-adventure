@@ -106,6 +106,20 @@ static class Layout
         check(800f + 420f < 1236f, "collection: dex column clears the second divider");
         check(1280f + 450f <= PW - 20f, "collection: detail column clears the panel edge");
 
+        // ---- title card ----
+        // Never listed here: only the text-fit checks covered it, which measure whether a string
+        // fits its box, not whether the boxes fit each other. The heading and subtitle were
+        // overlapping by 5px, hidden because both are vertically centred inside their boxes.
+        var titleCard = new List<Box>
+        {
+            Place("Heading",   0.5f, 0.5f, 0.5f, 0.5f,  0f,  250f, 1200f, 120f),
+            Place("Subtitle",  0.5f, 0.5f, 0.5f, 0.5f,  0f,  158f, 1200f,  50f),
+            Place("TitleBody", 0.5f, 0.5f, 0.5f, 0.5f,  0f, -110f, 1500f, 460f),
+            Place("BeginHint", 0.5f, 0f,   0.5f, 0f,    0f,   96f, 1300f,  40f),
+            Place("SaveLine",  0.5f, 0f,   0.5f, 0f,    0f,   62f, 1300f,  28f),
+        };
+        CheckScreen(check, "title", titleCard);
+
         // ---- pause and dialogue, both centred modals ----
         var modals = new List<Box>
         {
@@ -195,6 +209,6 @@ static class Layout
         var centred = Place("control-centre", 0.5f, 0.5f, 0.5f, 0.5f, 0f, 0f, 200f, 200f);
         check(Math.Abs(centred.X0 - (W / 2f - 100f)) < 0.01f, "control: centre pivot resolves correctly");
 
-        Console.WriteLine($"  {battle.Count} battle elements, {hud.Count} HUD panels, {inner.Length} collection columns, {modals.Count} overlays checked");
+        Console.WriteLine($"  {battle.Count} battle elements, {hud.Count} HUD panels, {titleCard.Count} title elements, {inner.Length} collection columns, {modals.Count} overlays checked");
     }
 }
