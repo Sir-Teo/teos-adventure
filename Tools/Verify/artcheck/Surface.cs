@@ -182,6 +182,17 @@ static class Surface
             Blob(c, x, y, rad * 2f, fieldCol, i * 31 + 11);
         }
 
+        // A roamer standing on a shell field, with the backing disc it now carries. This is the
+        // case the numbers were failing: an egg of the world's own element, on fields tinted
+        // toward that same element.
+        {
+            float lum2 = 0.2126f * landC.r + 0.7152f * landC.g + 0.0722f * landC.b;
+            var haloTarget = lum2 > 0.5f ? new Col(0, 0, 0) : new Col(1, 1, 1);
+            var halo = Col.Lerp(landC, haloTarget, 0.84f);
+            Dot(c, cxs[0], cys[0], 4.2f, new Col(halo.r, halo.g, halo.b, 0.55f), 0.9f);
+            Ellipse(c, cxs[0], cys[0], 1.5f, 1.9f, themeCol, 0.10f);
+        }
+
         // Nest station at the centre, and Teo just below it.
         Dot(c, 0, 0, 7f, new Col(1f, 0.9f, 0.6f, 0.45f), 0.8f);
         Dot(c, 0, 0, 5.4f, new Col(1f, 0.78f, 0.30f, 0.55f), 0.10f);

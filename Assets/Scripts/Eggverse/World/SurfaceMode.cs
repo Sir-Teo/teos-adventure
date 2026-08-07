@@ -500,7 +500,11 @@ namespace Eggverse
                 r.Halo.sprite = ProcArt.Disc("roamerhalo", Color.white, new Color(1f, 1f, 1f, 0f), 1.5f, 64, 64f);
                 r.Halo.material = ProcArt.SpriteMaterial;
                 r.Halo.sortingOrder = 7;
-                var haloTint = AgainstGround(planet.Land, planet.Land, 0f, 0.62f);
+                // 0.84, not 0.62. The halo was pitched against the bare ground, but a roamer
+                // spends much of its time standing on a shell field - which is tinted toward
+                // the world's own element, and so are the eggs that spawn there. A Molten egg
+                // on Cinderoost's Molten fields sat 0.06 luminance from what it stood on.
+                var haloTint = AgainstGround(planet.Land, planet.Land, 0f, 0.84f);
                 r.Halo.color = new Color(haloTint.r, haloTint.g, haloTint.b, 0.55f);
 
                 r.Sprite = spriteGo.AddComponent<SpriteRenderer>();

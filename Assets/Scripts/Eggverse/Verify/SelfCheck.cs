@@ -874,12 +874,42 @@ namespace Eggverse
                     float byRim = Mathf.Abs(SurfaceMode.Luminance(sp.Accent * 0.55f) - ground);
                     // Roamers sit on a backing disc coloured against the ground, so that is a
                     // third way to separate and the one that always works.
-                    var halo = SurfaceMode.AgainstGround(w.Land, w.Land, 0f, 0.62f);
+                    var halo = SurfaceMode.AgainstGround(w.Land, w.Land, 0f, 0.84f);
                     float byHalo = Mathf.Abs(SurfaceMode.Luminance(halo) - ground);
                     check(Mathf.Max(Mathf.Max(byBody, byRim), byHalo) >= 0.20f,
                           sp.Name + " reads against " + w.Name + "'s ground (body " +
                           byBody.ToString("0.00") + ", rim " + byRim.ToString("0.00") +
                           ", halo " + byHalo.ToString("0.00") + ")");
+                }
+            }
+
+            // ---- and against the shell fields, not only the bare ground ----
+            // Every visibility check so far measured against a world's ground colour. Eggs and
+            // Teo spend much of their time standing on shell fields, which are a different
+            // colour on top of it - the same mistake the audio checks made by testing each sound
+            // alone when they are all heard over music.
+            foreach (var w in PlanetDatabase.All)
+            {
+                var field = SurfaceMode.AgainstGround(TypeChart.ColorOf(w.Theme), w.Land, 0.55f, 0.30f);
+                // Drawn at 0.85 alpha over the ground, so that is what the eye actually receives.
+                var seen = Color.Lerp(w.Land, field, 0.85f);
+                float fieldLum = SurfaceMode.Luminance(seen);
+
+                float teoSuit = Mathf.Abs(SurfaceMode.Luminance(ProcArt.TeoSuit) - fieldLum);
+                float teoLine = Mathf.Abs(SurfaceMode.Luminance(ProcArt.TeoOutline) - fieldLum);
+                check(Mathf.Max(teoSuit, teoLine) >= 0.25f,
+                      "Teo stands out on " + w.Name + "'s shell fields (suit " + teoSuit.ToString("0.00") +
+                      ", outline " + teoLine.ToString("0.00") + ")");
+
+                var halo = SurfaceMode.AgainstGround(w.Land, w.Land, 0f, 0.84f);
+                float haloGap = Mathf.Abs(SurfaceMode.Luminance(halo) - fieldLum);
+                for (int i = 0; i < w.Spawns.Length; i++)
+                {
+                    var sp = SpeciesDatabase.Get(w.Spawns[i].SpeciesId);
+                    float body = Mathf.Abs(SurfaceMode.Luminance(sp.Body) - fieldLum);
+                    check(Mathf.Max(body, haloGap) >= 0.20f,
+                          sp.Name + " reads on " + w.Name + "'s shell fields (body " +
+                          body.ToString("0.00") + ", halo " + haloGap.ToString("0.00") + ")");
                 }
             }
 
