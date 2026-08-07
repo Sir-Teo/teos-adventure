@@ -1216,6 +1216,40 @@ namespace Eggverse
         }
 
         /// <summary>
+        /// What each action does, in the words a player needs at the moment they are choosing.
+        ///
+        /// The same job the move descriptions do one level down, and the same reason: this is
+        /// where the mechanics actually get taught. Ori explains cartons once in the opening
+        /// brief and Lune explains salves two sectors later; the menu explains both every time
+        /// a player looks at it.
+        /// </summary>
+        public static readonly string[] ActionHelp =
+        {
+            "Choose a move.",
+            "Throw one. Wear the egg down first — a healthy one kicks straight back out.",
+            "Mends the egg in front of you. It costs you the turn.",
+            "Bring another egg out. You take a hit on the way in.",
+            "Get clear. A faster egg gets away more often.",
+        };
+
+        public static string ActionMessageText(int index, EggInstance mine, bool isTrainer)
+        {
+            if (index < 0 || index >= ActionHelp.Length) return "";
+
+            // The two the game refuses outright against a trainer say why, rather than sitting
+            // greyed with no reason given.
+            if (isTrainer && index == 1) return "<color=#9AA4B6>Nothing here is yours to take.</color>";
+            if (isTrainer && index == 4) return "<color=#9AA4B6>There is no walking away from this one.</color>";
+
+            // A salve on an untouched egg is the one case where the button is greyed for a
+            // reason a player might not guess.
+            if (index == 2 && mine != null && mine.CurrentHP >= mine.MaxHP)
+                return "<color=#9AA4B6>" + mine.Name + " is not hurt.</color>";
+
+            return ActionHelp[index];
+        }
+
+        /// <summary>
         /// Whether there is anybody to swap to: another egg in the party, still standing.
         ///
         /// Every other action in this menu greys itself out when it would be refused - the
@@ -1497,6 +1531,14 @@ namespace Eggverse
             if (activeMenu == moveButtons && cursor < Mine.Moves.Count)
             {
                 messageText.text = MoveMessageText(Mine.Moves[cursor], Foe.Type);
+            }
+            // And the same one level up. The action menu had this box carrying a single line -
+            // "What will Pebbles do?" - above six hundred pixels of nothing, on the screen a
+            // player makes every decision in the game on. The move menu below it has explained
+            // its options since it was written.
+            else if (activeMenu == actionButtons && cursor < ActionHelp.Length)
+            {
+                messageText.text = ActionMessageText(cursor, Mine, IsTrainer);
             }
 
             for (int i = 0; i < activeMenu.Count; i++)

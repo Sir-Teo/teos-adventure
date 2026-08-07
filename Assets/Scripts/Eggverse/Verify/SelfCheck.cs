@@ -1626,6 +1626,43 @@ namespace Eggverse
                 check(elder.Elder && !ordinary.Elder, "and knows it");
             }
 
+            // ---- the action menu explains itself ----
+            {
+                // The move menu has explained whichever move is highlighted since it was
+                // written. One level up, the same box carried a single line above six hundred
+                // pixels of nothing - on the screen a player makes every decision in the game
+                // on, and where the mechanics actually get taught.
+                var mine = EggInstance.Wild("sprouteg", 20);
+                mine.CurrentHP = mine.MaxHP / 2;
+
+                for (int i = 0; i < BattleMode.ActionHelp.Length; i++)
+                {
+                    string wild = BattleMode.ActionMessageText(i, mine, false);
+                    check(wild.Length > 0, "action " + i + " says what it does");
+                    check(lines(wild, 1040f, 28) <= capacity(210f, 28),
+                          "action " + i + "'s line fits the message box: " + wild);
+                }
+
+                // The two the game refuses against a trainer say why, rather than sitting
+                // greyed with no reason given.
+                check(BattleMode.ActionMessageText(1, mine, true) != BattleMode.ActionHelp[1],
+                      "the carton says why it is greyed against a trainer");
+                check(BattleMode.ActionMessageText(4, mine, true) != BattleMode.ActionHelp[4],
+                      "and so does running");
+
+                // And the salve, which is greyed for a reason a player might not guess.
+                var whole = EggInstance.Wild("sprouteg", 20);
+                check(BattleMode.ActionMessageText(2, whole, false).Contains("not hurt"),
+                      "the salve says why it is greyed on an untouched egg: " +
+                      BattleMode.ActionMessageText(2, whole, false));
+                check(BattleMode.ActionMessageText(2, mine, false) == BattleMode.ActionHelp[2],
+                      "and explains itself normally on a hurt one");
+
+                // One line per button in the menu, or the indices stop lining up.
+                check(BattleMode.ActionHelp.Length == 5,
+                      "there is a line for every action (" + BattleMode.ActionHelp.Length + ")");
+            }
+
             // ---- running low says so in a word too ----
             {
                 // Empty was given a word because a figure that reads the same to somebody the

@@ -141,6 +141,9 @@ static class Prose
             Add("move " + mv.Name, mv.Describe());
         }
 
+        for (int i = 0; i < BattleMode.ActionHelp.Length; i++)
+            Add("action help " + i, BattleMode.ActionHelp[i]);
+
         for (int i = 0; i < UiCopy.BattleLines.Length; i++)
             Add("battle line " + i, UiCopy.BattleLines[i]);
 
