@@ -996,6 +996,65 @@ namespace Eggverse
         /// once at the end of all of them. The bar used to snap - and when the award crossed a
         /// level it snapped backwards, so the one moment worth watching never happened.
         /// </summary>
+        // Where the two eggs sit when nothing is happening to them. Captured once, because an
+        // animation that reads the current position as "home" and then restores it will leave
+        // the egg wherever the idle happened to have it that frame.
+        Vector2 mineHome, foeHome;
+        bool homesTaken;
+
+        /// <summary>Suppresses the idle while something else is moving an egg on purpose.</summary>
+        int animating;
+
+        /// <summary>
+        /// How far an egg drifts as it sits there, and how fast. Small: this is breathing, not
+        /// bouncing, and it plays for the whole of every fight.
+        /// </summary>
+        public const float IdleRise = 7f, IdleRate = 1.35f;
+
+        /// <summary>
+        /// A pair of phases far enough apart that two eggs never move as one object. The surface
+        /// learned this with its warming ring - six eggs rising in lockstep read as one lid
+        /// lifting rather than six creatures.
+        /// </summary>
+        public const float MinePhase = 0f, FoePhase = 2.1f;
+
+        /// <summary>
+        /// The battle screen's eggs sat perfectly still for the whole of every fight, except for
+        /// the third of a second one of them was being hit. The surface has bobbed its wildlife
+        /// since it was written; the screen a player spends most of the game looking at had
+        /// nothing.
+        /// </summary>
+        void TickIdle()
+        {
+            if (myEggImage == null || foeEggImage == null) return;
+            if (!homesTaken)
+            {
+                mineHome = myEggImage.rectTransform.anchoredPosition;
+                foeHome = foeEggImage.rectTransform.anchoredPosition;
+                homesTaken = true;
+            }
+            if (animating > 0) return;
+
+            // Off means off, the same as the hit shake. Someone who turned screen motion down
+            // did not mean "except for this".
+            if (State != null && !State.ScreenMotion)
+            {
+                myEggImage.rectTransform.anchoredPosition = mineHome;
+                foeEggImage.rectTransform.anchoredPosition = foeHome;
+                return;
+            }
+
+            float t = Time.time * IdleRate;
+            // A fainted egg does not breathe.
+            float mineAmp = Mine != null && !Mine.IsFainted ? IdleRise : 0f;
+            float foeAmp = Foe != null && !Foe.IsFainted ? IdleRise : 0f;
+
+            myEggImage.rectTransform.anchoredPosition =
+                mineHome + new Vector2(0f, Mathf.Sin(t + MinePhase) * mineAmp);
+            foeEggImage.rectTransform.anchoredPosition =
+                foeHome + new Vector2(0f, Mathf.Sin(t + FoePhase) * foeAmp);
+        }
+
         IEnumerator CryAfter(SpeciesDef sp, float delay)
         {
             yield return new WaitForSeconds(delay);
@@ -1051,7 +1110,8 @@ namespace Eggverse
         {
             float from = bar.FillRect.anchorMax.x;
             float to = target.HPFraction;
-            Vector2 home = victim.rectTransform.anchoredPosition;
+            animating++;
+            Vector2 home = victim == myEggImage ? mineHome : foeHome;
 
             float t = 0f;
             while (t < 0.34f)
@@ -1076,6 +1136,7 @@ namespace Eggverse
 
             victim.rectTransform.anchoredPosition = home;
             victim.color = Color.white;
+            animating--;
             bar.SetFraction(to);
             bar.SetFillColor(UIKit.HealthColor(to));
             RefreshCards(false);   // lands on the true value, which HpShown is pinned to at k=1
@@ -1175,7 +1236,8 @@ namespace Eggverse
         IEnumerator WobbleCarton()
         {
             float t = 0f;
-            Vector2 home = foeEggImage.rectTransform.anchoredPosition;
+            animating++;
+            Vector2 home = foeHome;
             while (t < 0.4f)
             {
                 t += Time.deltaTime;
@@ -1183,6 +1245,7 @@ namespace Eggverse
                 yield return null;
             }
             foeEggImage.rectTransform.anchoredPosition = home;
+            animating--;
         }
 
         /// <summary>Arrows for any raised or lowered stat, so buffs are not invisible.</summary>
@@ -1546,6 +1609,7 @@ namespace Eggverse
         void Update()
         {
             TickShake();
+            TickIdle();
             if (activeMenu == null) return;
 
             int before = cursor;

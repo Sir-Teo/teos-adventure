@@ -1671,6 +1671,42 @@ namespace Eggverse
                 check(elder.Elder && !ordinary.Elder, "and knows it");
             }
 
+            // ---- the eggs in a fight are alive between turns ----
+            {
+                // The surface has bobbed its wildlife since it was written. The battle screen -
+                // the one a player spends most of the game looking at - held both eggs
+                // perfectly still for the whole of every fight, except for the third of a
+                // second one of them was being hit.
+                check(BattleMode.IdleRise > 0f, "an egg in a fight moves at all");
+
+                // Breathing, not bouncing. The egg is 300-360px and this plays for the whole
+                // fight; anything you would notice as motion is something you would notice for
+                // ten minutes.
+                check(BattleMode.IdleRise <= 12f,
+                      "and not so much that it reads as bouncing (" + BattleMode.IdleRise + "px)");
+                check(BattleMode.IdleRate > 0.6f && BattleMode.IdleRate < 2.5f,
+                      "at the pace of something breathing (" + BattleMode.IdleRate + "/s)");
+
+                // Two eggs that rise together read as one object being lifted. The warming ring
+                // on the surface learned this with six of them.
+                float apart = Mathf.Abs(Mathf.Sin(BattleMode.MinePhase) - Mathf.Sin(BattleMode.FoePhase));
+                check(apart > 0.5f,
+                      "the two eggs do not move as one object (phases " + BattleMode.MinePhase +
+                      " and " + BattleMode.FoePhase + " differ by " + apart.ToString("0.00") + ")");
+
+                // Over a whole fight the phases must not drift into agreement either - they are
+                // driven off one clock at one rate, so this is a property of the constants.
+                float worst = 0f;
+                for (int frame = 0; frame < 600; frame++)
+                {
+                    float t = frame / 60f * BattleMode.IdleRate;
+                    float gap = Mathf.Abs(Mathf.Sin(t + BattleMode.MinePhase) - Mathf.Sin(t + BattleMode.FoePhase));
+                    worst = Mathf.Max(worst, gap);
+                }
+                check(worst > 1.0f,
+                      "and are visibly apart at some point in every cycle (" + worst.ToString("0.00") + ")");
+            }
+
             // ---- a nickname cannot break the panel it is drawn in ----
             {
                 // Everything typed at the naming prompt is interpolated straight into rich
