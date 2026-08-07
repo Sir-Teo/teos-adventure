@@ -16,7 +16,7 @@ static class Collection
         float y0 = (Battle.H - PH) / 2f, y1 = y0 + PH;
         Battle.Rect(c, x0, y0, x1, y1, Col.Hex(0x0B0D18));
 
-        Battle.TextCentre(c, "YOUR COLLECTION", (x0 + x1) / 2f, y1 - 30, 34, Battle.Accent);
+        Battle.TextCentre(c, Eggverse.UiCopy.CollectionTitle, (x0 + x1) / 2f, y1 - 30, 34, Battle.Accent);
 
         var all = SpeciesDatabase.All;
         var dim = Battle.InkDim;
@@ -128,7 +128,7 @@ static class Collection
                 }
             }
 
-            Battle.TextCentre(c, "LEFT/RIGHT PICK A COLUMN · UP/DOWN MOVE · ENTER SWAPS A NEST EGG IN · 1-6 LEADS · TAB CLOSES",
+            Battle.TextCentre(c, FooterFor(false),
                               Battle.W / 2f, y0 + 40, 20, dim);
             return c.Px;
         }
@@ -157,10 +157,16 @@ static class Collection
         // of matchups, base stats and the evolution line simply were not in the picture - the
         // column looked half empty in every render I ever took of this screen.
         float lx = x0 + 1280, ly2 = y1 - 262;
+        // The state has to match the screen being drawn. Rendering the fresh-start collection
+        // from an all-worlds-visited state put "FOUND ON  YOLKHAVEN, MOSSWELL" on a save that
+        // has only ever seen Yolkhaven - the render disagreeing with its own premise.
         var seenState = new Eggverse.GameState();
-        foreach (var w in Eggverse.PlanetDatabase.All) seenState.Visited.Add(w.Id);
-        foreach (var sp in Eggverse.SpeciesDatabase.All) seenState.Seen.Add(sp.Id);
-        seenState.Caught.Add(cur.Id);
+        if (!fresh)
+        {
+            foreach (var w in Eggverse.PlanetDatabase.All) seenState.Visited.Add(w.Id);
+            foreach (var sp in Eggverse.SpeciesDatabase.All) seenState.Seen.Add(sp.Id);
+            seenState.Caught.Add(cur.Id);
+        }
 
         foreach (var raw in Eggverse.HudView.DexLoreText(cur, seenState, true).Split('\n'))
         {
@@ -173,8 +179,7 @@ static class Collection
             }
         }
 
-        Battle.TextCentre(c, fresh ? "UP/DOWN MOVE · TAB CLOSES"
-                                   : "LEFT/RIGHT PICK A COLUMN · UP/DOWN MOVE · ENTER SWAPS A NEST EGG IN · 1-6 LEADS · TAB CLOSES",
+        Battle.TextCentre(c, FooterFor(fresh),
                           Battle.W / 2f, y0 + 40, 20, dim);
         return c.Px;
     }
@@ -206,5 +211,18 @@ static class Collection
     {
         var m = System.Text.RegularExpressions.Regex.Match(rich, "<color=#([0-9A-Fa-f]{6})>");
         return m.Success ? Col.Hex(Convert.ToInt32(m.Groups[1].Value, 16)) : fallback;
+    }
+
+    /// The game's own footer, which changes with what the player actually has.
+    static string FooterFor(bool fresh)
+    {
+        var st = new Eggverse.GameState();
+        if (!fresh)
+        {
+            while (st.Party.Count < Eggverse.GameState.PartySize)
+                st.Party.Add(Eggverse.EggInstance.Wild("sprouteg", 5));
+            st.Nest.Add(Eggverse.EggInstance.Wild("sprouteg", 5));
+        }
+        return Eggverse.HudView.HintFor(st).ToUpperInvariant();
     }
 }

@@ -186,7 +186,7 @@ namespace Eggverse
             var bg = UIKit.Panel(collectionPanel, "Bg", new Color32(0x0B, 0x0D, 0x18, 0xFA));
             UIKit.Stretch(bg.rectTransform, 0, 0, 0, 0);
 
-            var title = UIKit.Label(collectionPanel, "Title", "YOUR COLLECTION", 34, UIKit.Accent, TextAnchor.MiddleCenter, FontStyle.Bold);
+            var title = UIKit.Label(collectionPanel, "Title", UiCopy.CollectionTitle, 34, UIKit.Accent, TextAnchor.MiddleCenter, FontStyle.Bold);
             UIKit.Place(title.rectTransform, new Vector2(0.5f, 1f), new Vector2(0.5f, 1f), new Vector2(0f, -30f), new Vector2(1600f, 44f));
 
             // Three columns: your nest, the field record, and detail on whichever species
@@ -447,7 +447,11 @@ namespace Eggverse
         /// with an empty nest, or a column change before there is a second column worth reading,
         /// teaches the player to stop reading the footer.
         /// </summary>
-        static string HintFor(GameState state)
+        /// <summary>
+        /// The collection screen's footer, which changes with what you actually have - no
+        /// column hint before you own a nest, no "1-6 leads" with one egg.
+        /// </summary>
+        public static string HintFor(GameState state)
         {
             var parts = new List<string>();
             if (state.Nest.Count > 0) parts.Add("left/right pick a column");

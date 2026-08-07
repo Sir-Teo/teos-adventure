@@ -32,6 +32,16 @@ namespace Eggverse
         /// key opens the chart. The self-check requires both lists to mention the same keys, so
         /// one cannot be updated without the other.
         /// </summary>
+        // ---- screen chrome ----
+        //
+        // Titles and control footers. They were literals in the views and literals again in the
+        // renderers, matching only because both were typed from the same reading - which is how
+        // "THE HATCHERY REACH" became "HATCHERY REACH" on the chart render and nobody noticed.
+        public const string CollectionTitle = "YOUR COLLECTION";
+        public const string ChartTitle = "NAVIGATION CHART";
+        public const string ChartFooter = "Arrows select  ·  Enter to set course  ·  M or Esc to close";
+        public const string BattleFooter = "Arrows/WASD move · Enter or Space select · Esc back";
+
         // ---- world labels ----
         //
         // The floating labels on a planet surface. They live here rather than inline in the

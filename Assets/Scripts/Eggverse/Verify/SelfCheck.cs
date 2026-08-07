@@ -983,6 +983,62 @@ namespace Eggverse
                     }
             }
 
+            // ---- screen chrome ----
+            {
+                // Footers are the longest fixed strings in the game and none had been measured.
+                check(lines(UiCopy.ChartFooter, 1400f, 22) == 1, "the chart footer fits: " + UiCopy.ChartFooter);
+                check(lines(UiCopy.BattleFooter, 1040f, 22) == 1, "the battle footer fits: " + UiCopy.BattleFooter);
+                check(lines(UiCopy.ChartTitle, 900f, 34) == 1, "the chart title fits");
+                check(lines(UiCopy.CollectionTitle, 1600f, 34) == 1, "the collection title fits");
+
+                // The collection footer grows with what you own. Worst case: a nest, a full
+                // party, everything switched on at once.
+                var full = new GameState();
+                while (full.Party.Count < GameState.PartySize)
+                    full.Party.Add(EggInstance.Wild("sprouteg", 5));
+                full.Nest.Add(EggInstance.Wild("sprouteg", 5));
+                string hint = HudView.HintFor(full);
+                check(lines(hint, 1200f, 20) == 1, "the collection footer fits at its longest: " + hint);
+
+                // And shrinks when there is nothing to say. A player with one egg and no nest
+                // is not told about columns or about leading with 1-6.
+                string bare = HudView.HintFor(new GameState());
+                check(!bare.Contains("column"), "no column hint before you have a nest: " + bare);
+                check(!bare.Contains("leads"), "no lead hint with a single egg: " + bare);
+            }
+
+            // ---- battle plates ----
+            {
+                // The plate is 640px wide. The worst case is a long nickname, a status tag and
+                // three stat stages at once - which is exactly what a few turns of a real fight
+                // produces, and none of it had ever been measured.
+                var st = new GameState();
+                foreach (var sp0 in SpeciesDatabase.All) st.Caught.Add(sp0.Id);
+                // No starter. With one, Sprouteg is already in the record on turn zero - Ori
+                // hands you one - and the plate says so correctly. That is the second check
+                // this session written as though a new save were empty; it is not, and both
+                // times the game was right.
+                var fresh = new GameState(false);
+
+                foreach (var sp in SpeciesDatabase.All)
+                {
+                    var egg = EggInstance.WildElder(sp.Id, 30);
+                    egg.Nickname = "Bartholomew";
+
+                    check(lines(BattleMode.PlateName(egg), 640f, 30) == 1,
+                          sp.Name + "'s plate name fits: " + BattleMode.PlateName(egg));
+                    check(lines(BattleMode.PlateMeta(egg), 640f, 20) == 1,
+                          sp.Name + "'s plate meta fits: " + BattleMode.PlateMeta(egg));
+
+                    check(BattleMode.PlateRecord(egg, fresh, false).Contains("New species"),
+                          sp.Name + " is flagged as new before you have caught one");
+                    check(BattleMode.PlateRecord(egg, st, false).Contains("Already"),
+                          sp.Name + " is flagged as recorded once you have");
+                    check(BattleMode.PlateRecord(egg, fresh, true) == "",
+                          sp.Name + " carries no carton note when it belongs to a trainer");
+                }
+            }
+
             // ---- your own egg's panel ----
             {
                 // The worst case for this panel is an egg that has everything to say at once:

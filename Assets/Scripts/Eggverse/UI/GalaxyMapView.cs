@@ -46,7 +46,7 @@ namespace Eggverse
             var bg = UIKit.Panel(root, "Bg", new Color32(0x06, 0x07, 0x11, 0xFB));
             UIKit.Stretch(bg.rectTransform, 0, 0, 0, 0);
 
-            var title = UIKit.Label(root, "Title", "NAVIGATION CHART", 34, UIKit.Accent, TextAnchor.MiddleLeft, FontStyle.Bold);
+            var title = UIKit.Label(root, "Title", UiCopy.ChartTitle, 34, UIKit.Accent, TextAnchor.MiddleLeft, FontStyle.Bold);
             UIKit.Place(title.rectTransform, new Vector2(0f, 1f), new Vector2(0f, 1f), new Vector2(70f, -46f), new Vector2(900f, 44f));
 
             // The header row was a title and 900px of nothing. The chart is the screen a player
@@ -97,7 +97,7 @@ namespace Eggverse
                         new Vector2(0f, 48f), new Vector2(DetailWidth - 52f, 52f));
 
             footer = UIKit.Label(root, "Footer",
-                "Arrows select  ·  Enter to set course  ·  M or Esc to close",
+                UiCopy.ChartFooter,
                 22, UIKit.InkDim, TextAnchor.MiddleCenter);
             UIKit.Place(footer.rectTransform, new Vector2(0.5f, 0f), new Vector2(0.5f, 0f), new Vector2(0f, 34f), new Vector2(1400f, 30f));
 

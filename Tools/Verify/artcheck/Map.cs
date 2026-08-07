@@ -19,13 +19,16 @@ static class Map
         Battle.Rect(c, cx0, cy0, cx1, cy1, Col.Hex(0x0B0D1C));
         Battle.Rect(c, dx0, cy0, dx1, cy1, Col.Hex(0x121426));
 
-        Battle.Text(c, "NAVIGATION CHART", 70, 1034, 34, Battle.Accent);
+        Battle.Text(c, Eggverse.UiCopy.ChartTitle, 70, 1034, 34, Battle.Accent);
 
         // Straight from the game: same database, same projection, same label placement.
         float scale = GalaxyMapView.ChartScale();
         float ccx = (cx0 + cx1) * 0.5f, ccy = (cy0 + cy1) * 0.5f;
 
-        string[] sectorNames = { "HATCHERY REACH", "THE LONG DRIFT", "SHATTERED BELT" };
+        // The game's own captions. These were typed out, and two of the three had lost their
+        // "The" - "HATCHERY REACH" and "SHATTERED BELT" against the game's "THE HATCHERY REACH"
+        // and "THE SHATTERED BELT", while "THE LONG DRIFT" kept it. Inconsistent with the game
+        // and with itself, which is what typing them out gets you.
         var sectors = new[] { Sector.HatcheryReach, Sector.LongDrift, Sector.ShatteredBelt };
         for (int si = 0; si < sectors.Length; si++)
         {
@@ -109,7 +112,7 @@ static class Map
                               dx0 + 26 + 424, cy0 + 48, 22, Battle.Ink);
         }
 
-        Battle.TextCentre(c, "ARROWS SELECT  ·  ENTER TO SET COURSE  ·  M OR ESC TO CLOSE", 960, 64, 20, Battle.InkDim);
+        Battle.TextCentre(c, Eggverse.UiCopy.ChartFooter.ToUpperInvariant(), 960, 64, 20, Battle.InkDim);
         return c.Px;
     }
 

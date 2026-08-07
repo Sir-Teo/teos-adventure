@@ -315,7 +315,7 @@ namespace Eggverse
                 messageText.text = "What will " + Mine.Name + " do?";
                 RefreshActionButtons();
                 ShowMenu(actionPanel);
-                menuHint.text = "Arrows/WASD move · Enter or Space select · Esc back";
+                menuHint.text = UiCopy.BattleFooter;
                 yield return WaitChoice(actionButtons, 2, false);
                 HideAllMenus();
                 if (pendingChoice < 0) continue;
@@ -1114,31 +1114,39 @@ namespace Eggverse
               .Append(label).Append(arrows).Append("</color></size>");
         }
 
+        /// <summary>The name and level as drawn on a battle plate.</summary>
+        public static string PlateName(EggInstance egg) =>
+            egg.Name + "  <size=22><color=#A8B2C4>Lv " + egg.Level + "</color></size>";
+
+        /// <summary>
+        /// The line under the name: trait, any status, and any stat stages. The stages carry
+        /// arrows whose count is the magnitude, which the render had been leaving off entirely -
+        /// so a plate reading "Warm Yolk  ATK +1" was drawn where the game shows "ATK +1▲".
+        /// </summary>
+        public static string PlateMeta(EggInstance egg) =>
+            TypeChart.TraitName(egg.Trait) + StatusTag(egg) + Stages(egg);
+
+        /// <summary>Whether this foe is worth a carton, in the words the plate uses.</summary>
+        public static string PlateRecord(EggInstance foe, GameState state, bool isTrainer) =>
+            isTrainer ? ""                                      // not yours to take, so the note is noise
+            : state.Caught.Contains(foe.Species.Id) ? "Already in your record"
+            : "New species — not in your record";
+
         void RefreshCards(bool resetSprites)
         {
             var foe = Foe;
-            foeNameText.text = foe.Name + "  <size=22><color=#A8B2C4>Lv " + foe.Level + "</color></size>";
-            foeMetaText.text = TypeChart.TraitName(foe.Trait) + StatusTag(foe) + Stages(foe);
+            foeNameText.text = PlateName(foe);
+            foeMetaText.text = PlateMeta(foe);
             foeTypeText.text = TypeChart.Name(foe.Type);
             foeTypeChip.color = TypeChart.ColorOf(foe.Type);
             foeHpBar.SetFraction(foe.HPFraction);
             foeHpBar.SetFillColor(UIKit.HealthColor(foe.HPFraction));
-            if (IsTrainer)
-                foeRecordText.text = "";                       // not yours to take, so the note is noise
-            else if (State.Caught.Contains(foe.Species.Id))
-            {
-                foeRecordText.text = "Already in your record";
-                foeRecordText.color = UIKit.InkDim;
-            }
-            else
-            {
-                foeRecordText.text = "New species — not in your record";
-                foeRecordText.color = UIKit.Accent;
-            }
+            foeRecordText.text = PlateRecord(foe, State, IsTrainer);
+            foeRecordText.color = State.Caught.Contains(foe.Species.Id) ? UIKit.InkDim : UIKit.Accent;
 
             var mine = Mine;
-            myNameText.text = mine.Name + "  <size=22><color=#A8B2C4>Lv " + mine.Level + "</color></size>";
-            myMetaText.text = TypeChart.TraitName(mine.Trait) + StatusTag(mine) + Stages(mine);
+            myNameText.text = PlateName(mine);
+            myMetaText.text = PlateMeta(mine);
             myTypeText.text = TypeChart.Name(mine.Type);
             myTypeChip.color = TypeChart.ColorOf(mine.Type);
             myHpBar.SetFraction(mine.HPFraction);

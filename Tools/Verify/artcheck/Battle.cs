@@ -15,6 +15,10 @@ static class Battle
     {
         var f = new Dictionary<char, string[]>();
         void G(char c, string rows) => f[c] = rows.Split('|');
+        // The em dash. "New species — not in your record" is the game's own punctuation and it
+        // was printing as "NEW SPECIES ? NOT IN YOUR RECORD".
+        G('\u2014', ".....|.....|.....|#####|.....|.....|.....");
+
         // The evolution line's arrows, which the field record uses to say what a species grows
         // from and becomes. Every glyph the game draws and the font lacked printed as "?", and
         // a row of question marks reads as broken data rather than a missing mock glyph.
@@ -228,14 +232,28 @@ static class Battle
         Egg(c, 1490, 750, 150, Col.Hex(0x8FCB6B), Col.Hex(0x3E7A4E), 11);
         Egg(c, 440, 545, 180, Col.Hex(0x3D93C4), Col.Hex(0x14486E), 23);
 
+        // Both plates from the game's own builders. Typed out, the meta line read
+        // "WARM YOLK  ATK +1" - the game draws "ATK +1▲", with one arrow per stage, and the
+        // arrows are how you read the magnitude at a glance.
+        var foe = Eggverse.EggInstance.Wild("wavelet", 21);
+        var mine = Eggverse.EggInstance.Wild("sprouteg", 22);
+        mine.Nickname = "Pebbles";
+        mine.AtkStage = 1;                       // so the plate's stage arrow is exercised
+        mine.CurrentHP = mine.MaxHP / 3;         // and the health bar's low-HP colour
+        var bstate = new Eggverse.GameState(false);
+
         // Foe card: x 70..730, y 860..1010
-        Card(c, 70, 860, 730, 1010, "WAVELET  LV 21", "TIDAL", Col.Hex(0x3D93C4),
-             "TOUGH SHELL", 0.62f, null, false);
-        Text(c, "NEW SPECIES - NOT IN YOUR RECORD", 94, 1010 - 104, 20, Accent);
+        Card(c, 70, 860, 730, 1010, Strip(Eggverse.BattleMode.PlateName(foe)),
+             Eggverse.TypeChart.Name(foe.Type).ToUpperInvariant(), Col.Hex(TypeHex(foe.Type)),
+             Strip(Eggverse.BattleMode.PlateMeta(foe)).ToUpperInvariant(), 0.62f, null, false);
+        Text(c, Eggverse.BattleMode.PlateRecord(foe, bstate, false).ToUpperInvariant(),
+             94, 1010 - 104, 20, Accent);
 
         // My card: x 1150..1850, y 325..535
-        Card(c, 1150, 325, 1850, 535, "PEBBLES  LV 22", "VERDANT", Col.Hex(0x6FA858),
-             "WARM YOLK  ATK +1", 0.34f, "31/91 HP", true);
+        Card(c, 1150, 325, 1850, 535, Strip(Eggverse.BattleMode.PlateName(mine)),
+             Eggverse.TypeChart.Name(mine.Type).ToUpperInvariant(), Col.Hex(TypeHex(mine.Type)),
+             Strip(Eggverse.BattleMode.PlateMeta(mine)).ToUpperInvariant(), 0.34f,
+             mine.CurrentHP + "/" + mine.MaxHP + " HP", true);
 
         // Message box: x 40..1120, y 40..250
         Rect(c, 40, 40, 1120, 250, PanelDark);
@@ -250,8 +268,8 @@ static class Battle
             Text(c, (Strip(msg[0])), 72, 196, 28, Ink);
             if (msg.Length > 1) Text(c, Strip(msg[1]), 72, 196 - 28f * 1.16f, 24, InkDim);
         }
-        else Text(c, "WHAT WILL PEBBLES DO?", 72, 196, 30, Ink);
-        Text(c, "ARROWS/WASD MOVE · ENTER OR SPACE SELECT · ESC BACK", 72, 84, 19, InkDim);
+        else Text(c, ("What will " + mine.Name + " do?").ToUpperInvariant(), 72, 196, 30, Ink);
+        Text(c, Eggverse.UiCopy.BattleFooter.ToUpperInvariant(), 72, 84, 19, InkDim);
 
         if (menu == "action")
         {
@@ -326,5 +344,11 @@ static class Battle
     {
         var m = System.Text.RegularExpressions.Regex.Match(richText, "<color=#([0-9A-Fa-f]{6})>");
         return m.Success ? Col.Hex(Convert.ToInt32(m.Groups[1].Value, 16)) : fallback;
+    }
+
+    static int TypeHex(Eggverse.EggType t)
+    {
+        var col = Eggverse.TypeChart.ColorOf(t);
+        return ((int)(col.r * 255) << 16) | ((int)(col.g * 255) << 8) | (int)(col.b * 255);
     }
 }
