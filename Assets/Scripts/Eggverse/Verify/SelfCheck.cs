@@ -883,6 +883,41 @@ namespace Eggverse
                 }
             }
 
+            // ---- eggs against the battle backdrop ----
+            // The battle draws each egg over a near-black backdrop with a soft glow behind it.
+            // The glow is the catch: it lifts the local background toward the middle, which
+            // helps a bright egg and hurts a dark one by moving the backdrop *towards* it.
+            // Nothing had measured either, and the darkest species are Void.
+            {
+                var backdrop = new Color32(0x08, 0x0A, 0x14, 0xFF);
+                var foeGlow = new Color(0.35f, 0.28f, 0.6f);      // behind the foe, 0.35 alpha
+                var mineGlow = new Color(0.25f, 0.45f, 0.55f);    // behind yours,  0.30 alpha
+
+                float behindFoe = SurfaceMode.Luminance(Color.Lerp(backdrop, foeGlow, 0.35f));
+                float behindMine = SurfaceMode.Luminance(Color.Lerp(backdrop, mineGlow, 0.30f));
+
+                foreach (var sp in SpeciesDatabase.All)
+                {
+                    float body = SurfaceMode.Luminance(sp.Body);
+                    // Mirrors ProcArt: a dark egg is rimmed with light rather than shadow.
+                    float rim = SurfaceMode.Luminance(
+                        SurfaceMode.Luminance(sp.Body) < 0.30f
+                            ? Color.Lerp(sp.Accent, Color.white, 0.45f)
+                            : sp.Accent * 0.55f);
+
+                    foreach (var pair in new[] { new[] { behindFoe, 0f }, new[] { behindMine, 1f } })
+                    {
+                        float bg = pair[0];
+                        string side = pair[1] == 0f ? "the foe's side" : "your side";
+                        float byBody = Mathf.Abs(body - bg);
+                        float byRim = Mathf.Abs(rim - bg);
+                        check(Mathf.Max(byBody, byRim) >= 0.15f,
+                              sp.Name + " reads against the battle glow on " + side +
+                              " (body " + byBody.ToString("0.00") + ", rim " + byRim.ToString("0.00") + ")");
+                    }
+                }
+            }
+
             // ---- world labels ----
             // NEST STATION and every NPC name float on the planet with no panel behind them.
             // Their ink is near-white, so on a bright world they had nothing to read against -

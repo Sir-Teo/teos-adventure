@@ -206,7 +206,18 @@ namespace Eggverse
 
             var px = NewBuffer(size);
             Vector3 light = new Vector3(-0.45f, 0.62f, 0.64f).normalized;
-            Color rim = Mul(species.Accent, 0.55f);
+            // The rim used to be the accent darkened, always. That works for a bright egg and
+            // does nothing for a dark one - and every screen an egg is drawn large on is
+            // near-black, so the darkest species had a dark body ringed in a darker rim and
+            // nothing separating either from the background. Gloomolk sat 0.14 from the battle
+            // backdrop; Amy's Obsidyolk 0.13.
+            //
+            // The rim now goes the other way for a dark egg: lightened rather than darkened, so
+            // the silhouette always has an edge. Any species added later gets this for free.
+            float bodyLum = 0.2126f * species.Body.r + 0.7152f * species.Body.g + 0.0722f * species.Body.b;
+            Color rim = bodyLum < 0.30f
+                ? Color.Lerp(species.Accent, Color.white, 0.45f)
+                : Mul(species.Accent, 0.55f);
 
             for (int y = 0; y < size; y++)
             {

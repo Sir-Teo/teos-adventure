@@ -421,6 +421,7 @@ five separate things:
 | Wild eggs | Shadowhisk on Nullreach | 0.130 | 0.477 |
 | Wild eggs *on shell fields* | Yolkano on Cinderoost | 0.060 | 0.213 |
 | **World labels** | Glacierim's ice | **0.082** | 0.819 |
+| Dark eggs | Gloomolk on the battle backdrop | 0.128 | 0.525 |
 
 Teo was the worst of them — a white suit on a white world — and the fix is a dark outline rather
 than a per-planet tint, so the protagonist stays one colour and the outline only does work where
