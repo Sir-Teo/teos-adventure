@@ -92,6 +92,18 @@ static class Prose
         AddLayout("ending coda", UiCopy.VictoryCoda);
         for (int i = 0; i < UiCopy.RestIdle.Length; i++) Add("rest line " + i, UiCopy.RestIdle[i]);
         for (int i = 0; i < UiCopy.RestCold.Length; i++) Add("cold rest line " + i, UiCopy.RestCold[i]);
+        // Ori's line about the egg he handed over, which only appears once it has grown.
+        {
+            var briefed = new StoryState();
+            briefed.RestoreFrom(new[] { "met_ori", "ori_briefed" }, 2);
+            var grown = new GameState(false);
+            var raised = EggInstance.Wild("sprouteg", StoryDatabase.OriNoticesLevel);
+            raised.MarkFromOri();
+            grown.Party.Add(raised);
+            var script = StoryDatabase.GetDialogue("ori", briefed, grown);
+            foreach (var line in script.Lines) Add("Ori on his egg", line.Text);
+        }
+
         Add("woke warm", UiCopy.WokeWarm);
         Add("woke cold", UiCopy.WokeCold);
 

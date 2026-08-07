@@ -61,6 +61,16 @@ namespace Eggverse
         /// <summary>A rare, older wild egg: tougher, worth more, and much harder to keep.</summary>
         public bool Elder { get; private set; }
 
+        /// <summary>
+        /// The egg Ori hands you in the opening brief - "It's been yours since it was the size
+        /// of a thumbnail anyway." It was an ordinary Sprouteg, so the moment you caught a
+        /// second one, or it grew into something else, nothing in the game knew which one it
+        /// was. Survives evolution, because the instance does.
+        /// </summary>
+        public bool FromOri { get; private set; }
+
+        public void MarkFromOri() { FromOri = true; }
+
         public string Name =>
             !string.IsNullOrEmpty(Nickname) ? Nickname
             : Elder ? "Elder " + Species.Name
@@ -370,7 +380,7 @@ namespace Eggverse
 
         /// <summary>Rebuilds a saved egg exactly, including its remembered moves and PP.</summary>
         public static EggInstance Restore(string speciesId, string nickname, int level, int xp, int currentHP,
-                                          string[] moveIds, int[] movePP, bool elder = false)
+                                          string[] moveIds, int[] movePP, bool elder = false, bool fromOri = false)
         {
             var egg = new EggInstance(SpeciesDatabase.Get(speciesId), level);
             egg.Elder = elder;
@@ -391,6 +401,7 @@ namespace Eggverse
             }
 
             egg.CurrentHP = Mathf.Clamp(currentHP, 0, egg.MaxHP);
+            egg.FromOri = fromOri;
             return egg;
         }
     }

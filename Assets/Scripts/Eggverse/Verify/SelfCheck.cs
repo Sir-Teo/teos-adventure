@@ -995,6 +995,53 @@ namespace Eggverse
                     }
             }
 
+            // ---- the egg Ori gave you ----
+            {
+                // It was an ordinary Sprouteg, so the moment a player caught a second one the
+                // game had no idea which was which - and the one thing Ori would certainly
+                // notice was the one thing he could not.
+                var fresh = new GameState();
+                check(fresh.EggFromOri != null, "a new game starts holding the egg Ori gave you");
+                check(fresh.EggFromOri.Species.Id == "sprouteg", "and it is his Sprouteg");
+
+                // A second one of the same species is not his.
+                fresh.Party.Add(EggInstance.Wild("sprouteg", 5));
+                check(ReferenceEquals(fresh.EggFromOri, fresh.Party[0]),
+                      "catching another Sprouteg does not confuse which one is his");
+
+                // It survives being put in the nest, and being let go.
+                var kept = new GameState();
+                var mine = kept.EggFromOri;
+                kept.Party.Remove(mine); kept.Nest.Add(mine);
+                check(ReferenceEquals(kept.EggFromOri, mine), "it is still his while it sits at the nest");
+
+                // He says nothing until it has grown.
+                var briefed = new StoryState();
+                briefed.RestoreFrom(new[] { "met_ori", "ori_briefed" }, 2);
+                var young = new GameState();
+                var small = StoryDatabase.GetDialogue("ori", briefed, young);
+                bool remarks = false;
+                foreach (var line in small.Lines) if (line.Text.Contains("size of my thumb")) remarks = true;
+                check(!remarks, "Ori does not remark on a level 5 Sprouteg he handed over this morning");
+
+                // Built through the real constructor at the level Ori notices, rather than by
+                // reaching into the egg - the flag is what identifies it, not the level.
+                var grown = new GameState(false);
+                var raised = EggInstance.Wild("sprouteg", StoryDatabase.OriNoticesLevel);
+                raised.MarkFromOri();
+                grown.Party.Add(raised);
+                var big = StoryDatabase.GetDialogue("ori", briefed, grown);
+                bool notices = false;
+                foreach (var line in big.Lines) if (line.Text.Contains("size of my thumb")) notices = true;
+                check(notices, "Ori notices it once it has grown");
+                check(big.SetsFlag == "ori_saw_starter", "and only says it once");
+
+                // Every line of it fits the dialogue box.
+                foreach (var line in big.Lines)
+                    check(lines(line.Text, 1380f, 28) <= capacity(180f, 28),
+                          "Ori's line about his egg fits: " + line.Text);
+            }
+
             // ---- the gate says which elements are missing ----
             {
                 // "Two more types" is a number. The elements you have nothing of are

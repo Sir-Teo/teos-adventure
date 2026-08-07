@@ -111,6 +111,10 @@ namespace Eggverse
             { "beat_vess_1",  "Vess on Cobblestead" },
             { "beat_vess_2",  "Vess on Vesper" },
             { "beat_amy",     "Amy on Amaranth Prime" },
+            // Nothing is gated on Ori noticing his egg, so it has no label to show as
+            // outstanding - but it is still a flag, and leaving it out of this map would
+            // make it the only one nobody can look up.
+            { "ori_saw_starter", null },
         };
 
         /// <summary>A short phrase for a gate flag, or null if it has none.</summary>
@@ -121,6 +125,9 @@ namespace Eggverse
         }
 
         public const int FirstCatchEggs = 3;
+        /// <summary>The level at which Ori notices what his Sprouteg has grown into.</summary>
+        public const int OriNoticesLevel = 16;
+
         public const int GateEggs = 6;
         public const int GateTypes = 4;
         public const int GateLevel = 22;
@@ -643,6 +650,32 @@ namespace Eggverse
                         new DialogueLine("Ori", "Most hatchers find their four favourites and stop. Don't stop."),
                         new DialogueLine("Ori", "A wide nest reads the cold better than a strong one. Remember that when you get north."),
                     }, "ori_record_10", null, null, 5, true, true);
+                }
+
+                // The egg he handed over, brought back grown.
+                //
+                // It was an ordinary Sprouteg, so the moment a player caught a second one the
+                // game had no idea which was which - and the one thing Ori would certainly
+                // notice was the one thing he could not.
+                //
+                // Below the record milestones on purpose. The full-record gift is the biggest
+                // thing Ori has to say, and an aside about a Sprouteg must never stand in front
+                // of it.
+                var his = state.EggFromOri;
+                if (his != null && !story.HasFlag("ori_saw_starter") &&
+                    (his.Level >= OriNoticesLevel || his.Species.Id != "sprouteg"))
+                {
+                    return new DialogueScript(new[]
+                    {
+                        new DialogueLine("Ori", "Hold on. Bring that one here."),
+                        new DialogueLine("Ori", "..."),
+                        new DialogueLine("Ori", his.Species.Id != "sprouteg"
+                            ? "It cracked, then. I had that in a drawer the size of my thumb, and now look at it."
+                            : "Look at the size of it. I had that in a drawer the size of my thumb."),
+                        new DialogueLine("Ori", "You have been feeding it properly. That is not nothing, whatever else happens out there."),
+                        new DialogueLine("Teo", "It mostly feeds itself."),
+                        new DialogueLine("Ori", "They all say that. Go on."),
+                    }, "ori_saw_starter", null, null, 5, true);
                 }
             }
 

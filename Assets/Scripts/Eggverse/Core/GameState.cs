@@ -102,6 +102,7 @@ namespace Eggverse
 
             var starter = EggInstance.Wild("sprouteg", 5);
             starter.Nickname = null;
+            starter.MarkFromOri();
             Party.Add(starter);
             Seen.Add(starter.Species.Id);
             Caught.Add(starter.Species.Id);
@@ -149,6 +150,17 @@ namespace Eggverse
                 foreach (EggType t in System.Enum.GetValues(typeof(EggType)))
                     if (t != EggType.Plain && !held.Contains(t)) missing.Add(t);
                 return missing;
+            }
+        }
+
+        /// <summary>The egg Ori gave you, wherever it is now, or null if you let it go.</summary>
+        public EggInstance EggFromOri
+        {
+            get
+            {
+                for (int i = 0; i < Party.Count; i++) if (Party[i].FromOri) return Party[i];
+                for (int i = 0; i < Nest.Count; i++) if (Nest[i].FromOri) return Nest[i];
+                return null;
             }
         }
 

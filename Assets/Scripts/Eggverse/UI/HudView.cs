@@ -719,7 +719,8 @@ namespace Eggverse
                 "   <color=#A8B2C4>Lv " + egg.Level + "</color>" +
                 (egg.Elder ? "   <color=#FFC24D>ELDER</color>" : "") + "\n\n" +
                 "<color=#FFC24D>" + TypeChart.TraitName(egg.Trait) + "</color>\n" +
-                "<color=#A8B2C4>" + TypeChart.TraitBlurb(egg.Trait) + "</color>";
+                "<color=#A8B2C4>" + TypeChart.TraitBlurb(egg.Trait) + "</color>" +
+                (egg.FromOri ? "\n<color=#7A8090>Ori gave you this one.</color>" : "");
 
         }
 
