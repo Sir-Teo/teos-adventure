@@ -693,6 +693,22 @@ namespace Eggverse
                               "for the Still needed line");
                 }
 
+                // The toast shown on loading a save. It prefers the outstanding list, which is
+                // shorter as well as more useful, but must still fit when it falls back to the
+                // objective for a beat with nothing countable left.
+                for (int i = 0; i < StoryDatabase.Beats.Length; i++)
+                {
+                    var walk3 = new StoryState();
+                    walk3.RestoreFrom(new string[0], i);
+                    string outstanding = walk3.CurrentBlockerText(new GameState());
+                    string toast = outstanding != null
+                        ? "Welcome back. Still needed: " + outstanding
+                        : "Welcome back. " + StoryDatabase.Beats[i].Objective;
+                    check(lines(toast, 1000f - 40f, 24) <= capacity(76f, 24),
+                          "welcome-back toast fits at beat '" + StoryDatabase.Beats[i].Id +
+                          "' (" + lines(toast, 1000f - 40f, 24) + " of " + capacity(76f, 24) + " lines)");
+                }
+
                 // The chart says the same thing when it refuses to plot a course, in a 900px
                 // detail panel. That panel carries the tagline and spawn list too, so the sealed
                 // message has to leave room for them.

@@ -232,7 +232,13 @@ namespace Eggverse
             Hud.HideTitle();
             Hud.SetHudVisible(true);
             Hud.Refresh();
-            Hud.Toast("Welcome back. " + Story.Current.Objective);
+            // What is left, not what the objective said. Coming back to a run after a week, the
+            // useful sentence is the one naming the thing you have not done - the objective panel
+            // is on screen behind this toast and already carries the full wording.
+            string outstanding = Story.CurrentBlockerText(State);
+            Hud.Toast(outstanding != null
+                ? "Welcome back. Still needed: " + outstanding
+                : "Welcome back. " + Story.Current.Objective);
         }
 
         void StartFreshGame()
