@@ -29,8 +29,13 @@ namespace Eggverse
 
         public bool IsOpen { get { return canvas != null && canvas.gameObject.activeSelf; } }
 
-        const float ChartWidth = 1180f;
+        // The galaxy is taller than it is wide (194 x 214 world units, aspect 0.91), so the
+        // chart always fits vertically. A 1180-wide panel therefore left 518px — 44% of its
+        // width — as empty margin either side of the map. Sized to the content instead, and
+        // the width that frees goes to the detail panel, which has lore to show.
+        const float ChartWidth = 760f;
         const float ChartHeight = 820f;
+        const float DetailWidth = 900f;
 
         public void Build(GameDirector director)
         {
@@ -48,9 +53,13 @@ namespace Eggverse
             UIKit.Place(chart, new Vector2(0f, 0.5f), new Vector2(0f, 0.5f), new Vector2(70f, -20f), new Vector2(ChartWidth, ChartHeight));
             var chartBg = UIKit.Panel(chart, "ChartBg", new Color32(0x0B, 0x0D, 0x1C, 0xC0));
             UIKit.Stretch(chartBg.rectTransform, 0, 0, 0, 0);
+
+            // uGUI does not clip children on its own. Without this, anything positioned near
+            // the edge of the chart draws straight over the detail panel and the title.
+            chart.gameObject.AddComponent<RectMask2D>();
             chartBg.transform.SetAsFirstSibling();
 
-            BuildSectorRings();
+            BuildSectorLabels();
             BuildMarkers();
 
             teoMarker = UIKit.Picture(chart, "You", ProcArt.Teo());
@@ -58,15 +67,15 @@ namespace Eggverse
 
             // Details column.
             var detail = UIKit.Node(root, "Detail");
-            UIKit.Place(detail, new Vector2(1f, 0.5f), new Vector2(1f, 0.5f), new Vector2(-70f, -20f), new Vector2(560f, ChartHeight));
+            UIKit.Place(detail, new Vector2(1f, 0.5f), new Vector2(1f, 0.5f), new Vector2(-70f, -20f), new Vector2(DetailWidth, ChartHeight));
             var detailBg = UIKit.Panel(detail, "Bg", new Color32(0x12, 0x14, 0x26, 0xE8));
             UIKit.Stretch(detailBg.rectTransform, 0, 0, 0, 0);
 
             detailTitle = UIKit.Label(detail, "Title", "", 30, UIKit.Ink, TextAnchor.UpperLeft, FontStyle.Bold);
-            UIKit.Place(detailTitle.rectTransform, new Vector2(0f, 1f), new Vector2(0f, 1f), new Vector2(26f, -26f), new Vector2(508f, 76f));
+            UIKit.Place(detailTitle.rectTransform, new Vector2(0f, 1f), new Vector2(0f, 1f), new Vector2(26f, -26f), new Vector2(DetailWidth - 52f, 76f));
 
             detailBody = UIKit.Label(detail, "Body", "", 22, UIKit.Ink, TextAnchor.UpperLeft);
-            UIKit.Place(detailBody.rectTransform, new Vector2(0f, 1f), new Vector2(0f, 1f), new Vector2(26f, -112f), new Vector2(508f, 660f));
+            UIKit.Place(detailBody.rectTransform, new Vector2(0f, 1f), new Vector2(0f, 1f), new Vector2(26f, -112f), new Vector2(DetailWidth - 52f, 660f));
 
             footer = UIKit.Label(root, "Footer",
                 "Arrows select  ·  Enter to set course  ·  M or Esc to close",
@@ -94,13 +103,15 @@ namespace Eggverse
             max += Vector2.one * 22f;
         }
 
-        static float ChartScale()
+        public static float ChartScale()
         {
             Vector2 min, max;
             WorldBounds(out min, out max);
             Vector2 span = max - min;
-            return Mathf.Min((ChartWidth - 90f) / Mathf.Max(1f, span.x),
-                             (ChartHeight - 90f) / Mathf.Max(1f, span.y));
+            // 120px of padding, not 90: the widest planet label overhangs its dot by ~51px,
+            // and at the tighter margin "Cobblestead" ran past the edge of the chart.
+            return Mathf.Min((ChartWidth - 120f) / Mathf.Max(1f, span.x),
+                             (ChartHeight - 120f) / Mathf.Max(1f, span.y));
         }
 
         public static Vector2 WorldToChart(Vector2 world)
@@ -111,36 +122,93 @@ namespace Eggverse
             return (world - centre) * ChartScale();
         }
 
-        void BuildSectorRings()
+        /// <summary>
+        /// Sector names, sat above the worlds they belong to.
+        ///
+        /// These used to be circles enclosing every world in a sector. Two things were wrong
+        /// with that. The circles did not fit: all three overflowed the chart panel, the Long
+        /// Drift by 186px, and uGUI does not clip children, so they drew over the rest of the
+        /// screen. And a circle round the Belt's four worlds has to reach 93 units to hold
+        /// them, while Amaranth sits only 66 units past their centre — so the final world was
+        /// drawn inside Sector III, which is the one place the story says it is not. No
+        /// centroid circle can express this layout; a label can.
+        /// </summary>
+        void BuildSectorLabels()
         {
             Sector[] sectors = { Sector.HatcheryReach, Sector.LongDrift, Sector.ShatteredBelt };
+            var all = PlanetDatabase.All;
+            float scale = ChartScale();
+
             for (int s = 0; s < sectors.Length; s++)
             {
                 Sector sector = sectors[s];
 
-                // Radius that encloses every planet in the sector.
-                Vector2 centre = PlanetDatabase.SectorCentre(sector);
-                float radius = 0f;
-                var all = PlanetDatabase.All;
+                // Sit the label clear of the topmost world that belongs to this sector.
+                float top = float.NegativeInfinity;
                 for (int i = 0; i < all.Count; i++)
                 {
                     if (all[i].Sector != sector) continue;
-                    radius = Mathf.Max(radius, Vector2.Distance(all[i].SpacePosition, centre) + all[i].SpaceRadius + 10f);
+                    top = Mathf.Max(top, WorldToChart(all[i].SpacePosition).y + all[i].SpaceRadius * scale);
                 }
+                if (float.IsNegativeInfinity(top)) continue;
 
-                float scale = ChartScale();
-                var ring = UIKit.Picture(chart, "SectorRing" + s, ProcArt.Ring("sector", Color.white, 0.006f));
-                float size = radius * 2f * scale;
-                UIKit.Place(ring.rectTransform, new Vector2(0.5f, 0.5f), new Vector2(0.5f, 0.5f), WorldToChart(centre), new Vector2(size, size));
-                ring.color = new Color(1f, 1f, 1f, 0.10f);
+                float y = Mathf.Min(top + 34f, ChartHeight * 0.5f - 20f);
+                string caption = PlanetDatabase.SectorName(sector).ToUpperInvariant();
+                float x = PlaceSectorLabel(WorldToChart(PlanetDatabase.SectorCentre(sector)).x, y, caption, scale);
 
-                var label = UIKit.Label(chart, "SectorLabel" + s, PlanetDatabase.SectorName(sector).ToUpperInvariant(),
+                var label = UIKit.Label(chart, "SectorLabel" + s, caption,
                                         19, new Color(1f, 1f, 1f, 0.28f), TextAnchor.MiddleCenter, FontStyle.Bold);
                 UIKit.Place(label.rectTransform, new Vector2(0.5f, 0.5f), new Vector2(0.5f, 0.5f),
-                            WorldToChart(centre) + new Vector2(0f, size * 0.5f + 16f), new Vector2(420f, 24f));
+                            new Vector2(x, y), new Vector2(420f, 24f));
                 sectorLabels.Add(label);
             }
         }
+
+        /// <summary>
+        /// Nudges a sector caption sideways until it clears every world's dot and name.
+        /// Sat at the bare centroid, "THE LONG DRIFT" landed directly on Umbralux — the
+        /// sectors interleave vertically, so a sector's own centre is not reliably clear.
+        /// </summary>
+        public static float PlaceSectorLabel(float preferredX, float y, string caption, float scale)
+        {
+            float half = CaptionHalfWidth(caption, 19);
+            float limit = ChartWidth * 0.5f - half - 8f;
+            var all = PlanetDatabase.All;
+
+            for (int step = 0; step <= 14; step++)
+            {
+                for (int sign = -1; sign <= 1; sign += 2)
+                {
+                    float x = Mathf.Clamp(preferredX + sign * step * 30f, -limit, limit);
+                    if (ClearOfWorlds(x, y, half, all, scale)) return x;
+                    if (step == 0) break;      // no point testing +0 and -0
+                }
+            }
+            return Mathf.Clamp(preferredX, -limit, limit);
+        }
+
+        public static float CaptionHalfWidth(string caption, int fontSize) =>
+            caption.Length * fontSize * 0.52f * 0.5f;
+
+        public static bool ClearOfWorlds(float x, float y, float half, IReadOnlyList<PlanetDef> all, float scale)
+        {
+            for (int i = 0; i < all.Count; i++)
+            {
+                Vector2 c = WorldToChart(all[i].SpacePosition);
+                float dot = Mathf.Clamp(all[i].SpaceRadius * 2f * scale, 18f, 62f);
+
+                // The dot itself, and the name sat underneath it.
+                if (Boxes(x, y, half, 14f, c.x, c.y, dot * 0.5f, dot * 0.5f)) return false;
+                float nameHalf = CaptionHalfWidth(all[i].Name, 18);
+                float nameY = c.y - dot * 0.66f - 14f;
+                if (Boxes(x, y, half, 14f, c.x, nameY, nameHalf, 12f)) return false;
+            }
+            return true;
+        }
+
+        static bool Boxes(float ax, float ay, float ahw, float ahh,
+                          float bx, float by, float bhw, float bhh) =>
+            Mathf.Abs(ax - bx) < ahw + bhw + 10f && Mathf.Abs(ay - by) < ahh + bhh + 6f;
 
         void BuildMarkers()
         {
