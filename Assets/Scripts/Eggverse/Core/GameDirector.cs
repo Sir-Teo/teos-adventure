@@ -296,7 +296,8 @@ namespace Eggverse
             Hud.HideTitle();
             Hud.SetHudVisible(true);
             Hud.Refresh();
-            Hud.Toast("Yolkhaven. Ori is at the Nest Station.");
+            // Generated, so it follows the database rather than restating it.
+            Hud.Toast(PlanetDatabase.Home.Name + ". Ori is at the Nest Station.");
         }
 
         public void Land(PlanetDef planet)

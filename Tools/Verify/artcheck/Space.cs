@@ -1,35 +1,15 @@
 using System;
+using System.Collections.Generic;
+using Eggverse;
 
 /// Mirrors SpaceMode: parallax starfield, nebulae, planets at their real positions and radii.
 /// Lets me see whether the hand-placed layout actually frames well through the game camera.
 static class Space
 {
-    public struct World
-    {
-        public string Name; public float X, Y, R; public int Ocean, Land, Atmo; public int Sector;
-    }
-
-    // The 14 worlds, straight out of PlanetDatabase.
-    public static readonly World[] Worlds =
-    {
-        new World { Name="Yolkhaven",   X=0,   Y=0,    R=6f,   Ocean=0x3E7A4E, Land=0x8FCB6B, Atmo=0xBFF0A8, Sector=0 },
-        new World { Name="Cinderoost",  X=48,  Y=16,   R=5.5f, Ocean=0x5A1F0E, Land=0xD1552A, Atmo=0xFFB07A, Sector=0 },
-        new World { Name="Brineholt",   X=-44, Y=22,   R=5.5f, Ocean=0x14486E, Land=0x3D93C4, Atmo=0x9FDCF5, Sector=0 },
-        new World { Name="Mosswell",    X=10,  Y=-46,  R=5f,   Ocean=0x2C5B38, Land=0x6FA858, Atmo=0xA8DE94, Sector=0 },
-        new World { Name="Tidewrack",   X=-72, Y=-30,  R=5.5f, Ocean=0x0E3A5A, Land=0x2F7CA8, Atmo=0x86C9E8, Sector=1 },
-        new World { Name="Voltacrest",  X=60,  Y=-44,  R=5f,   Ocean=0x3B3410, Land=0xD9B429, Atmo=0xFFEF9C, Sector=1 },
-        new World { Name="Emberfall",   X=78,  Y=66,   R=5.5f, Ocean=0x4A1508, Land=0xE0632C, Atmo=0xFFA36B, Sector=1 },
-        new World { Name="Cobblestead", X=98,  Y=18,   R=5.5f, Ocean=0x3D3226, Land=0xA88C6B, Atmo=0xD9C4A8, Sector=1 },
-        new World { Name="Glacierim",   X=-88, Y=26,   R=6f,   Ocean=0x2A5F76, Land=0xBEE8F4, Atmo=0xE4FAFF, Sector=1 },
-        new World { Name="Umbralux",    X=30,  Y=96,   R=6f,   Ocean=0x1A1533, Land=0x54487F, Atmo=0x9B8BD6, Sector=2 },
-        new World { Name="Aetherwake",  X=86,  Y=116,  R=5.5f, Ocean=0x2A1A4E, Land=0x9B6BD6, Atmo=0xD6B8FF, Sector=2 },
-        new World { Name="Nullreach",   X=-42, Y=108,  R=5.5f, Ocean=0x110E24, Land=0x3E3663, Atmo=0x7A6DB0, Sector=2 },
-        new World { Name="Vesper",      X=-96, Y=88,   R=5f,   Ocean=0x1E4256, Land=0x9FC8DA, Atmo=0xD2ECF7, Sector=2 },
-        new World { Name="Shimmerfen",  X=-2,  Y=54,   R=5.5f, Ocean=0x2E2358, Land=0xB49BE8, Atmo=0xE8DCFF, Sector=1 },
-        new World { Name="Arcmoor",     X=-58, Y=66,   R=5f,   Ocean=0x2B2E14, Land=0xBFD13A, Atmo=0xEEFFA8, Sector=1 },
-        new World { Name="Cairnhold",   X=-82, Y=132,  R=5.5f, Ocean=0x2A2A33, Land=0x8A8794, Atmo=0xC6C3D4, Sector=2 },
-        new World { Name="Amaranth",    X=-6,  Y=168,  R=12f,  Ocean=0x3A1152, Land=0xC46BE8, Atmo=0xF2B8FF, Sector=3 },
-    };
+    // No table here any more. This kept its own copy of every world - positions, radii and
+    // three colours each - which had already drifted: the comment above it said "the 14 worlds"
+    // while the array held 17, because adding planets meant remembering to edit two places.
+    public static IReadOnlyList<PlanetDef> Worlds => PlanetDatabase.All;
 
     /// Renders a view centred on (camX, camY) covering `viewHeight` world units.
     public static Col[] Render(int size, float camX, float camY, float viewHeight, bool labels)
@@ -107,18 +87,23 @@ static class Space
         // Planets: glow, body, a simple terminator.
         foreach (var w in Worlds)
         {
-            Disc(w.X, w.Y, w.R * 2.6f, new Col(Col.Hex(w.Atmo).r, Col.Hex(w.Atmo).g, Col.Hex(w.Atmo).b, 0.30f), 1.6f);
-            Disc(w.X, w.Y, w.R * 2f, Col.Hex(w.Land), 0.04f);
+            float wx = w.SpacePosition.x, wy = w.SpacePosition.y, wr = w.SpaceRadius;
+            var atmo = new Col(w.Atmosphere.r, w.Atmosphere.g, w.Atmosphere.b, 0.30f);
+            var land = new Col(w.Land.r, w.Land.g, w.Land.b, 1f);
+            var ocean = new Col(w.Ocean.r, w.Ocean.g, w.Ocean.b, 1f);
+
+            Disc(wx, wy, wr * 2.6f, atmo, 1.6f);
+            Disc(wx, wy, wr * 2f, land, 0.04f);
             // Continent mottling and the shaded limb.
-            var rng2 = new Random(w.Name.GetHashCode() & 0xFFFF);
+            var rng2 = new Random(w.Seed & 0xFFFF);   // the planet's own stable seed
             for (int i = 0; i < 9; i++)
             {
                 float a = (float)rng2.NextDouble() * 6.2832f;
-                float d = (float)Math.Sqrt(rng2.NextDouble()) * w.R * 0.72f;
-                Disc(w.X + (float)Math.Cos(a) * d, w.Y + (float)Math.Sin(a) * d,
-                     w.R * (0.4f + 0.5f * (float)rng2.NextDouble()), Col.Hex(w.Ocean), 0.5f);
+                float d = (float)Math.Sqrt(rng2.NextDouble()) * wr * 0.72f;
+                Disc(wx + (float)Math.Cos(a) * d, wy + (float)Math.Sin(a) * d,
+                     wr * (0.4f + 0.5f * (float)rng2.NextDouble()), ocean, 0.5f);
             }
-            Disc(w.X + w.R * 0.42f, w.Y - w.R * 0.42f, w.R * 1.5f, new Col(0, 0, 0, 0.35f), 1.2f);
+            Disc(wx + wr * 0.42f, wy - wr * 0.42f, wr * 1.5f, new Col(0, 0, 0, 0.35f), 1.2f);
         }
         return px;
     }

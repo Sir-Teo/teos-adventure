@@ -630,6 +630,10 @@ namespace Eggverse
                 check(EggInstance.ElderLevelBonus == 3,
                       "Garrow on Cairnhold says an Elder is \"three levels past its neighbours\" - update his " +
                       "line if the bonus is not 3 (it is " + EggInstance.ElderLevelBonus + ")");
+                check(UiCopy.TitleBody.Contains(PlanetDatabase.Home.Name),
+                      "the title screen's \"a junior hatcher on ...\" line does not name " +
+                      PlanetDatabase.Home.Name + ", which is the world the player actually starts on");
+
                 check(GameState.PartySize == 6,
                       "Amy says \"Your six can hold it with me\" - update her line if the party is not 6 " +
                       "(it is " + GameState.PartySize + ")");

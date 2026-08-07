@@ -314,11 +314,13 @@ static class Program
 
         // How far apart are the worlds, really?
         float minGap = 1e9f; string pair = "";
-        for (int i = 0; i < Space.Worlds.Length; i++)
-            for (int j = i + 1; j < Space.Worlds.Length; j++)
+        for (int i = 0; i < Space.Worlds.Count; i++)
+            for (int j = i + 1; j < Space.Worlds.Count; j++)
             {
                 var a = Space.Worlds[i]; var b = Space.Worlds[j];
-                float d = (float)Math.Sqrt((a.X-b.X)*(a.X-b.X) + (a.Y-b.Y)*(a.Y-b.Y)) - a.R - b.R;
+                var pa = a.SpacePosition; var pb = b.SpacePosition;
+                float d = (float)Math.Sqrt((pa.x-pb.x)*(pa.x-pb.x) + (pa.y-pb.y)*(pa.y-pb.y))
+                          - a.SpaceRadius - b.SpaceRadius;
                 if (d < minGap) { minGap = d; pair = a.Name + "/" + b.Name; }
             }
         Console.WriteLine($"  closest surface-to-surface gap: {pair} at {minGap:0.0} units");
