@@ -33,8 +33,8 @@ static class Pacing
         int reward = wild.XpRewardFor();
         state.AwardXp(lead, reward, null, new List<string>());
 
-        // The bench takes 35%, exactly as BattleMode does.
-        int share = Math.Max(1, reward * 35 / 100);
+        // The bench share, read from the game rather than repeated here.
+        int share = Math.Max(1, reward * GameState.BenchXpPercent / 100);
         foreach (var e in state.Party)
             if (e != lead && !e.IsFainted) state.AwardXp(e, share, null, new List<string>());
 
@@ -111,6 +111,16 @@ static class Pacing
 
         Console.WriteLine($"  total: {run.Encounters} encounters, {run.Catches} caught, "
                           + $"{run.CartonsThrown} cartons thrown");
+
+        // How far apart do the lead and the bench actually drift? The bench takes 35% of every
+        // fight, so the gap is bounded by the sharing rule rather than by player discipline -
+        // which decides whether a lopsided team is a thing a player can accidentally build.
+        int highest = 0, lowest = int.MaxValue;
+        foreach (var e in state.Party) { highest = Math.Max(highest, e.Level); lowest = Math.Min(lowest, e.Level); }
+        Console.WriteLine($"  party spread after a played run: lead {highest}, weakest {lowest} " +
+                          $"(gap {highest - lowest})");
+        check(highest - lowest <= 12,
+              $"the bench share keeps a party within reach of its lead (gap {highest - lowest})");
 
         // The gate Amaranth actually asks for.
         check(state.Party.Count >= 6, $"a played run fills a party of six (got {state.Party.Count})");

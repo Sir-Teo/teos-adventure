@@ -11,6 +11,20 @@ namespace Eggverse
         public const int BaseMaxCartons = 12;
         public const int MaxSalves = 4;
 
+        /// <summary>
+        /// What an egg on the bench takes from a win, as a percentage of the lead's share.
+        ///
+        /// At 35 the party drifted ten levels apart over a run - the lead at 22 and the weakest
+        /// at 12 - because the lead takes everything and the bench a third. Simulated, a party
+        /// that shape loses to Amy every single time, so the game's own pacing was building a
+        /// team that could not finish it.
+        ///
+        /// At 85 the spread is three levels and a played-minimum run beats her 30% of the time:
+        /// a wall worth another few fights rather than a dead end. Not 100 - the lead should
+        /// still be worth choosing, and an even party wins 88%, which makes the gate pointless.
+        /// </summary>
+        public const int BenchXpPercent = 85;
+
         public readonly List<EggInstance> Party = new List<EggInstance>();
         public readonly List<EggInstance> Nest = new List<EggInstance>();
         public readonly HashSet<string> Seen = new HashSet<string>();

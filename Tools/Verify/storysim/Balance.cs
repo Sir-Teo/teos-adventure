@@ -153,6 +153,10 @@ static class Balance
         // A party of three never wipes to a single wild egg, so "win%" is a floor check, not a
         // difficulty reading. What tells you whether a wild fight has any tension is what it
         // *costs*: how much of the lead egg's HP it takes, and how often something actually faints.
+        // Each block below reseeds. Sharing one stream means adding a probe anywhere shifts
+        // every figure after it, which made a fixed-level benchmark appear to swing from 55% to
+        // 19% on a change that cannot touch it.
+        EggRandom.SetSource(EggRandom.Seeded(0x21A17));
         Console.WriteLine("  planet            lvl   win%   turns  lead hp lost  faint%");
         foreach (var planet in PlanetDatabase.All)
         {
@@ -265,6 +269,36 @@ static class Balance
         // ---- Amy, with the minimum team the gate actually allows ----
         {
             var amy = StoryDatabase.GetTrainer("amy");
+
+            // Ten seeds, not one. This fight sits near a tipping point - a single level on her
+            // trio takes it from 82% to 42% - and a fight that sensitive to level is as sensitive
+            // to which rolls it gets. One stream gave 19% where the mean is 57%.
+            {
+                float lo = 100f, hi = 0f, sum = 0f;
+                for (int seed = 0; seed < 10; seed++)
+                {
+                    EggRandom.SetSource(EggRandom.Seeded((uint)(0xA47 + seed * 7919)));
+                    int w = 0;
+                    for (int i = 0; i < 200; i++)
+                    {
+                        var m = Fresh(("mossmallow", 22), ("emberoo", 21), ("bubblenog", 21),
+                                      ("frizzlebolt", 20), ("glacegg", 20), ("shadowhisk", 20));
+                        var f = new List<EggInstance>();
+                        for (int e = 0; e < amy.SpeciesIds.Length; e++)
+                            f.Add(EggInstance.Wild(amy.SpeciesIds[e], amy.Levels[e]));
+                        if (Fight(m, f, out _)) w++;
+                    }
+                    float p2 = w * 100f / 200f;
+                    lo = Math.Min(lo, p2); hi = Math.Max(hi, p2); sum += p2;
+                }
+                Console.WriteLine($"  Amy at the gate minimum, mean of 10 seeds: {sum / 10f:0}% " +
+                                  $"(range {lo:0}-{hi:0})");
+                check(sum / 10f >= 35f && sum / 10f <= 70f,
+                      $"Amy is a wall you can climb ({sum / 10f:0}% mean)");
+                check(hi - lo <= 40f, $"and not a coin flip ({hi - lo:0} points across seeds)");
+            }
+
+            EggRandom.SetSource(EggRandom.Seeded(0xA47));
             int wins = 0, runs = 400, totalTurns = 0;
             for (int i = 0; i < runs; i++)
             {

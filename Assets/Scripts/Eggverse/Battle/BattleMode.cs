@@ -827,7 +827,7 @@ namespace Eggverse
             }
 
             // Everyone else who can still stand shares a little.
-            int share = Mathf.Max(1, reward * 35 / 100);
+            int share = Mathf.Max(1, reward * GameState.BenchXpPercent / 100);
             for (int i = 0; i < State.Party.Count; i++)
             {
                 if (i == activeIndex || State.Party[i].IsFainted) continue;
