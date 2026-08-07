@@ -1188,7 +1188,16 @@ namespace Eggverse
                         if (next != dexCursor)
                         {
                             dexCursor = next;
-                            if (dir.Audio != null) dir.Audio.Play(Sfx.UiMove);
+                            if (dir.Audio != null)
+                            {
+                                dir.Audio.Play(Sfx.UiMove);
+                                // The record is a book of living things, and it made the same
+                                // tick for all twenty-eight of them. One you have met speaks.
+                                // Nothing you have not, because the row is still "? ? ?" and a
+                                // voice would give away what is behind it.
+                                var sp = SpeciesDatabase.All[dexCursor];
+                                if (dir.State.Seen.Contains(sp.Id)) dir.Audio.PlayCry(sp, 0.55f);
+                            }
                             RefreshCollection();
                         }
                     }

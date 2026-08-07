@@ -66,9 +66,23 @@ namespace Eggverse
         /// A species' own voice. Twenty-eight creatures arrived on the same three-note sting for
         /// the whole of the game's life; the sting says something is here, and this says what.
         /// </summary>
+        /// <summary>
+        /// How close together two cries may land. Running the record cursor down twenty-eight
+        /// entries would otherwise stack twenty-eight voices into one noise; at this spacing it
+        /// is a chirping sweep, which is what flicking through a record of living things should
+        /// sound like.
+        /// </summary>
+        // 0.16, not 0.11. At 0.11 a cursor held down the record kept eight voices alive at
+        // once - not loud, the sweep peaks at 0.39, but eight overlapping creatures is mud
+        // whatever its level. Six still reads as a sweep and you can still hear each one.
+        public const float CryGap = 0.16f;
+        float lastCryTime = -99f;
+
         public void PlayCry(SpeciesDef sp, float volumeScale = 1f)
         {
             if (Muted || sfx == null || sp == null) return;
+            if (Time.unscaledTime - lastCryTime < CryGap) return;
+            lastCryTime = Time.unscaledTime;
             sfx.PlayOneShot(ProcAudio.Cry(sp), SfxVolume * volumeScale);
         }
 

@@ -414,6 +414,49 @@ static class AudioCheck
                           $"a heavier egg has a lower voice ({heavy.Name} {CryForm.RootHz(heavy):0}Hz " +
                           $"against {light.Name} {CryForm.RootHz(light):0}Hz)");
 
+                    // Running the record cursor down the whole list. Throttled at CryGap, so
+                    // what a player hears flicking through twenty-eight entries is a sweep
+                    // rather than twenty-eight voices in a heap. The throttle is the whole
+                    // reason this is playable at all, so it is measured rather than trusted.
+                    {
+                        int gapSamples = (int)(SR * AudioDirector.CryGap);
+                        int len = gapSamples * cries.Count + cries[cries.Count - 1].buf.Length;
+                        var sweep = new float[len];
+                        for (int k = 0; k < cries.Count; k++)
+                        {
+                            var b = cries[k].buf;
+                            for (int i = 0; i < b.Length && k * gapSamples + i < len; i++)
+                                sweep[k * gapSamples + i] += b[i] * 0.55f;
+                        }
+                        float sweepPeak = 0f;
+                        foreach (var v in sweep) sweepPeak = Math.Max(sweepPeak, Math.Abs(v));
+                        Console.WriteLine($"    the record cursor run flat out: peak {sweepPeak:0.000} " +
+                                          $"over {len / (float)SR:0.0}s");
+                        check(sweepPeak <= 1.0f,
+                              $"running the record cursor down the list does not clip ({sweepPeak:0.000})");
+                        check(sweepPeak <= 0.97f,
+                              $"and leaves headroom ({sweepPeak:0.000})");
+                        WriteWav(Path.Combine(outDir, "cry-sweep.wav"), sweep);
+
+                        // A throttle that lets a voice through before the last one has got going
+                        // is not a throttle. Every cry is longer than the gap, so they always
+                        // overlap - what matters is that only a few are alive at once.
+                        int worstAlive = 0;
+                        for (int k = 0; k < cries.Count; k++)
+                        {
+                            int alive = 0;
+                            for (int j = 0; j <= k; j++)
+                                if (j * gapSamples + cries[j].buf.Length > k * gapSamples) alive++;
+                            worstAlive = Math.Max(worstAlive, alive);
+                        }
+                        Console.WriteLine($"    at most {worstAlive} voices alive at once");
+                        // Six, not eight. It passed at exactly eight of eight, which is the way
+                        // a bound behaves when it was written to fit what was measured rather
+                        // than to say what is wanted.
+                        check(worstAlive <= 6,
+                              $"the throttle keeps the sweep to a few voices at a time ({worstAlive})");
+                    }
+
                     // The cry lands a third of a second into the encounter sting, so they overlap.
                     var sting = (float[])sfxMethod.Invoke(null, new object[] { Sfx.Encounter });
                     int at = (int)(SR * 0.34f);

@@ -788,6 +788,9 @@ namespace Eggverse
             {
                 dir.Audio.Play(Sfx.CatchSuccess);
                 var prize = Foe;
+                // The one you just caught says something. It is the only moment in the game
+                // where an egg becomes yours, and the carton latching was the whole of it.
+                StartCoroutine(CryAfter(prize.Species, 0.30f));
                 // Recorded before Collect, which is what adds it to the record.
                 LastCatchWasNewSpecies = !State.Caught.Contains(prize.Species.Id);
                 LastCatchWasElder = prize.Elder;
@@ -993,6 +996,12 @@ namespace Eggverse
         /// once at the end of all of them. The bar used to snap - and when the award crossed a
         /// level it snapped backwards, so the one moment worth watching never happened.
         /// </summary>
+        IEnumerator CryAfter(SpeciesDef sp, float delay)
+        {
+            yield return new WaitForSeconds(delay);
+            dir.Audio.PlayCry(sp, 0.8f);
+        }
+
         IEnumerator AnimateXp(List<XpFill.Step> path)
         {
             if (path == null || path.Count == 0) yield break;

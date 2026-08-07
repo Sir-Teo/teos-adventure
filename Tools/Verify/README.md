@@ -187,20 +187,41 @@ beat, so the sound agrees with the stats on the record page instead of being spr
 
 | measure | value |
 |---|---|
-| closest pair of cries | Craggle / Obsidyolk at 0.065 (floor 0.05) |
+| closest pair of cries | Shadowhisk / Vesperling at 0.131 (floor 0.05) |
 | average distance within an element | 0.854 |
-| average distance across elements | 1.631 |
+| average distance across elements | 1.619 |
 | heaviest / lightest voice | Obsidyolk 336Hz, Yolty 532Hz |
 
 An element being **twice as tight internally as across** is the design working: a family that is
 recognisable without its members being interchangeable.
 
-Getting there took two corrections. A per-species pitch jitter made the closest pair *worse*
-(0.061 → 0.053) — a random offset moves a pair together as readily as apart, and pitch was the
-only axis in play. Craggle and Obsidyolk are both Stone, whose voice is a single note, and their
-bulk and speed put them 0.9 semitones apart to begin with. The fix was a quiet **overtone** at one
-of three intervals, chosen by a stable hash: timbre is a different axis, and it is what makes two
-rocks sound like two rocks.
+### A hash reshuffles; a stat separates
+
+The closest pair started at 0.061 — Craggle and Obsidyolk, both Stone, whose voice is a single
+note. Their bulk and speed put them 0.9 semitones apart and nothing else was in play.
+
+Two rounds of hash-derived variation were tried and **measured**:
+
+| what | closest pair | within an element |
+|---|---|---|
+| stats only | 0.071 | 0.730 |
+| + hash pitch jitter | 0.053 | — |
+| + hash overtone | 0.066 | 0.778 |
+| + both | 0.065 | 0.854 |
+| **+ stat-derived sag** | **0.131** | **0.854** |
+
+The jitter made it *worse*. The overtone made it worse than doing neither. Both bought real
+variety across the roster — within-element distance rose 17% — but neither moved the pair that
+was actually too close, because **a random offset reshuffles which pair is closest without making
+any pair further apart**.
+
+What worked was giving the one-note voices a second stat-derived dimension: how far the last note
+sags as it dies, from bulk. A heavier egg sags further. Craggle and Obsidyolk stopped being the
+closest pair at all, the new worst is 0.131 — 2.6× the floor — and the variety the hashes bought
+was kept.
+
+An earlier commit here claimed the overtone fixed that pair. It did not; it improved on a state
+the jitter had made worse. The table is what actually happened.
 
 And the check that every voice is spoken by somebody failed on `Plain` — which is a *move* type,
 the neutral element `Flail` is written in, already excluded from species logic in five other

@@ -131,7 +131,17 @@ namespace Eggverse
 
                 // Every note slides a little toward the next one, which is what stops three
                 // separate beeps sounding like three separate beeps.
-                float next = last ? hz * 0.94f
+                // How far the last note sags as it dies. Heavier eggs sag further, which is
+                // where the one-note voices get a second dimension: Stone says a single low
+                // thing, so pitch was all Craggle and Obsidyolk had between them, and their
+                // bulk and speed put that at nine tenths of a semitone. This is stat-derived
+                // like the pitch is, rather than another hash — a hash reshuffles which pair is
+                // closest without making any pair further apart, which is what two rounds of
+                // measuring here actually showed.
+                float bulk = (sp.BaseHP + sp.BaseDef) * 0.5f;
+                float sag = Mathf.Lerp(0.975f, 0.885f, Mathf.InverseLerp(30f, 90f, bulk));
+
+                float next = last ? hz * sag
                                   : root * Mathf.Pow(2f, voice.Steps[i + 1] / 12f);
                 float to = Mathf.Lerp(hz, next, last ? 1f : 0.18f);
 
