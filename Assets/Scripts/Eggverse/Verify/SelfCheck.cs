@@ -1626,6 +1626,36 @@ namespace Eggverse
                 check(elder.Elder && !ordinary.Elder, "and knows it");
             }
 
+            // ---- an empty stack says so ----
+            {
+                // The supplies strip was fixed a while back so that running out reads as a
+                // word rather than a zero. The battle's own action menu still said
+                // "CARTON (0)" - and unlike the salve beside it, which greys itself out when
+                // it would be wasted, an empty carton stack stayed selectable and told the
+                // player it was empty only after they had spent the input on it.
+                check(BattleMode.SupplyAction("CARTON", 12) == "CARTON (12)",
+                      "a full stack shows its count");
+                check(BattleMode.SupplyAction("CARTON", 0) == "CARTON (none)",
+                      "and an empty one says none: " + BattleMode.SupplyAction("CARTON", 0));
+                check(!BattleMode.SupplyAction("SALVE", 0).Contains("(0)"),
+                      "the salve says it the same way");
+
+                // It reads the same way the strip does, which is the point of doing it twice.
+                var empty = new GameState(false);
+                empty.Cartons = 0; empty.Salves = 0;
+                string strip = HudView.SuppliesLine(empty);
+                check(strip.Contains("none") && BattleMode.SupplyAction("CARTON", 0).Contains("none"),
+                      "the strip and the battle menu use the same word for empty");
+
+                // 286px buttons at font 20 - the widest label is a full stack after every
+                // cache has been dug.
+                var rich = new GameState(false);
+                foreach (var id in PlanetDatabase.CacheWorlds.Keys) rich.Caches.Add(id);
+                check(lines(BattleMode.SupplyAction("CARTON", rich.MaxCartons), 286f, 20) == 1,
+                      "the fullest carton label fits its button: " +
+                      BattleMode.SupplyAction("CARTON", rich.MaxCartons));
+            }
+
             // ---- one number, one format ----
             {
                 // An egg's health appeared on four screens in three forms: "45 / 135" on the

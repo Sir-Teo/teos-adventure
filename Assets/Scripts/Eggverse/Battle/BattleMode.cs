@@ -1215,14 +1215,28 @@ namespace Eggverse
             }
         }
 
+        /// <summary>
+        /// A supply action's label. Empty says so in a word rather than a zero in brackets -
+        /// the same reason the supplies strip reads "Cartons none": a 0 among other numbers is
+        /// the easiest thing on a screen to read straight past.
+        /// </summary>
+        public static string SupplyAction(string label, int have) =>
+            have > 0 ? label + " (" + have + ")" : label + " (none)";
+
         void RefreshActionButtons()
         {
             for (int i = 0; i < actionButtons.Count; i++) actionButtons[i].interactable = true;
-            UIKit.CaptionOf(actionButtons[1]).text = "CARTON (" + State.Cartons + ")";
-            UIKit.CaptionOf(actionButtons[2]).text = "SALVE (" + State.Salves + ")";
+            UIKit.CaptionOf(actionButtons[1]).text = SupplyAction("CARTON", State.Cartons);
+            UIKit.CaptionOf(actionButtons[2]).text = SupplyAction("SALVE", State.Salves);
+
             // A salve on an untouched egg is a wasted turn, so grey it out rather than
             // letting the player discover the refusal after spending the input.
             actionButtons[2].interactable = State.Salves > 0 && Mine.CurrentHP < Mine.MaxHP;
+
+            // The same for cartons, which was not done: an empty stack stayed selectable and
+            // told you it was empty only after you had spent the input on it. The salve beside
+            // it had been greying itself out for exactly that reason since it was written.
+            actionButtons[1].interactable = State.Cartons > 0;
             if (IsTrainer)
             {
                 actionButtons[1].interactable = false;   // CARTON
