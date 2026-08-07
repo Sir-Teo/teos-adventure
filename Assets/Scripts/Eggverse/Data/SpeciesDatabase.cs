@@ -86,6 +86,33 @@ namespace Eggverse
         /// How many species a player can realistically collect. Amy's trio and Vess's ace have
         /// catch rates low enough to be decorative, so a "complete" record excludes them.
         /// </summary>
+        /// <summary>
+        /// The median base speed across the roster, used to decide which eggs run from you and
+        /// which come to have a look. Computed rather than written down, so adding a species
+        /// cannot quietly put every egg in the game on one side of the line.
+        /// </summary>
+        public static int MedianBaseSpeed
+        {
+            get
+            {
+                var speeds = new List<int>();
+                foreach (var sp in All) speeds.Add(sp.BaseSpd);
+                speeds.Sort();
+                return speeds[speeds.Count / 2];
+            }
+        }
+
+        /// <summary>
+        /// True for an egg that bolts when you get near. Ori calls the ones out in the open
+        /// "the bold ones", and until now they all behaved identically: a random walk that took
+        /// no notice of the player at all.
+        /// </summary>
+        public static bool IsSkittish(string speciesId)
+        {
+            var sp = Get(speciesId);
+            return sp != null && sp.BaseSpd > MedianBaseSpeed;
+        }
+
         public static int CatchableCount
         {
             get

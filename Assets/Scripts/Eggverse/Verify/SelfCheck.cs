@@ -983,6 +983,45 @@ namespace Eggverse
                     }
             }
 
+            // ---- roamer temperament ----
+            {
+                // Split on the median, so both behaviours ship no matter how the roster grows.
+                // A threshold written down as a number would drift out from under the species
+                // the first time somebody retuned speed across the board.
+                int bold = 0, skittish = 0;
+                foreach (var sp in SpeciesDatabase.All)
+                    if (SpeciesDatabase.IsSkittish(sp.Id)) skittish++; else bold++;
+
+                check(bold > 0 && skittish > 0,
+                      "some eggs run and some come to look (" + bold + " bold, " + skittish + " skittish)");
+                check(Mathf.Min(bold, skittish) >= SpeciesDatabase.All.Count / 4,
+                      "neither temperament is a rarity (" + bold + " / " + skittish + " of " +
+                      SpeciesDatabase.All.Count + ")");
+
+                // Not "every world has both" - that was the rule I nearly imposed, and the
+                // roster is better than it. Speed rises with tier, so the whole Hatchery Reach
+                // comes to have a look at you while you are still learning to walk, and the two
+                // Volt worlds are the opposite: nothing on Voltacrest or Arcmoor will let you
+                // near. That is a change of texture worth keeping, not a gap worth filling.
+                var home = PlanetDatabase.Home;
+                foreach (var sp in home.Spawns)
+                    check(!SpeciesDatabase.IsSkittish(sp.SpeciesId),
+                          "nothing on " + home.Name + " runs from a new player: " +
+                          SpeciesDatabase.Get(sp.SpeciesId).Name);
+
+                int allShy = 0;
+                foreach (var w in PlanetDatabase.All)
+                {
+                    if (w.Spawns == null || w.Spawns.Length < 3) continue;
+                    bool everyOne = true;
+                    foreach (var sp in w.Spawns)
+                        if (!SpeciesDatabase.IsSkittish(sp.SpeciesId)) everyOne = false;
+                    if (everyOne) allShy++;
+                }
+                check(allShy > 0,
+                      "somewhere out there is a world where nothing lets you near (" + allShy + " of them)");
+            }
+
             // ---- the number Ori asks for ----
             {
                 // The objective line spells FirstCatchEggs from the constant. Ori says "Three"

@@ -20,6 +20,7 @@ namespace Eggverse
             public float Bob;
             public bool Alive;
             public bool IsElder;
+            public bool Skittish;
             public SpriteRenderer Aura;
         }
 
@@ -81,6 +82,9 @@ namespace Eggverse
 
         const float NestRange = 3.4f;
         const float RoamerSpeed = 3.4f;
+
+        /// <summary>How close you get before a roamer takes an interest in you.</summary>
+        const float RoamerNoticeRange = 6.5f;
         const float RoamerTouchRange = 1.15f;
 
         public PlanetDef Current => current;
@@ -721,6 +725,7 @@ namespace Eggverse
             r.SpeciesId = current.RollSpecies();
             r.Level = current.RollLevel();
             r.IsElder = dir.State.ElderesAllowed && EggRandom.Value < EggInstance.ElderChance;
+            r.Skittish = SpeciesDatabase.IsSkittish(r.SpeciesId);
             var species = SpeciesDatabase.Get(r.SpeciesId);
 
             r.Sprite.sprite = ProcArt.Egg(species);
@@ -935,7 +940,25 @@ namespace Eggverse
                 }
 
                 Vector2 pos = r.Root.position;
-                pos += r.Heading * (RoamerSpeed * dt);
+
+                // Every roamer used to be the same random walk, taking no notice of the player
+                // at all - on a world where the resident tells you these are the bold ones. A
+                // fast egg bolts; a slow one comes to have a look. Which is which falls out of
+                // base speed, so it is the same egg being brave or nervy in the field as it is
+                // in a fight.
+                Vector2 gap = pos - (Vector2)dir.Teo.transform.position;
+                float near = gap.magnitude;
+                float pace = RoamerSpeed;
+                if (near < RoamerNoticeRange && near > 0.01f)
+                {
+                    float urgency = 1f - near / RoamerNoticeRange;
+                    Vector2 want = r.Skittish ? gap.normalized : -gap.normalized;
+                    r.Heading = Vector2.Lerp(r.Heading, want, urgency).normalized;
+                    // A bolting egg is quick about it; a curious one dawdles over.
+                    pace *= r.Skittish ? 1f + urgency * 0.85f : 1f - urgency * 0.45f;
+                }
+
+                pos += r.Heading * (pace * dt);
                 if (pos.magnitude > R * 0.94f)
                 {
                     r.Heading = (-pos).normalized;
