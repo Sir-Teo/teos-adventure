@@ -462,10 +462,19 @@ namespace Eggverse
                    " · Record " + state.RecordedCatchable + "/" + SpeciesDatabase.CatchableCount;
         }
 
+        /// <summary>At or below this, a stack is worth mentioning before it runs out.</summary>
+        public const int LowSupply = 2;
+
         static string Supply(string label, int have, int max)
         {
             if (have == 0) return "<color=#E55555>" + label + " none</color>";
-            if (have <= 2) return "<color=#FFC24D>" + label + " " + have + "/" + max + "</color>";
+
+            // "Low" in a word, not only in amber. Empty was given a word for exactly this
+            // reason - a figure that reads the same to somebody the colour does not reach is
+            // not telling them anything - and the state just above empty was left in hue alone.
+            if (have <= LowSupply)
+                return "<color=#FFC24D>" + label + " " + have + "/" + max + " low</color>";
+
             return label + " " + have + "/" + max;
         }
 

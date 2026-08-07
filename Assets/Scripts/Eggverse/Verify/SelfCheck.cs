@@ -1626,6 +1626,43 @@ namespace Eggverse
                 check(elder.Elder && !ordinary.Elder, "and knows it");
             }
 
+            // ---- running low says so in a word too ----
+            {
+                // Empty was given a word because a figure that reads the same to somebody the
+                // colour does not reach is not telling them anything. The state just above
+                // empty - the one where a player can still do something about it - was left
+                // in hue alone.
+                var st = new GameState(false);
+                foreach (var id in PlanetDatabase.CacheWorlds.Keys) st.Caches.Add(id);
+
+                st.Cartons = HudView.LowSupply; st.Salves = GameState.MaxSalves;
+                string low = HudView.SuppliesLine(st);
+                check(low.Contains("low"), "a low stack says so: " + low.Split('\n')[0]);
+
+                st.Cartons = st.MaxCartons;
+                check(!HudView.SuppliesLine(st).Contains("low"),
+                      "a full stack does not");
+
+                st.Cartons = 0;
+                // The supplies row only. The second row carries "Types 0/8" on a fresh state,
+                // which is a zero this rule has nothing to say about.
+                string gone = HudView.SuppliesLine(st).Split('\n')[0];
+                check(gone.Contains("Cartons none") && !gone.Contains("Cartons 0"),
+                      "and empty still reads as none rather than a zero: " + gone);
+
+                // The threshold has to leave a player somewhere to act. At one, the warning
+                // arrives with a single throw left in the stack.
+                check(HudView.LowSupply >= 2,
+                      "the warning arrives with something still in the stack (" +
+                      HudView.LowSupply + ")");
+
+                // And the widest form still fits the 524px strip.
+                st.Cartons = HudView.LowSupply; st.Salves = HudView.LowSupply;
+                foreach (var row in HudView.SuppliesLine(st).Split('\n'))
+                    check(lines(row, 524f, 19) == 1,
+                          "the strip fits with both stacks low: " + row);
+            }
+
             // ---- nothing in the menu takes an input to refuse it ----
             {
                 // The salve has greyed itself out when it would be wasted since it was
