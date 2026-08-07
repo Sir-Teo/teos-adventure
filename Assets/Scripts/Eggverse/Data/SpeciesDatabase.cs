@@ -65,6 +65,18 @@ namespace Eggverse
         }
 
         /// <summary>Whether this id names a real species — see PlanetDatabase.Exists.</summary>
+        /// <summary>
+        /// Whatever evolves into this species, or null. The entry has always shown what an egg
+        /// becomes and never what it came from, so a player looking at a grown form had no way
+        /// to see the line it belongs to - which in a collecting game is most of the point.
+        /// </summary>
+        public static SpeciesDef EvolvesFrom(string id)
+        {
+            for (int i = 0; i < ordered.Count; i++)
+                if (ordered[i].CanEvolve && ordered[i].EvolvesIntoId == id) return ordered[i];
+            return null;
+        }
+
         public static bool Exists(string id) => !string.IsNullOrEmpty(id) && byId.ContainsKey(id);
 
         public static IReadOnlyList<SpeciesDef> All => ordered;

@@ -670,6 +670,17 @@ namespace Eggverse
             lore.Append(StatRow("SPD", species.BaseSpd, 100));
             lore.Append("<color=#7A8090>total ").Append(species.BaseTotal).Append("</color>\n\n");
 
+            // Where it came from, on the same terms as where it is going: named only once you
+            // have met that form yourself.
+            var prev = SpeciesDatabase.EvolvesFrom(species.Id);
+            if (prev != null)
+            {
+                bool prevKnown = state.Seen.Contains(prev.Id) || state.Caught.Contains(prev.Id);
+                lore.Append("<color=#7A8090>← grows from ")
+                    .Append(prevKnown ? prev.Name : "something")
+                    .Append(" at level ").Append(prev.EvolveLevel).Append("</color>\n");
+            }
+
             if (species.CanEvolve)
             {
                 var next = SpeciesDatabase.Get(species.EvolvesIntoId);

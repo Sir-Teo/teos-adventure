@@ -884,6 +884,36 @@ namespace Eggverse
                 }
             }
 
+            // ---- evolution lines read both ways ----
+            {
+                int roots = 0, grown = 0;
+                foreach (var sp in SpeciesDatabase.All)
+                {
+                    var from = SpeciesDatabase.EvolvesFrom(sp.Id);
+                    if (from == null) { roots++; continue; }
+                    grown++;
+
+                    // The reverse lookup has to agree with the forward one, or the entry would
+                    // show a line that does not exist.
+                    check(from.EvolvesIntoId == sp.Id,
+                          from.Name + " -> " + sp.Name + " agrees in both directions");
+                    check(from.Id != sp.Id, sp.Name + " does not grow from itself");
+
+                    // Exactly one thing may evolve into a given species; two would make the
+                    // "grows from" line a lie for one of them.
+                    int parents = 0;
+                    foreach (var other in SpeciesDatabase.All)
+                        if (other.CanEvolve && other.EvolvesIntoId == sp.Id) parents++;
+                    check(parents == 1,
+                          sp.Name + " has exactly one earlier form (found " + parents + ")");
+
+                    check(lines("← grows from " + from.Name + " at level " + from.EvolveLevel, 450f, 19) == 1,
+                          sp.Name + "'s grows-from line fits the entry");
+                }
+                check(roots > 0 && grown > 0,
+                      "the roster has both starting forms and grown ones (" + roots + " and " + grown + ")");
+            }
+
             // ---- a nickname at full length, everywhere a name is shown ----
             // The entry screen allows twelve characters. Nothing had ever put twelve of them
             // through the places a name is drawn - the checks used a nine-letter stand-in.
