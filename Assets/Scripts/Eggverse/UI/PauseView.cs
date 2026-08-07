@@ -29,7 +29,8 @@ namespace Eggverse
             UIKit.Stretch(shade.rectTransform, 0, 0, 0, 0);
 
             var box = UIKit.Node(root, "Box");
-            UIKit.Place(box, new Vector2(0.5f, 0.5f), new Vector2(0.5f, 0.5f), Vector2.zero, new Vector2(760f, 620f));
+            // 800 rather than 620: the extra 180 carries the controls reference below the menu.
+            UIKit.Place(box, new Vector2(0.5f, 0.5f), new Vector2(0.5f, 0.5f), Vector2.zero, new Vector2(760f, 800f));
             var bg = UIKit.Panel(box, "Bg", new Color32(0x11, 0x13, 0x22, 0xFA));
             UIKit.Stretch(bg.rectTransform, 0, 0, 0, 0);
             var edge = UIKit.Panel(box, "Edge", UIKit.Accent);
@@ -44,6 +45,21 @@ namespace Eggverse
                 UIKit.Place(label.rectTransform, new Vector2(0.5f, 1f), new Vector2(0.5f, 1f),
                             new Vector2(0f, -118f - i * 62f), new Vector2(700f, 52f));
                 rows.Add(label);
+            }
+
+            // A controls reference, always on screen rather than behind another keypress. The
+            // title screen lists them once and is never seen again, so this is the only place a
+            // player who has forgotten which key opens the chart can actually look.
+            var rule = UIKit.Panel(box, "Rule", new Color32(0x2C, 0x32, 0x50, 0xFF));
+            UIKit.Place(rule.rectTransform, new Vector2(0.5f, 1f), new Vector2(0.5f, 1f),
+                        new Vector2(0f, -506f), new Vector2(660f, 2f));
+
+            for (int i = 0; i < UiCopy.PauseControls.Length; i++)
+            {
+                var line = UIKit.Label(box, "Controls" + i, UiCopy.PauseControls[i],
+                                       20, UIKit.InkDim, TextAnchor.MiddleCenter);
+                UIKit.Place(line.rectTransform, new Vector2(0.5f, 1f), new Vector2(0.5f, 1f),
+                            new Vector2(0f, -540f - i * 32f), new Vector2(700f, 28f));
             }
 
             footer = UIKit.Label(box, "Footer", "", 20, UIKit.InkDim, TextAnchor.MiddleCenter);

@@ -18,6 +18,14 @@ setup, no prefabs, and **no art or audio assets** — every sprite and every sou
 
 `Esc` opens a pause menu with sound settings, an explicit save, and a way back to the title.
 
+They are written down twice: on the title screen in prose, and in the **pause menu** as a compact
+grid under the rule. The title screen is read once and never seen again, so the pause menu is
+where a player who has forgotten which key opens the chart can actually look.
+
+The self-check requires both lists to mention the same keys — not to read the same, which they
+should not. It caught the `N` key on its first run: naming a caught egg was taught only in the
+catch prompt itself and had never made it onto the title screen.
+
 ## The story
 
 Every planet is a shard of one broken egg. The Prime Egg's core is still out there, still whole —

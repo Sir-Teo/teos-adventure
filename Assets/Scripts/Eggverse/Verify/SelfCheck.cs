@@ -447,6 +447,36 @@ namespace Eggverse
             check(lines("Cartons 12/12 · Salves 4/4", 524f, 19) == 1, "the HUD supply line wraps");
             check(lines("Nest 240 · Types 8/8 · Record 24/24", 524f, 19) == 1, "the HUD collection line wraps");
 
+            // ---- the pause menu's controls reference ----
+            // Two places document the controls: the title screen in prose, and the pause menu in
+            // a grid. They are read months apart and edited independently, so the check is that
+            // they mention the same keys - not that they read the same, which they should not.
+            {
+                string pause = string.Join("  ", UiCopy.PauseControls);
+                foreach (var line in UiCopy.PauseControls)
+                    check(lines(line, 700f, 20) == 1, "pause controls line fits: \"" + line + "\"");
+
+                foreach (var key in new[] { "WASD", "E", "Q", "M", "Tab", "N", "0" })
+                {
+                    bool onTitle = System.Text.RegularExpressions.Regex.IsMatch(
+                        UiCopy.TitleBody, @"\b" + System.Text.RegularExpressions.Regex.Escape(key) + @"\b");
+                    bool onPause = System.Text.RegularExpressions.Regex.IsMatch(
+                        pause, @"\b" + System.Text.RegularExpressions.Regex.Escape(key) + @"\b");
+                    check(onTitle == onPause,
+                          "the title screen and the pause menu agree about the '" + key + "' key (title " +
+                          (onTitle ? "yes" : "no") + ", pause " + (onPause ? "yes" : "no") + ")");
+                }
+
+                // And the box has to hold all of it: six rows, a rule, two control lines, a footer.
+                const float BoxH = 800f;
+                float rowsEnd = 118f + 5f * 62f + 52f;
+                float controlsEnd = 540f + 32f + 28f;
+                float footerTop = BoxH - 42f - 60f;
+                check(rowsEnd < 506f, "the pause rule clears the menu rows");
+                check(controlsEnd < footerTop, "the pause controls clear the footer");
+                check(BoxH <= 1080f - 80f, "the pause box fits the screen with margin");
+            }
+
             // ---- the egg detail panel ----
             // Shows one of your own eggs in the 280x160 header and the 450x600 body. Worst case
             // is a nicknamed Elder at max level with four long moves.

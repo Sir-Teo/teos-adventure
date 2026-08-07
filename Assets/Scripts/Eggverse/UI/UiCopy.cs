@@ -24,7 +24,19 @@ namespace Eggverse
             "<b><color=#FFC24D>BATTLE</color></b>  arrows to choose    ·    Enter or Space to confirm    ·    Esc to go back\n" +
             "<b><color=#FFC24D>ANY TIME</color></b>  M for the chart    ·    Tab for your collection    ·    0 to mute\n\n" +
             "Wild eggs hide in the pale <b>shell fields</b>, and the bold ones wander in the open. Weaken one before you\n" +
-            "throw a carton at it — a healthy egg kicks straight back out.";
+            "throw a carton at it — a healthy egg kicks straight back out. Press <b>N</b> to name what you catch.";
+
+        /// <summary>
+        /// The controls, compact, for the pause menu. The title screen explains them in prose
+        /// and is never seen again; this is where a player goes when they have forgotten which
+        /// key opens the chart. The self-check requires both lists to mention the same keys, so
+        /// one cannot be updated without the other.
+        /// </summary>
+        public static readonly string[] PauseControls =
+        {
+            "MOVE  WASD or arrows      TALK OR REST  E      LIFT OFF  Q",
+            "CHART  M      COLLECTION  Tab      NAME AN EGG  N      MUTE  0",
+        };
 
         public const string VictoryHeading = "AMY IS BEATEN";
 
