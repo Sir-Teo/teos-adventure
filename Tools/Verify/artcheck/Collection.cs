@@ -27,21 +27,18 @@ static class Collection
         float step20 = 20f * 1.16f;
         Battle.Text(c, "PARTY", bx, by, 20, Battle.Accent);
         if (!fresh) Battle.Text(c, "PRESS 1-6 TO LEAD WITH THAT EGG", bx + 130, by, 20, grey);
-        string[] party =
-        {
-            "1 PEBBLES        LV 22  VERDANT   91/91",
-            "2 FRIZZLEBOLT    LV 21  VOLT      78/78",
-            "3 BUBBLENOG      LV 21  TIDAL     80/80",
-            "4 ELDER GLACEGG  LV 24  FROST     96/96",
-            "5 SHADOWHISK     LV 20  VOID      74/74",
-            "6 BOULDEROO      LV 20  STONE     88/88",
-        };
-        int partyShown = fresh ? 1 : party.Length;
-        for (int i = 0; i < partyShown; i++)
-            Battle.Text(c, fresh ? "  SPROUTEG        LV  5  VERDANT   22/22" : party[i],
+        // The game's own rows. These were six typed-out strings in a format the collection has
+        // never used - and being one line each, they hid that the real rows were two.
+        var roster = new Eggverse.GameState(false);
+        if (fresh) roster.Party.Add(Eggverse.EggInstance.Wild("sprouteg", 5));
+        else foreach (var id in new[] { "sprouteg", "frizzlebolt", "bubblenog", "glacegg", "shadowhisk", "boulderoo" })
+            roster.Party.Add(Eggverse.EggInstance.Wild(id, 21));
+
+        for (int i = 0; i < roster.Party.Count; i++)
+            Battle.Text(c, Strip(Eggverse.HudView.DescribeStoredEgg(roster.Party[i])).ToUpperInvariant(),
                         bx, by - step20 * (i + 1), 20, Battle.Ink);
 
-        float ny = by - step20 * (partyShown + 2);
+        float ny = by - step20 * (roster.Party.Count + 2);
         Battle.Text(c, "NEST", bx, ny, 20, Battle.Accent);
         if (fresh)
         {
@@ -49,19 +46,22 @@ static class Collection
             Battle.Text(c, "CATCH WAITS HERE - AND YOU CAN TRADE IT BACK IN.", bx, ny - step20 * 2, 20, grey);
         }
         else Battle.Text(c, "56 BACK HOME", bx + 110, ny, 20, dim);
-        // 20, matching the game's window.
-        string[] kinds = { "SPROUTEG", "TIDEPOACH", "COBBLET", "YOLKANO", "CHILLET" };
-        string[] elems = { "VERDANT", "TIDAL", "STONE", "MOLTEN", "FROST" };
+        // The nest rows, also from the game. These were invented too, in yet another format -
+        // full element names where the row uses three letters - which is how a column of
+        // two-line rows looked like a column of one-line rows for as long as it did.
+        var stored = new[] { "sprouteg", "tidepoach", "cobblet", "yolkano", "chillet" };
         const int focusRow = 4;   // the nest cursor, four rows down
-        for (int i = 0; !fresh && i < 20; i++)
+        for (int i = 0; !fresh && i < Eggverse.HudView.NestWindowSize; i++)
         {
-            int hp = 40 + i * 3;
             bool here = i == focusRow;
-            if (here) Battle.Text(c, "*", bx, ny - step20 * (i + 1), 20, Battle.Accent);
-            Battle.Text(c, $"  {kinds[i % 5],-11} LV {12 + i}  {elems[i % 5],-9} {hp}/{hp}",
+            var egg = Eggverse.EggInstance.Wild(stored[i % stored.Length], 12 + i);
+            if (here) Battle.Text(c, "\u25b8", bx, ny - step20 * (i + 1), 20, Battle.Accent);
+            Battle.Text(c, Strip(Eggverse.HudView.DescribeStoredEgg(egg)).ToUpperInvariant(),
                         bx + 18, ny - step20 * (i + 1), 20, here ? Battle.Accent : Battle.Ink);
         }
-        if (!fresh) Battle.Text(c, "      ...AND 36 MORE", bx, ny - step20 * 21, 20, grey);
+        if (!fresh)
+            Battle.Text(c, "      36 MORE BELOW", bx,
+                        ny - step20 * (Eggverse.HudView.NestWindowSize + 1), 20, grey);
 
         // dividers
         Battle.Rect(c, x0 + 772, y1 - 82 - 786, x0 + 774, y1 - 82, Col.Hex(0x2C3250));

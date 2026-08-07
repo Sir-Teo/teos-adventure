@@ -2862,10 +2862,33 @@ namespace Eggverse
                 // both scroll markers at once - which happens whenever the cursor is somewhere
                 // in the middle of a long nest. The window scrolls now, so both markers can be
                 // on screen together and the old count of one was short by a line.
-                int nestLines = 1 + GameState.PartySize + 1 + 1 + HudView.NestWindowSize + 2;
+                // The column the game actually composes, at its worst: a full party, a nest
+                // long enough that both scroll markers show, and the cursor in the middle of it.
+                //
+                // Measuring the row builders on their own could not see the real fault, which
+                // was that the nest was being drawn with the two-line party row - six party
+                // eggs and twenty nest eggs at two lines each is fifty-seven lines in a column
+                // that holds thirty-three, and the old count of one line per egg passed.
+                var worst = new GameState(false);
+                for (int i = 0; i < GameState.PartySize; i++)
+                    worst.Party.Add(EggInstance.Wild("sprouteg", 20));
+                for (int i = 0; i < HudView.NestWindowSize * 3; i++)
+                    worst.Nest.Add(EggInstance.Wild("cobblet", 20));
+
+                int scroll = HudView.NestWindowSize;      // mid-nest: both markers on screen
+                string column = HudView.CollectionBodyText(
+                    worst, worst.Party.Count + HudView.NestWindowSize + 2, true, ref scroll);
+
+                int nestLines = 0;
+                foreach (var row in column.Split('\n')) nestLines += lines(row, 720f, 20);
                 check(nestLines <= capacity(ColH, 20),
                       "collection: the party and nest column fits with both scroll markers (" +
                       nestLines + " of " + capacity(ColH, 20) + " lines)");
+
+                check(column.Contains("more above") && column.Contains("more below"),
+                      "and that worst case really does show both markers");
+
+
 
                 int dexLines = 2 + SpeciesDatabase.Count;
                 check(dexLines <= capacity(ColH, 19),

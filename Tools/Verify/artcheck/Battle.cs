@@ -15,6 +15,11 @@ static class Battle
     {
         var f = new Dictionary<char, string[]>();
         void G(char c, string rows) => f[c] = rows.Split('|');
+        // The filled dot every egg row starts with, and the half-dot for a species you have
+        // seen but not caught.
+        G('\u25cf', ".###.|#####|#####|#####|#####|#####|.###.");
+        G('\u25d0', ".###.|##...|##...|##...|##...|##...|.###.");
+
         // The hollow ring the chart puts on a world you have walked and not finished, and the
         // field record puts on a species you have not caught.
         G('\u25cb', ".###.|#...#|#...#|#...#|#...#|#...#|.###.");

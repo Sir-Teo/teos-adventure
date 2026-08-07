@@ -639,13 +639,17 @@ namespace Eggverse
             return lore.ToString();
         }
 
-        void RefreshCollection()
+        /// <summary>
+        /// The party-and-nest column, as text. Static so the checks measure the column the game
+        /// composes rather than the pieces it is composed from - measuring DescribeStoredEgg on
+        /// its own could not tell that the nest was being drawn with the two-line party row.
+        /// </summary>
+        public static string CollectionBodyText(GameState state, int cursor, bool focus, ref int scroll)
         {
-            var state = dir.State;
             var sb = new System.Text.StringBuilder();
 
             int rows = CollectionRows(state);
-            if (rows > 0) nestCursor = Mathf.Clamp(nestCursor, 0, rows - 1);
+            if (rows > 0) cursor = Mathf.Clamp(cursor, 0, rows - 1);
 
             // Offer 1-6 only once there is more than one egg to choose between. Telling a
             // player with a single egg to pick which one leads is noise on the first screen
@@ -657,9 +661,9 @@ namespace Eggverse
             sb.Append('\n');
             for (int i = 0; i < state.Party.Count; i++)
             {
-                sb.Append(nestFocus && nestCursor == i ? "<color=#FFC24D>\u25b8</color>" : " ");
+                sb.Append(focus && cursor == i ? "<color=#FFC24D>\u25b8</color>" : " ");
                 sb.Append(i == 0 ? "<color=#FFC24D>1</color>" : "<color=#7A8090>" + (i + 1) + "</color>").Append(' ');
-                sb.Append(DescribeEgg(state.Party[i])).Append('\n');
+                sb.Append(DescribeStoredEgg(state.Party[i])).Append('\n');
             }
             if (state.Party.Count == 0) sb.Append("<color=#A8B2C4>empty</color>\n");
 
@@ -686,27 +690,33 @@ namespace Eggverse
                 // nothing else, and the cursor could not leave them - so on a run that ends with
                 // fifty-nine eggs back home, thirty-nine of them could never be looked at, let
                 // alone swapped back in. They were not hidden; they were unreachable.
-                int nestIndex = Mathf.Max(0, nestCursor - state.Party.Count);
-                nestScroll = Mathf.Clamp(nestScroll, 0, Mathf.Max(0, state.Nest.Count - NestWindow));
-                if (nestIndex < nestScroll) nestScroll = nestIndex;
-                else if (nestIndex >= nestScroll + NestWindow) nestScroll = nestIndex - NestWindow + 1;
+                int nestIndex = Mathf.Max(0, cursor - state.Party.Count);
+                scroll = Mathf.Clamp(scroll, 0, Mathf.Max(0, state.Nest.Count - NestWindow));
+                if (nestIndex < scroll) scroll = nestIndex;
+                else if (nestIndex >= scroll + NestWindow) scroll = nestIndex - NestWindow + 1;
 
-                int last = Mathf.Min(nestScroll + NestWindow, state.Nest.Count);
-                if (nestScroll > 0)
-                    sb.Append("<color=#7A8090>      ").Append(nestScroll).Append(" more above</color>\n");
+                int last = Mathf.Min(scroll + NestWindow, state.Nest.Count);
+                if (scroll > 0)
+                    sb.Append("<color=#7A8090>      ").Append(scroll).Append(" more above</color>\n");
 
-                for (int i = nestScroll; i < last; i++)
+                for (int i = scroll; i < last; i++)
                 {
-                    bool here = nestFocus && nestCursor == state.Party.Count + i;
+                    bool here = focus && cursor == state.Party.Count + i;
                     sb.Append(here ? "<color=#FFC24D>\u25b8</color> " : "  ");
-                    sb.Append(DescribeEgg(state.Nest[i])).Append('\n');
+                    sb.Append(DescribeStoredEgg(state.Nest[i])).Append('\n');
                 }
 
                 if (last < state.Nest.Count)
                     sb.Append("<color=#7A8090>      ").Append(state.Nest.Count - last).Append(" more below</color>\n");
             }
 
-            collectionBody.text = sb.ToString();
+            return sb.ToString();
+        }
+
+        void RefreshCollection()
+        {
+            var state = dir.State;
+            collectionBody.text = CollectionBodyText(state, nestCursor, nestFocus, ref nestScroll);
             collectionHint.text = HintFor(state);
 
             // Middle column: the field record, with a cursor.
@@ -915,7 +925,27 @@ namespace Eggverse
             return text.Substring(0, max - 1) + "\u2026";
         }
 
-        string DescribeEgg(EggInstance egg)
+        /// <summary>
+        /// One egg, on one line, for both the party and the nest.
+        ///
+        /// The party rows used to carry a second line with every move name and the trait's full
+        /// blurb, which wrapped to three or four drawn lines each. Six of those plus twenty nest
+        /// rows in the same form asked a thirty-three-line column to hold nearly sixty - and the
+        /// column check, counting one line per egg, passed the whole time.
+        ///
+        /// The second line was redundant anyway: the right-hand panel shows moves, stats, trait
+        /// blurb and evolution for whichever egg the cursor is on. The list lists; the panel
+        /// details.
+        /// </summary>
+        public static string DescribeStoredEgg(EggInstance egg)
+        {
+            string hex = ColorUtility.ToHtmlStringRGB(TypeChart.ColorOf(egg.Type));
+            return "<color=#" + hex + ">●</color> " + egg.Name + "  Lv " + egg.Level +
+                   "  <color=#A8B2C4>" + TypeChart.Abbrev(egg.Type) + "  " +
+                   egg.CurrentHP + "/" + egg.MaxHP + "</color>";
+        }
+
+        public static string DescribeEgg(EggInstance egg)
         {
             string hex = ColorUtility.ToHtmlStringRGB(TypeChart.ColorOf(egg.Type));
             var moves = new System.Text.StringBuilder();
