@@ -393,8 +393,10 @@ namespace Eggverse
                 sb.Append("\n<b><color=#FFC24D>NEST</color></b>  <color=#A8B2C4>")
                   .Append(state.Nest.Count).Append(" back home</color>\n");
 
-                // The nest is unbounded; show a window of it so the column cannot overrun the panel.
-                const int shown = 8;
+                // The nest is unbounded, so show a window of it. The column is 780px at font 20,
+                // which is 33 lines; the party costs at most 8 of those and the headers 2, so 20
+                // is what is left. It used to show 8 and leave over half the column empty.
+                const int shown = 20;
                 for (int i = 0; i < Mathf.Min(shown, state.Nest.Count); i++)
                     sb.Append(DescribeEgg(state.Nest[i])).Append('\n');
                 if (state.Nest.Count > shown)

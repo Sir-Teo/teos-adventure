@@ -447,6 +447,36 @@ namespace Eggverse
             check(lines("Cartons 12/12 · Salves 4/4", 524f, 19) == 1, "the HUD supply line wraps");
             check(lines("Nest 240 · Types 8/8 · Record 24/24", 524f, 19) == 1, "the HUD collection line wraps");
 
+            // ---- the collection screen's three columns ----
+            // Each column has a fixed height and content that grows with the game. The dex
+            // lists every species with no window at all, so it is the one that breaks first.
+            {
+                const float ColH = 780f;
+                int nestLines = 1 + GameState.PartySize + 1 + 1 + 20 + 1;   // party, headers, nest window
+                check(nestLines <= capacity(ColH, 20),
+                      "collection: the party and nest column fits (" + nestLines + " of " +
+                      capacity(ColH, 20) + " lines)");
+
+                int dexLines = 2 + SpeciesDatabase.Count;
+                check(dexLines <= capacity(ColH, 19),
+                      "collection: the field record lists every species without overrunning (" +
+                      dexLines + " of " + capacity(ColH, 19) + " lines)");
+
+                // The detail box is 280x160 and holds a name, a type line, a trait and its blurb.
+                foreach (var sp in SpeciesDatabase.All)
+                {
+                    var trait = TypeChart.TraitOf(sp.Type);
+                    int used = 2                                            // #NN Name, at size 26
+                             + lines(TypeChart.Name(sp.Type) + "   " + sp.Pattern + " shell", 280f, 19)
+                             + 1                                            // blank
+                             + lines(TypeChart.TraitName(trait), 280f, 19)
+                             + lines(TypeChart.TraitBlurb(trait), 280f, 19);
+                    check(used <= capacity(160f, 19),
+                          "collection: " + sp.Name + "'s detail box fits (" + used + " of " +
+                          capacity(160f, 19) + " lines)");
+                }
+            }
+
             // The foe card's record note sits in a 500px box on one line.
             foreach (string note in new[] { "New species — not in your record", "Already in your record" })
                 check(lines(note, 500f, 20) == 1, "foe record note \"" + note + "\" wraps");

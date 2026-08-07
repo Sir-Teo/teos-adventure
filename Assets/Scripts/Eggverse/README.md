@@ -175,6 +175,12 @@ middle, and a detail panel on the right for whichever entry the cursor is on —
 number, type, passive, base-stat bars, evolution target, and the species' field note. Unseen
 species show as a blacked-out silhouette; seen-but-uncaught show stats but withhold the note.
 
+The nest column shows a window of twenty, not the whole nest — it is unbounded, and by the
+end of a run holds fifty or more. Twenty is what the 780px column holds once the party and
+headers are paid for; it used to show eight and leave over half the column empty. The field
+record lists every species with no window at all, so the self-check bounds it: 30 lines of
+the 35 that column can hold, which is the number that breaks first if the roster grows.
+
 ## Balance
 
 All battle randomness routes through `EggRandom`, which can be given a seeded generator. That
