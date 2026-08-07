@@ -63,6 +63,15 @@ if echo "$OUT" | grep -q "error CS"; then
   exit 3
 fi
 
+# A suite that crashed produces no failures either. That is not "still passes" - it is "never
+# finished", and reporting it as the former is how a check that took the whole run down with it
+# looked like a check with no teeth.
+if echo "$OUT" | grep -qE "Unhandled exception|SecurityException|NullReferenceException"; then
+  echo "  ABORT: the suite crashed rather than finishing, so nothing was concluded."
+  echo "$OUT" | grep -E "Unhandled exception|at Eggverse|at Sim" | head -4 | sed 's/^/    /'
+  exit 3
+fi
+
 if [ -z "$FAILS" ]; then
   echo "  NOT CAUGHT: the suite still passes with the fault planted."
   exit 1

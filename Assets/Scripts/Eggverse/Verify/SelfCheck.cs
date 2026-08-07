@@ -1112,6 +1112,27 @@ namespace Eggverse
                           sp.Name + "'s row fits while the cursor is on it");
             }
 
+            // ---- entering a world sets everything a world needs ----
+            {
+                // The radius and the ground colour were separate assignments. Four places set
+                // the radius; one set the colour. Among the three that forgot was the start of
+                // a new run - so the first world anybody ever walks threw up default grey.
+                // They are one call now, and this is the check that the call does both.
+                foreach (var w in PlanetDatabase.All)
+                {
+                    check(Mathf.Approximately(TeoController.SurfaceEntryRadius(w), w.SurfaceRadius),
+                          "entering " + w.Name + " sets how far you can walk");
+                    check(TeoController.SurfaceEntryGround(w) == w.Land,
+                          "entering " + w.Name + " sets what you are walking on");
+                }
+
+                // The home world in particular, because that is the one a new run starts on and
+                // the one the separate assignments got wrong.
+                var home2 = PlanetDatabase.Home;
+                check(TeoController.SurfaceEntryGround(home2) == home2.Land,
+                      home2.Name + " is not left as default grey");
+            }
+
             // ---- walking kicks up the ground ----
             {
                 // Minutes of walking on ground the game has gone to some trouble to make

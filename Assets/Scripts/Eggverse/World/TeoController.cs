@@ -106,9 +106,30 @@ namespace Eggverse
 
         /// <summary>
         /// The ground this world is made of, so walking kicks up something that belongs to it -
-        /// ash on Cinderoost, snow on Glacierim, leaf litter on Mosswell. Set on landing.
+        /// ash on Cinderoost, snow on Glacierim, leaf litter on Mosswell.
         /// </summary>
-        public Color GroundTint = Color.grey;
+        public Color GroundTint { get; private set; } = Color.grey;
+
+        /// <summary>
+        /// Puts Teo on a world: how far he can walk, and what he is walking on.
+        ///
+        /// One call because these two must never be set apart. They were separate assignments,
+        /// four places set the radius and one set the tint, and the three that forgot included
+        /// the very first world of a new run - so a brand-new player walked Yolkhaven kicking up
+        /// default grey.
+        /// </summary>
+        public void EnterSurface(PlanetDef planet)
+        {
+            SurfaceRadius = SurfaceEntryRadius(planet);
+            GroundTint = SurfaceEntryGround(planet);
+        }
+
+        // The two facts a world hands the walker, as plain functions. EnterSurface is on a
+        // MonoBehaviour and the self-check runs outside Unity, so a check that wanted to prove
+        // both are set had to build a GameObject - which throws, and took the whole suite with
+        // it. These are what the check can actually reach.
+        public static float SurfaceEntryRadius(PlanetDef planet) => planet.SurfaceRadius;
+        public static Color SurfaceEntryGround(PlanetDef planet) => planet.Land;
 
         /// <summary>How often a walking step throws something up. Flight is 0.045.</summary>
         public const float StepPuffInterval = 0.15f;

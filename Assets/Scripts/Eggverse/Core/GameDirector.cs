@@ -114,7 +114,7 @@ namespace Eggverse
             Space.SetActive(false);
             Surface.SetActive(true);
             Surface.Enter(CurrentPlanet);
-            Teo.SurfaceRadius = CurrentPlanet.SurfaceRadius;
+            Teo.EnterSurface(CurrentPlanet);
             Teo.Warp(Surface.LandingPoint());
             Cam.transform.position = new Vector3(0f, 0f, -10f);
             Cam.orthographicSize = SurfaceZoom;
@@ -233,7 +233,7 @@ namespace Eggverse
             Space.SetActive(false);
             Surface.SetActive(true);
             Surface.Enter(CurrentPlanet);
-            Teo.SurfaceRadius = CurrentPlanet.SurfaceRadius;
+            Teo.EnterSurface(CurrentPlanet);
             Teo.Warp(Surface.LandingPoint());
 
             Mode = GameMode.Surface;
@@ -273,7 +273,7 @@ namespace Eggverse
             Space.SetActive(false);
             Surface.SetActive(true);
             Surface.Enter(CurrentPlanet);
-            Teo.SurfaceRadius = CurrentPlanet.SurfaceRadius;
+            Teo.EnterSurface(CurrentPlanet);
             Teo.Warp(Surface.LandingPoint());
             targetOrthoSize = SurfaceZoom;
             Cam.transform.position = new Vector3(Teo.transform.position.x, Teo.transform.position.y, -10f);
@@ -358,8 +358,7 @@ namespace Eggverse
             Surface.SetActive(true);
             Surface.Enter(planet);
 
-            Teo.SurfaceRadius = planet.SurfaceRadius;
-            Teo.GroundTint = planet.Land;
+            Teo.EnterSurface(planet);
             Teo.Warp(Surface.LandingPoint());
             Teo.Movement = TeoMovement.Walking;
             Teo.ClearPuffs();

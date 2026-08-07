@@ -66,10 +66,13 @@ no-op edit and a working check look identical from the outside.** So this refuse
 conclusion unless it can prove the plant landed: it counts the occurrences, aborts at zero, and
 compares the file against its backup before running anything.
 
-It distinguishes four outcomes, which is the whole point:
+It distinguishes five outcomes, which is the whole point:
 
 - `ABORT` — the pattern matched nothing. Nothing was tested; the result means nothing.
-- `ABORT` — the planted code does not compile, so the suite never ran. A plant that fails to
+- `ABORT` — the planted code does not compile, so the suite never ran.
+- `ABORT` — the suite crashed rather than finishing. Also produces no failures, and also is not
+  "still passes". A check that built a `GameObject` took the entire self-check down with it and
+  read as toothless. A plant that fails to
   build produces no failures either, and reporting that as "still passes" is the same mistake
   this script exists to prevent. It happened while testing a coda check, and read exactly like a
   missing assertion.
