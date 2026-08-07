@@ -1170,8 +1170,20 @@ namespace Eggverse
                     case EggStatus.Dazed:    rider = "\n<color=#FFC24D>LEAVES DAZED</color>"; break;
                 }
 
+                // Effectiveness against the egg actually standing there, on every button at once.
+                // It was only ever shown for the highlighted move, so comparing four meant
+                // arrowing through them one at a time and remembering. An arrow rather than
+                // colour alone, because the palette work assumes nothing is carried by hue.
+                string edge = "";
+                if (!slot.Move.IsStatus)
+                {
+                    float mult = TypeChart.Multiplier(slot.Move.Type, Foe.Type);
+                    if (mult > 1.2f) edge = " <color=#FF8A3D>\u25b2</color>";
+                    else if (mult < 0.8f) edge = " <color=#9AA4B6>\u25bc</color>";
+                }
+
                 UIKit.CaptionOf(moveButtons[i]).text =
-                    "<color=#" + hex + ">" + slot.Move.Name + "</color>" + accuracy + "\n" +
+                    "<color=#" + hex + ">" + slot.Move.Name + "</color>" + accuracy + edge + "\n" +
                     "<size=17><color=#A8B2C4>" + TypeChart.Name(slot.Move.Type) +
                     (slot.Move.IsStatus ? " · STATUS" : " · PWR " + slot.Move.Power) +
                     " · PP " + slot.PP + "/" + slot.Move.MaxPP + "</color>" + rider + "</size>";

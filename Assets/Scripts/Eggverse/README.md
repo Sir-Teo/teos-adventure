@@ -257,9 +257,14 @@ the 35 that column can hold, which is the number that breaks first if the roster
 **Left/Right pick a column, Up/Down move inside it, Enter swaps a nest egg into the party.**
 
 The right-hand panel follows the cursor. On the field record it shows the species entry; on one
-of your own eggs it shows *that egg* — condition, experience to the next level, **ATK/DEF/SPD**,
-and its four moves with power and remaining PP. Levelling up has always announced "ATK +2" and
-there was nowhere in the game to go and see what ATK was.
+of your own eggs it shows *that egg* — what it has **ahead** of it, condition, experience to the
+next level, **ATK/DEF/SPD**, and its four moves with power and remaining PP. Levelling up has
+always announced "ATK +2" and there was nowhere in the game to go and see what ATK was.
+
+The **AHEAD** line answers the question you are actually asking when you look at an egg: is this
+one worth raising. It names the grown form only once you have recorded it yourself — otherwise
+it says *"Something else at level 26"*, which tells you there is more coming without handing over
+what.
 
 Until that existed an egg that went to the nest stayed there. Your party was whichever six you
 happened to catch first, for the entire run, while fifty more sat at home unusable — in a game

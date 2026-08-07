@@ -534,7 +534,7 @@ namespace Eggverse
             if (nestFocus)
             {
                 var egg = EggUnderCursor(state);
-                if (egg != null) RefreshEggDetail(egg);
+                if (egg != null) RefreshEggDetail(egg, state);
                 else RefreshDexDetail(all[dexCursor], state);
             }
             else RefreshDexDetail(all[dexCursor], state);
@@ -549,7 +549,7 @@ namespace Eggverse
         }
 
         /// <summary>Right column: one of your own eggs, with the numbers behind it.</summary>
-        void RefreshEggDetail(EggInstance egg)
+        void RefreshEggDetail(EggInstance egg, GameState state)
         {
             string hex = ColorUtility.ToHtmlStringRGB(TypeChart.ColorOf(egg.Type));
             dexPortrait.sprite = ProcArt.Egg(egg.Species, 128);
@@ -582,6 +582,25 @@ namespace Eggverse
             sb.Append("<color=#A8B2C4>ATK</color>  ").Append(egg.Atk)
               .Append("     <color=#A8B2C4>DEF</color>  ").Append(egg.Def)
               .Append("     <color=#A8B2C4>SPD</color>  ").Append(egg.Spd).Append("\n\n");
+
+            // What it still has ahead of it. The game has always known when an egg evolves and
+            // never said, which is exactly the question you are asking when deciding whether to
+            // keep raising one. Named only once you have recorded the grown form yourself -
+            // otherwise it says there is more coming without giving away what.
+            if (egg.Species.CanEvolve)
+            {
+                var next = SpeciesDatabase.Get(egg.Species.EvolvesIntoId);
+                bool known = next != null && state.Caught.Contains(next.Id);
+                sb.Append("<color=#FFC24D>AHEAD</color>\n");
+                if (egg.Level >= egg.Species.EvolveLevel)
+                    sb.Append("<color=#A8B2C4>Ready to crack any level now.</color>\n\n");
+                else if (known)
+                    sb.Append("<color=#A8B2C4>Becomes ").Append(next.Name)
+                      .Append(" at level ").Append(egg.Species.EvolveLevel).Append(".</color>\n\n");
+                else
+                    sb.Append("<color=#A8B2C4>Something else at level ")
+                      .Append(egg.Species.EvolveLevel).Append(".</color>\n\n");
+            }
 
             sb.Append("<color=#FFC24D>MOVES</color>\n");
             for (int i = 0; i < egg.Moves.Count; i++)

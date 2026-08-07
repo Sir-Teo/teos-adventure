@@ -105,6 +105,7 @@ static class Collection
             float lx3 = x0 + 1280, ly3 = y1 - 262;
             var block = new[]
             {
+                ("AHEAD", Battle.Accent), ("BECOMES SNOWPOACH AT LEVEL 26.", Battle.Ink), ("", dim),
                 ("CONDITION", Battle.Accent), ("HP  96 / 96", Battle.Ink),
                 ("XP  180 / 600 TO LEVEL 25", Battle.Ink), ("", dim),
                 ("STATS", Battle.Accent), ("ATK  73     DEF  81     SPD  62", Battle.Ink), ("", dim),

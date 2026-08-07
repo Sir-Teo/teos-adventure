@@ -493,6 +493,12 @@ namespace Eggverse
                           capacity(160f, 19) + " lines)");
 
                     var body = new StringBuilder();
+                    if (sp.CanEvolve)
+                    {
+                        var nx = SpeciesDatabase.Get(sp.EvolvesIntoId);
+                        body.Append("AHEAD\nBecomes ").Append(nx != null ? nx.Name : "?")
+                            .Append(" at level ").Append(sp.EvolveLevel).Append(".\n\n");
+                    }
                     body.Append("CONDITION\nHP  ").Append(egg.CurrentHP).Append(" / ").Append(egg.MaxHP)
                         .Append("\nXP  fully grown\n\nSTATS\nATK  ").Append(egg.Atk)
                         .Append("     DEF  ").Append(egg.Def).Append("     SPD  ").Append(egg.Spd)
@@ -780,8 +786,9 @@ namespace Eggverse
                 string rider = rid == EggStatus.Scorched ? "LEAVES SCORCHED"
                              : rid == EggStatus.Chilled ? "LEAVES CHILLED"
                              : rid == EggStatus.Dazed ? "LEAVES DAZED" : "";
-                check(lines(mv.Name + acc, 330f - 44f, 24) == 1,
-                      "move button top line fits: \"" + mv.Name + acc + "\"");
+                // The name line also carries an effectiveness arrow against the current foe.
+                check(lines(mv.Name + acc + " \u25b2", 330f - 44f, 24) == 1,
+                      "move button top line fits with its effectiveness arrow: \"" + mv.Name + acc + "\"");
 
                 string sub = TypeChart.Name(mv.Type) + (mv.IsStatus ? " · STATUS" : " · PWR " + mv.Power) +
                              " · PP " + mv.MaxPP + "/" + mv.MaxPP;
