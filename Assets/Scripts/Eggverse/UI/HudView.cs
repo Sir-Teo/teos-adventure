@@ -806,8 +806,7 @@ namespace Eggverse
                 "   <color=#A8B2C4>Lv " + egg.Level + "</color>" +
                 (egg.Elder ? "   <color=#FFC24D>ELDER</color>" : "") + "\n\n" +
                 "<color=#FFC24D>" + TypeChart.TraitName(egg.Trait) + "</color>\n" +
-                "<color=#A8B2C4>" + TypeChart.TraitBlurb(egg.Trait) + "</color>" +
-                (egg.FromOri ? "\n<color=#7A8090>Ori gave you this one.</color>" : "");
+                "<color=#A8B2C4>" + TypeChart.TraitBlurb(egg.Trait) + "</color>";
 
         }
 
@@ -852,6 +851,17 @@ namespace Eggverse
                 else
                     sb.Append("<color=#A8B2C4>Something else at level ")
                       .Append(egg.Species.EvolveLevel).Append(".</color>\n\n");
+            }
+
+            // What this one has actually done for you. The panel carried every number the game
+            // computes about an egg and not the one thing that is only true of yours.
+            if (egg.Fought > 0)
+            {
+                sb.Append("<color=#FFC24D>RECORD</color>\n")
+                  .Append("<color=#A8B2C4>Out in front for ")
+                  .Append(Words.Count(egg.Fought, "fight")).Append(".</color>")
+                  .Append(egg.FromOri ? "  <color=#7A8090>Ori's.</color>" : "")
+                  .Append("\n\n");
             }
 
             sb.Append("<color=#FFC24D>MOVES</color>\n");

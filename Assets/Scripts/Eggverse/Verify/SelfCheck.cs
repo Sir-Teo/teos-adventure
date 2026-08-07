@@ -1940,6 +1940,52 @@ namespace Eggverse
                 }
             }
 
+            // ---- an egg's own record, in its panel ----
+            {
+                // The panel carried every number the game computes about an egg and not the
+                // one thing that is only true of yours. It also moves the note about Ori's egg
+                // out of the header, where it was competing with the trait blurb, and into the
+                // section that is about what this particular egg has been through.
+                var st = new GameState(false);
+                foreach (var sp0 in SpeciesDatabase.All) { st.Seen.Add(sp0.Id); st.Caught.Add(sp0.Id); }
+
+                var fresh = EggInstance.Wild("sprouteg", 10);
+                check(!HudView.EggLoreText(fresh, st).Contains("RECORD"),
+                      "an egg that has not fought yet has no record to show");
+
+                var veteran = EggInstance.Wild("sprouteg", 30);
+                veteran.RecordFight();
+                check(HudView.EggLoreText(veteran, st).Contains("1 fight."),
+                      "one fight reads as one: " + HudView.EggLoreText(veteran, st));
+                veteran.RecordFight();
+                check(HudView.EggLoreText(veteran, st).Contains("2 fights."),
+                      "and two read as two");
+
+                // Ori's egg says so here rather than in the header.
+                var his = EggInstance.Wild("sprouteg", 30);
+                his.MarkFromOri();
+                his.RecordFight();
+                check(HudView.EggLoreText(his, st).Contains("Ori's"),
+                      "the egg Ori gave you is noted in its record");
+                check(!HudView.EggDetailText(his).Contains("Ori"),
+                      "and no longer crowds the header");
+
+                // The panel still fits with the extra section on it, for every species at the
+                // level where it has the most to say.
+                foreach (var sp in SpeciesDatabase.All)
+                {
+                    var egg = EggInstance.WildElder(sp.Id, EggInstance.MaxLevel - 3);
+                    egg.Nickname = new string('W', NameEntryView.MaxLength);
+                    for (int k = 0; k < 999; k++) egg.RecordFight();
+                    int used = 0;
+                    foreach (var row in HudView.EggLoreText(egg, st).Split('\n'))
+                        used += lines(row, 450f, 19);
+                    check(used <= capacity(600f, 19),
+                          sp.Name + "'s panel fits with a fight record on it (" + used +
+                          " of " + capacity(600f, 19) + ")");
+                }
+            }
+
             // ---- the egg that carried the run ----
             {
                 // Not a stat and it changes nothing. The game simply had no idea which of your
