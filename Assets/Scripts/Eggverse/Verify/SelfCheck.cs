@@ -467,15 +467,29 @@ namespace Eggverse
                           (onTitle ? "yes" : "no") + ", pause " + (onPause ? "yes" : "no") + ")");
                 }
 
-                // And the box has to hold all of it: seven rows, a rule, two control lines, a footer.
-                const float BoxH = 924f;
-                const int PauseRows = 8;   // resume, sound, music, effects, motion, text, save, quit
-                float rowsEnd = 118f + (PauseRows - 1) * 62f + 52f;
-                float controlsEnd = 664f + 32f + 28f;
+                // The box holds both pages without resizing, so it has to fit the longer of them.
+                // Main is four rows plus the controls reference; Settings is six rows without it.
+                const float BoxH = 620f, FirstRow = 118f, Step = 62f, RowH = 52f;
+                const float RuleAt = 390f, ControlsAt = 424f;
+                const int MainRows = 4;      // resume, settings, save, quit
+                const int SettingsRows = 6;  // sound, music, effects, motion, text speed, back
+
+                float mainEnd = FirstRow + (MainRows - 1) * Step + RowH;
+                float setEnd = FirstRow + (SettingsRows - 1) * Step + RowH;
+                float controlsEnd = ControlsAt + 32f + 28f;
                 float footerTop = BoxH - 42f - 60f;
-                check(rowsEnd < 630f, "the pause rule clears the menu rows");
-                check(controlsEnd < footerTop, "the pause controls clear the footer");
+
+                check(mainEnd < RuleAt, "the rule clears the main page's rows");
+                check(controlsEnd < footerTop, "the controls reference clears the footer");
+                check(setEnd < footerTop,
+                      "the settings page's rows clear the footer (" + setEnd + " of " + footerTop + ")");
                 check(BoxH <= 1080f - 80f, "the pause box fits the screen with margin");
+
+                // Splitting the menu was to stop the box chasing settings down the screen. If a
+                // future setting pushes the longer page past the box again, this is the line that
+                // should complain rather than the box quietly growing.
+                check(SettingsRows <= 7,
+                      "the settings page still fits without growing the box (" + SettingsRows + " rows)");
             }
 
             // ---- the egg detail panel ----

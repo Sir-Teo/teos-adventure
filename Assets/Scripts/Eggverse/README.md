@@ -363,8 +363,8 @@ system can produce.
 
 ## Accessibility
 
-The palette work below assumes nothing is carried by hue alone. Alongside it, the pause menu has
-**Screen motion**, which answers for everything that moves the display: the battle scene shaking
+The palette work below assumes nothing is carried by hue alone. Alongside it, the pause menu's
+**Settings** page has **Screen motion**, which answers for everything that moves the display: the battle scene shaking
 on a hit, the per-egg shake on damage, and the full-screen flash on landing and mode changes.
 
 Turned off, the shakes do not happen at all and the flash still does — it is what hides the scene
