@@ -192,26 +192,17 @@ namespace Eggverse
             var bg = UIKit.Panel(titlePanel, "Bg", new Color32(0x06, 0x07, 0x10, 0xFC));
             UIKit.Stretch(bg.rectTransform, 0, 0, 0, 0);
 
-            var heading = UIKit.Label(titlePanel, "Heading", "EGGVERSE", 96, UIKit.Accent, TextAnchor.MiddleCenter, FontStyle.Bold);
+            var heading = UIKit.Label(titlePanel, "Heading", UiCopy.Title, 96, UIKit.Accent, TextAnchor.MiddleCenter, FontStyle.Bold);
             UIKit.Place(heading.rectTransform, new Vector2(0.5f, 0.5f), new Vector2(0.5f, 0.5f), new Vector2(0f, 250f), new Vector2(1200f, 120f));
 
-            var sub = UIKit.Label(titlePanel, "Sub", "Teo and the Long Way to Amy", 34, UIKit.Ink, TextAnchor.MiddleCenter);
+            var sub = UIKit.Label(titlePanel, "Sub", UiCopy.Subtitle, 34, UIKit.Ink, TextAnchor.MiddleCenter);
             UIKit.Place(sub.rectTransform, new Vector2(0.5f, 0.5f), new Vector2(0.5f, 0.5f), new Vector2(0f, 170f), new Vector2(1200f, 50f));
 
-            var body = UIKit.Label(titlePanel, "Body",
-                "Every planet you have ever stood on is a piece of shell. One egg broke, a long time ago, and the pieces\n" +
-                "cooled into worlds. The core of it is still up there, still whole — and eleven years ago it started to split.\n\n" +
-                "You are <b>Teo</b>, a junior hatcher on Yolkhaven, and the Nest Stations have started going cold.\n\n" +
-                "<b><color=#FFC24D>SPACE</color></b>   WASD or arrows to fly    ·    E to land on a planet\n" +
-                "<b><color=#FFC24D>PLANET</color></b>  WASD to walk    ·    E to talk or rest    ·    Q to lift off\n" +
-                "<b><color=#FFC24D>BATTLE</color></b>  arrows to choose    ·    Enter or Space to confirm    ·    Esc to go back\n" +
-                "<b><color=#FFC24D>ANY TIME</color></b>  M for the chart    ·    Tab for your collection    ·    0 to mute\n\n" +
-                "Wild eggs hide in the pale <b>shell fields</b>, and the bold ones wander in the open. Weaken one before you\n" +
-                "throw a carton at it — a healthy egg kicks straight back out.",
+            var body = UIKit.Label(titlePanel, "Body", UiCopy.TitleBody,
                 24, UIKit.Ink, TextAnchor.UpperCenter);
             UIKit.Place(body.rectTransform, new Vector2(0.5f, 0.5f), new Vector2(0.5f, 0.5f), new Vector2(0f, -110f), new Vector2(1500f, 460f));
 
-            titleHint = UIKit.Label(titlePanel, "Hint", "press SPACE to begin", 30, UIKit.Accent, TextAnchor.MiddleCenter, FontStyle.Bold);
+            titleHint = UIKit.Label(titlePanel, "Hint", UiCopy.BeginHint, 30, UIKit.Accent, TextAnchor.MiddleCenter, FontStyle.Bold);
             UIKit.Place(titleHint.rectTransform, new Vector2(0.5f, 0f), new Vector2(0.5f, 0f), new Vector2(0f, 96f), new Vector2(1300f, 40f));
 
             titleSaveLine = UIKit.Label(titlePanel, "SaveLine", "", 21, UIKit.InkDim, TextAnchor.MiddleCenter);
@@ -225,7 +216,7 @@ namespace Eggverse
             var bg = UIKit.Panel(victoryPanel, "Bg", new Color32(0x0A, 0x06, 0x14, 0xF7));
             UIKit.Stretch(bg.rectTransform, 0, 0, 0, 0);
 
-            var heading = UIKit.Label(victoryPanel, "Heading", "AMY IS BEATEN", 82, UIKit.Accent, TextAnchor.MiddleCenter, FontStyle.Bold);
+            var heading = UIKit.Label(victoryPanel, "Heading", UiCopy.VictoryHeading, 82, UIKit.Accent, TextAnchor.MiddleCenter, FontStyle.Bold);
             UIKit.Place(heading.rectTransform, new Vector2(0.5f, 0.5f), new Vector2(0.5f, 0.5f), new Vector2(0f, 140f), new Vector2(1400f, 110f));
 
             var body = UIKit.Label(victoryPanel, "Body", "", 28, UIKit.Ink, TextAnchor.UpperCenter);
@@ -298,12 +289,11 @@ namespace Eggverse
                 var t = body.GetComponent<Text>();
                 if (t != null)
                 {
-                    t.text =
-                        "Amy folds her arms, looks at your team, and nods once.\n\n" +
-                        "\"Fine. You cracked it.\"\n\n" +
-                        "<color=#A8B2C4>Eggs collected: " + dir.State.TotalCollected +
-                        "   ·   Species recorded: " + dir.State.Caught.Count + " / " + SpeciesDatabase.CatchableCount +
-                        "   ·   Types held: " + dir.State.DistinctTypesHeld + " / 8</color>";
+                    t.text = UiCopy.VictoryBody +
+                             UiCopy.VictoryTally(dir.State.TotalCollected,
+                                                 dir.State.Caught.Count,
+                                                 SpeciesDatabase.CatchableCount,
+                                                 dir.State.DistinctTypesHeld);
                 }
             }
             victoryPanel.gameObject.SetActive(true);

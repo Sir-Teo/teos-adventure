@@ -447,6 +447,27 @@ namespace Eggverse
             check(lines("Cartons 12/12 · Salves 4/4", 524f, 19) == 1, "the HUD supply line wraps");
             check(lines("Nest 240 · Types 8/8 · Record 24/24", 524f, 19) == 1, "the HUD collection line wraps");
 
+            // ---- the title screen: the first prose anyone reads ----
+            // 1500x460 at font 24, and the controls list is the widest thing in the game.
+            {
+                check(lines(UiCopy.TitleBody, 1500f, 24) <= capacity(460f, 24),
+                      "the title body fits its panel (" + lines(UiCopy.TitleBody, 1500f, 24) +
+                      " of " + capacity(460f, 24) + " lines)");
+                foreach (var line in UiCopy.TitleBody.Split('\n'))
+                    check(lines(line, 1500f, 24) <= 1,
+                          "title line stays on one row: \"" + line + "\"");
+
+                check(lines(UiCopy.Subtitle, 1200f, 34) == 1, "the subtitle fits");
+                check(lines(UiCopy.Title, 1200f, 96) == 1, "the title fits");
+                check(lines(UiCopy.BeginHint, 1300f, 30) == 1, "the begin hint fits");
+
+                string ending = UiCopy.VictoryBody + UiCopy.VictoryTally(120, 24, 24, 8);
+                check(lines(ending, 1300f, 28) <= capacity(300f, 28),
+                      "the ending card fits (" + lines(ending, 1300f, 28) + " of " +
+                      capacity(300f, 28) + " lines)");
+                check(lines(UiCopy.VictoryHeading, 1400f, 82) == 1, "the ending heading fits");
+            }
+
             // ---- every catchable egg must actually live somewhere ----
             // A species with a catchable rate and no spawn entry makes the record impossible to
             // finish, and nothing else in the game would ever say so.
