@@ -45,11 +45,14 @@ static class Collection
         // 20, matching the game's window.
         string[] kinds = { "SPROUTEG", "TIDEPOACH", "COBBLET", "YOLKANO", "CHILLET" };
         string[] elems = { "VERDANT", "TIDAL", "STONE", "MOLTEN", "FROST" };
+        const int focusRow = 4;   // the nest cursor, four rows down
         for (int i = 0; i < 20; i++)
         {
             int hp = 40 + i * 3;
+            bool here = i == focusRow;
+            if (here) Battle.Text(c, "*", bx, ny - step20 * (i + 1), 20, Battle.Accent);
             Battle.Text(c, $"  {kinds[i % 5],-11} LV {12 + i}  {elems[i % 5],-9} {hp}/{hp}",
-                        bx, ny - step20 * (i + 1), 20, Battle.Ink);
+                        bx + 18, ny - step20 * (i + 1), 20, here ? Battle.Accent : Battle.Ink);
         }
         Battle.Text(c, "      ...AND 36 MORE", bx, ny - step20 * 21, 20, grey);
 
@@ -106,7 +109,7 @@ static class Collection
             ly2 -= step19;
         }
 
-        Battle.TextCentre(c, "ARROWS BROWSE THE RECORD · 1-6 CHANGES WHO LEADS · TAB OR ESC TO CLOSE",
+        Battle.TextCentre(c, "LEFT/RIGHT PICK A COLUMN · UP/DOWN MOVE · ENTER SWAPS A NEST EGG IN · 1-6 LEADS · TAB CLOSES",
                           Battle.W / 2f, y0 + 40, 20, dim);
         return c.Px;
     }

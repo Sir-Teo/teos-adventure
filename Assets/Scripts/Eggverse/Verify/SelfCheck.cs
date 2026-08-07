@@ -447,6 +447,39 @@ namespace Eggverse
             check(lines("Cartons 12/12 · Salves 4/4", 524f, 19) == 1, "the HUD supply line wraps");
             check(lines("Nest 240 · Types 8/8 · Record 24/24", 524f, 19) == 1, "the HUD collection line wraps");
 
+            // ---- moving eggs between nest and party ----
+            // Until this existed, an egg that went to the nest stayed there: the party was
+            // whichever six you caught first, for the whole run.
+            {
+                var st3 = new GameState();
+                while (st3.Party.Count < GameState.PartySize)
+                    st3.Collect(EggInstance.Wild("sprouteg", 5));
+                st3.Collect(EggInstance.Wild("glacegg", 20));       // over the limit, so into the nest
+                check(st3.Party.Count == GameState.PartySize, "the party fills to six");
+                check(st3.Nest.Count == 1, "the seventh egg goes to the nest");
+
+                string leadBefore = st3.Party[0].Name;
+                check(st3.SwapWithNest(0, 0), "a nest egg can be swapped for the lead");
+                check(st3.Party[0].Species.Id == "glacegg", "the nest egg is now leading");
+                check(st3.Nest[0].Name == leadBefore, "and the old lead went to the nest");
+                check(st3.Party.Count == GameState.PartySize && st3.Nest.Count == 1,
+                      "a swap moves eggs rather than creating or losing them");
+
+                // Out-of-range asks must not corrupt anything.
+                check(!st3.SwapWithNest(-1, 0) && !st3.SwapWithNest(0, -1), "negative indices refuse");
+                check(!st3.SwapWithNest(99, 0) && !st3.SwapWithNest(0, 99), "out-of-range indices refuse");
+                check(st3.Party.Count == GameState.PartySize && st3.Nest.Count == 1,
+                      "a refused swap changes nothing");
+
+                // With room in the party, a nest egg moves across rather than trading.
+                var st4 = new GameState();
+                st4.Nest.Add(EggInstance.Wild("cobblet", 8));
+                int before4 = st4.Party.Count;
+                check(st4.TakeFromNest(0), "a nest egg fills an empty party slot");
+                check(st4.Party.Count == before4 + 1 && st4.Nest.Count == 0, "and leaves the nest");
+                check(!st4.TakeFromNest(0), "taking from an empty nest refuses");
+            }
+
             // ---- a wild egg has to be visible on the world it lives on ----
             // Species colour comes from the element, ground colour from the planet, and the two
             // were never held against each other: a Frost egg on an ice world is pale on pale by
@@ -555,6 +588,8 @@ namespace Eggverse
                       "the cap stays in range even with every cache found (" + full + ")");
 
                 // The strip is a fixed 524px and the number of digits can grow.
+                check(lines("left/right pick a column  ·  up/down move  ·  Enter swaps a nest egg in  ·  1-6 leads  ·  Tab closes",
+                            1200f, 20) == 1, "the collection hint line fits its 1200px strip");
                 check(lines("Cartons " + full + "/" + full + " · Salves 4/4", 524f, 19) == 1,
                       "the supply line still fits at full capacity");
 

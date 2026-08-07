@@ -144,6 +144,33 @@ namespace Eggverse
             RestockSupplies();
         }
 
+        /// <summary>
+        /// Trades a nest egg for a party egg. Until this existed an egg that went to the nest
+        /// stayed there: your party was whichever six you happened to catch first, for the whole
+        /// run, while fifty more sat at home unusable.
+        /// </summary>
+        public bool SwapWithNest(int nestIndex, int partySlot)
+        {
+            if (nestIndex < 0 || nestIndex >= Nest.Count) return false;
+            if (partySlot < 0 || partySlot >= Party.Count) return false;
+
+            var incoming = Nest[nestIndex];
+            Nest[nestIndex] = Party[partySlot];
+            Party[partySlot] = incoming;
+            RaiseChanged();
+            return true;
+        }
+
+        /// <summary>Moves a nest egg into an empty party slot, when there is room.</summary>
+        public bool TakeFromNest(int nestIndex)
+        {
+            if (nestIndex < 0 || nestIndex >= Nest.Count || Party.Count >= PartySize) return false;
+            Party.Add(Nest[nestIndex]);
+            Nest.RemoveAt(nestIndex);
+            RaiseChanged();
+            return true;
+        }
+
         public void SwapPartySlots(int a, int b)
         {
             if (a < 0 || b < 0 || a >= Party.Count || b >= Party.Count || a == b) return;

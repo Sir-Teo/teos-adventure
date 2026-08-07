@@ -246,6 +246,15 @@ headers are paid for; it used to show eight and leave over half the column empty
 record lists every species with no window at all, so the self-check bounds it: 30 lines of
 the 35 that column can hold, which is the number that breaks first if the roster grows.
 
+**Left/Right pick a column, Up/Down move inside it, Enter swaps a nest egg into the party.**
+
+Until that existed an egg that went to the nest stayed there. Your party was whichever six you
+happened to catch first, for the entire run, while fifty more sat at home unusable — in a game
+whose whole subject is collecting them. Enter trades the highlighted nest egg for whichever egg
+is leading, or drops it straight into an empty slot if the party is not full; combined with
+**1-6**, which promotes any party egg to the front, that reaches every arrangement without a
+second cursor or a mode to get stuck in.
+
 ## Balance
 
 All battle randomness routes through `EggRandom`, which can be given a seeded generator. That

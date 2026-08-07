@@ -25,6 +25,11 @@ namespace Eggverse
         Text collectionBody, collectionDex, dexDetail, dexLore, titleHint, titleSaveLine;
         Image dexPortrait;
         int dexCursor;
+        // The collection screen has two things worth pointing at: the field record, and your
+        // own eggs. Left/Right chooses which, Up/Down moves inside it.
+        bool nestFocus;
+        int nestCursor;
+        const int NestWindow = 20;
 
         readonly Queue<string> toastQueue = new Queue<string>();
         float toastTimer;
@@ -178,7 +183,7 @@ namespace Eggverse
             UIKit.Place(dexLore.rectTransform, new Vector2(0f, 1f), new Vector2(0f, 1f), new Vector2(1280f, -262f), new Vector2(450f, 600f));
 
             var hint = UIKit.Label(collectionPanel, "Hint",
-                "arrows browse the record  ·  1-6 changes who leads  ·  Tab or Esc to close",
+                "left/right pick a column  ·  up/down move  ·  Enter swaps a nest egg in  ·  1-6 leads  ·  Tab closes",
                 20, UIKit.InkDim, TextAnchor.MiddleCenter);
             UIKit.Place(hint.rectTransform, new Vector2(0.5f, 0f), new Vector2(0.5f, 0f), new Vector2(0f, 24f), new Vector2(1200f, 26f));
 
@@ -365,14 +370,53 @@ namespace Eggverse
             if (CollectionOpen) RefreshCollection();
         }
 
+        /// <summary>
+        /// Trades the highlighted nest egg for whichever egg is leading, or drops it straight
+        /// into an empty slot if the party is not full. Refuses politely rather than silently
+        /// when the cursor is on a party row - there is nothing to bring in from there.
+        /// </summary>
+        void TakeCursorEgg()
+        {
+            var state = dir.State;
+            int partyRows = state.Party.Count;
+            if (nestCursor < partyRows)
+            {
+                Toast("That one is already with you. Pick an egg from the nest.");
+                return;
+            }
+
+            int nestIndex = nestCursor - partyRows;
+            if (nestIndex >= state.Nest.Count) return;
+            string incoming = state.Nest[nestIndex].Name;
+
+            if (state.Party.Count < GameState.PartySize)
+            {
+                if (!state.TakeFromNest(nestIndex)) return;
+                Toast(incoming + " joined the party.");
+            }
+            else
+            {
+                string outgoing = state.Party[0].Name;
+                if (!state.SwapWithNest(nestIndex, 0)) return;
+                Toast(incoming + " swapped in; " + outgoing + " went to the nest.");
+            }
+
+            if (dir.Audio != null) dir.Audio.Play(Sfx.UiConfirm);
+            RefreshCollection();
+        }
+
         void RefreshCollection()
         {
             var state = dir.State;
             var sb = new System.Text.StringBuilder();
 
+            int rows = state.Party.Count + Mathf.Min(NestWindow, state.Nest.Count);
+            if (rows > 0) nestCursor = Mathf.Clamp(nestCursor, 0, rows - 1);
+
             sb.Append("<b><color=#FFC24D>PARTY</color></b>   <color=#7A8090>press 1-6 to lead with that egg</color>\n");
             for (int i = 0; i < state.Party.Count; i++)
             {
+                sb.Append(nestFocus && nestCursor == i ? "<color=#FFC24D>\u25b8</color>" : " ");
                 sb.Append(i == 0 ? "<color=#FFC24D>1</color>" : "<color=#7A8090>" + (i + 1) + "</color>").Append(' ');
                 sb.Append(DescribeEgg(state.Party[i])).Append('\n');
             }
@@ -386,9 +430,13 @@ namespace Eggverse
                 // The nest is unbounded, so show a window of it. The column is 780px at font 20,
                 // which is 33 lines; the party costs at most 8 of those and the headers 2, so 20
                 // is what is left. It used to show 8 and leave over half the column empty.
-                const int shown = 20;
+                const int shown = NestWindow;
                 for (int i = 0; i < Mathf.Min(shown, state.Nest.Count); i++)
+                {
+                    bool here = nestFocus && nestCursor == state.Party.Count + i;
+                    sb.Append(here ? "<color=#FFC24D>\u25b8</color> " : "  ");
                     sb.Append(DescribeEgg(state.Nest[i])).Append('\n');
+                }
                 if (state.Nest.Count > shown)
                     sb.Append("<color=#7A8090>      ...and ").Append(state.Nest.Count - shown).Append(" more</color>\n");
             }
@@ -563,23 +611,51 @@ namespace Eggverse
                     Toast(dir.State.Party[0].Name + " will lead.");
                 }
 
-                // Arrows browse the field record; left/right jump a page.
-                int move = 0;
-                if (EggInput.DownPressed) move = 1;
-                else if (EggInput.UpPressed) move = -1;
-                else if (EggInput.RightPressed) move = 8;
-                else if (EggInput.LeftPressed) move = -8;
-
-                if (move != 0)
+                // Left/Right choose a column, Up/Down move inside it.
+                if (EggInput.LeftPressed || EggInput.RightPressed)
                 {
-                    int next = Mathf.Clamp(dexCursor + move, 0, SpeciesDatabase.Count - 1);
-                    if (next != dexCursor)
+                    bool wanted = EggInput.LeftPressed;
+                    if (wanted != nestFocus)
                     {
-                        dexCursor = next;
+                        nestFocus = wanted;
                         if (dir.Audio != null) dir.Audio.Play(Sfx.UiMove);
                         RefreshCollection();
                     }
                 }
+
+                int move = 0;
+                if (EggInput.DownPressed) move = 1;
+                else if (EggInput.UpPressed) move = -1;
+
+                if (move != 0)
+                {
+                    if (nestFocus)
+                    {
+                        int rows2 = dir.State.Party.Count + Mathf.Min(NestWindow, dir.State.Nest.Count);
+                        int next = Mathf.Clamp(nestCursor + move, 0, Mathf.Max(0, rows2 - 1));
+                        if (next != nestCursor)
+                        {
+                            nestCursor = next;
+                            if (dir.Audio != null) dir.Audio.Play(Sfx.UiMove);
+                            RefreshCollection();
+                        }
+                    }
+                    else
+                    {
+                        int next = Mathf.Clamp(dexCursor + move, 0, SpeciesDatabase.Count - 1);
+                        if (next != dexCursor)
+                        {
+                            dexCursor = next;
+                            if (dir.Audio != null) dir.Audio.Play(Sfx.UiMove);
+                            RefreshCollection();
+                        }
+                    }
+                }
+
+                // Enter on a nest egg trades it for the one leading the party. Combined with
+                // 1-6, which promotes any party egg to the front, that reaches every
+                // arrangement without a second cursor or a mode to get stuck in.
+                if (EggInput.ConfirmPressed && nestFocus) TakeCursorEgg();
             }
 
             if (toastTimer > 0f)
