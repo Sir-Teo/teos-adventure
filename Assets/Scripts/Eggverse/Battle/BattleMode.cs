@@ -286,7 +286,7 @@ namespace Eggverse
             else if (Foe.Elder)
             {
                 yield return Say("An <b>Elder " + Foe.Species.Name + "</b> heaves into view.  (Lv " + Foe.Level + ")");
-                yield return Say("It is far older than the others, and it will not go quietly into a carton.");
+                yield return Say(UiCopy.ElderWarning);
             }
             else
             {
@@ -378,7 +378,7 @@ namespace Eggverse
                         }
                         if (State.Cartons <= 0)
                         {
-                            yield return Say("You are out of egg cartons! Rest at a Nest Station to restock.");
+                            yield return Say(UiCopy.OutOfCartons);
                             continue;
                         }
                         chosenAction = PlayerAction.Carton;
@@ -387,7 +387,7 @@ namespace Eggverse
                     case PlayerAction.Salve:
                         if (State.Salves <= 0)
                         {
-                            yield return Say("No yolk salve left! Nest Stations carry more.");
+                            yield return Say(UiCopy.OutOfSalves);
                             continue;
                         }
                         if (Mine.CurrentHP >= Mine.MaxHP)
@@ -401,7 +401,7 @@ namespace Eggverse
                     case PlayerAction.Swap:
                         if (CountAliveInParty() <= 1)
                         {
-                            yield return Say("No other egg is in any shape to fight.");
+                            yield return Say(UiCopy.NobodyLeft);
                             continue;
                         }
                         RefreshPartyButtons();
@@ -458,11 +458,11 @@ namespace Eggverse
                     {
                         if (EggRandom.Value < BattleCalc.FleeChance(Mine, Foe))
                         {
-                            yield return Say("You drifted away safely.");
+                            yield return Say(UiCopy.FledSafely);
                             Finish(BattleOutcome.Fled);
                             yield break;
                         }
-                        yield return Say("You could not get clear!");
+                        yield return Say(UiCopy.CouldNotFlee);
                         yield return FoeTurn();
                         yield break;
                     }
@@ -546,7 +546,7 @@ namespace Eggverse
 
             if (!BattleCalc.Hits(move))
             {
-                yield return Say("It missed!");
+                yield return Say(UiCopy.Missed);
                 yield break;
             }
 
@@ -576,7 +576,7 @@ namespace Eggverse
                 yield return AnimateHit(victimImage,
                                         userIsPlayer ? foeHpBar : myHpBar,
                                         target);
-                if (crit) yield return Say("A critical crack!");
+                if (crit) yield return Say(UiCopy.Critical);
                 if (sturdySave) yield return Say(target.Name + " held together on one shard of shell!");
 
                 // Static punishes whoever threw the punch.
@@ -655,7 +655,7 @@ namespace Eggverse
                     yield return LowerFoeSpeed(target);
                     break;
                 default:
-                    yield return Say("Nothing much happened.");
+                    yield return Say(UiCopy.NoEffect);
                     break;
             }
         }
@@ -911,7 +911,7 @@ namespace Eggverse
                     yield return Say(IsTrainer ? trainerName + " is out of eggs." : WildVictoryLine());
                     break;
                 case BattleOutcome.Lost:
-                    yield return Say("Every egg you brought is out cold...");
+                    yield return Say(UiCopy.AllOutCold);
                     break;
             }
         }

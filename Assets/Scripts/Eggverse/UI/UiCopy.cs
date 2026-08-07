@@ -42,6 +42,37 @@ namespace Eggverse
         public const string ChartFooter = "Arrows select  ·  Enter to set course  ·  M or Esc to close";
         public const string BattleFooter = "Arrows/WASD move · Enter or Space select · Esc back";
 
+        // ---- what the battle says ----
+        //
+        // Written inline in BattleMode, every one of them, and so outside the prose pass -
+        // twenty-two lines a player reads more often than any dialogue in the game, never once
+        // checked for a doubled word or a stray space. These are the ones with no name or
+        // number in them; the rest are probed through the methods that build them.
+        public static readonly string[] BattleLines =
+        {
+            "It is far older than the others, and it will not go quietly into a carton.",
+            "You are out of egg cartons! Rest at a Nest Station to restock.",
+            "No yolk salve left! Nest Stations carry more.",
+            "No other egg is in any shape to fight.",
+            "You drifted away safely.",
+            "You could not get clear!",
+            "It missed!",
+            "A critical crack!",
+            "Nothing much happened.",
+            "Every egg you brought is out cold...",
+        };
+
+        public const string ElderWarning = "It is far older than the others, and it will not go quietly into a carton.";
+        public const string OutOfCartons = "You are out of egg cartons! Rest at a Nest Station to restock.";
+        public const string OutOfSalves = "No yolk salve left! Nest Stations carry more.";
+        public const string NobodyLeft = "No other egg is in any shape to fight.";
+        public const string FledSafely = "You drifted away safely.";
+        public const string CouldNotFlee = "You could not get clear!";
+        public const string Missed = "It missed!";
+        public const string Critical = "A critical crack!";
+        public const string NoEffect = "Nothing much happened.";
+        public const string AllOutCold = "Every egg you brought is out cold...";
+
         // ---- world labels ----
         //
         // The floating labels on a planet surface. They live here rather than inline in the

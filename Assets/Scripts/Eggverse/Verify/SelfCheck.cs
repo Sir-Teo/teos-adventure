@@ -1626,6 +1626,31 @@ namespace Eggverse
                 check(elder.Elder && !ordinary.Elder, "and knows it");
             }
 
+            // ---- the battle's own lines ----
+            {
+                // They were written inline in BattleMode, so they were outside the prose pass
+                // and outside every fit check - twenty-two lines a player reads more often than
+                // any dialogue in the game.
+                foreach (var line in UiCopy.BattleLines)
+                    check(lines(line, 1040f, 28) <= capacity(210f, 28),
+                          "the battle line fits its box: " + line);
+
+                // The array and the constants are the same set - it would be a poor trade to
+                // give them a home and then have the pass read a stale copy of it.
+                var known = new HashSet<string>(UiCopy.BattleLines);
+                foreach (var one in new[] { UiCopy.ElderWarning, UiCopy.OutOfCartons,
+                                            UiCopy.OutOfSalves, UiCopy.NobodyLeft,
+                                            UiCopy.FledSafely, UiCopy.CouldNotFlee,
+                                            UiCopy.Missed, UiCopy.Critical,
+                                            UiCopy.NoEffect, UiCopy.AllOutCold })
+                    check(known.Contains(one),
+                          "the prose pass sees this battle line: " + one);
+
+                check(UiCopy.BattleLines.Length == 10,
+                      "every battle line in the set is accounted for (" +
+                      UiCopy.BattleLines.Length + ")");
+            }
+
             // ---- a cache is worth seeing arrive ----
             {
                 // Four worlds hide one, it is not signposted, and finding it takes a deliberate
