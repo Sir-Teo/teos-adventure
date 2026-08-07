@@ -447,6 +447,70 @@ namespace Eggverse
             check(lines("Cartons 12/12 · Salves 4/4", 524f, 19) == 1, "the HUD supply line wraps");
             check(lines("Nest 240 · Types 8/8 · Record 24/24", 524f, 19) == 1, "the HUD collection line wraps");
 
+            // ---- lingering conditions ----
+            {
+                // Each condition is dealt out by one element and shrugged off by that element.
+                var pairs = new[]
+                {
+                    new object[] { EggStatus.Scorched, EggType.Molten, "yolkano" },
+                    new object[] { EggStatus.Chilled,  EggType.Frost,  "chillet" },
+                    new object[] { EggStatus.Dazed,    EggType.Volt,   "yolty" },
+                };
+                foreach (var pair in pairs)
+                {
+                    var status = (EggStatus)pair[0];
+                    var immuneType = (EggType)pair[1];
+                    var immune = EggInstance.Wild((string)pair[2], 20);
+                    check(immune.Type == immuneType, (string)pair[2] + " is " + immuneType);
+                    check(!immune.CanCatch(status),
+                          immuneType + " eggs shrug off " + status);
+
+                    var victim = EggInstance.Wild("sprouteg", 20);
+                    check(victim.CanCatch(status), "a Verdant egg can catch " + status);
+                    victim.Afflict(status);
+                    check(victim.Status == status, status + " sticks");
+                    check(!victim.CanCatch(EggStatus.Scorched) && !victim.CanCatch(EggStatus.Chilled),
+                          "an afflicted egg cannot take a second condition");
+
+                    // It has to wear off, or a long fight is decided by it rather than shaped by it.
+                    int rounds = 0;
+                    while (victim.Status != EggStatus.None && rounds < 20) { victim.TickStatus(); rounds++; }
+                    check(rounds == EggInstance.StatusDuration,
+                          status + " lasts exactly " + EggInstance.StatusDuration + " rounds (took " + rounds + ")");
+                }
+
+                // Burn is a fixed fraction, and never rounds away to nothing.
+                foreach (var sp in SpeciesDatabase.All)
+                {
+                    var e = EggInstance.Wild(sp.Id, 5);
+                    e.Afflict(EggStatus.Scorched);
+                    check(e.StatusTickDamage() >= 1, sp.Name + " burns for at least 1 even at level 5");
+                    check(e.StatusTickDamage() <= e.MaxHP / 8,
+                          sp.Name + "'s burn is not more than an eighth a round");
+                    check(EggInstance.StatusDuration * e.StatusTickDamage() < e.MaxHP,
+                          sp.Name + " cannot be killed by one application of scorch alone");
+                }
+
+                // Chill is the only condition that touches a stat, and it must actually bite.
+                var brisk = EggInstance.Wild("sprouteg", 20);
+                int before = brisk.Spd;
+                brisk.Afflict(EggStatus.Chilled);
+                check(brisk.Spd < before, "chill actually slows an egg (" + before + " -> " + brisk.Spd + ")");
+                brisk.ClearStatus();
+                check(brisk.Spd == before, "and it comes back when the chill wears off");
+
+                // A move's rider must match its own element, or the immunity rule reads as random.
+                foreach (var mv in MoveDatabase.All)
+                {
+                    var rider = BattleCalc.RiderOf(mv.Effect);
+                    if (rider == EggStatus.None) continue;
+                    var expect = rider == EggStatus.Scorched ? EggType.Molten
+                               : rider == EggStatus.Chilled ? EggType.Frost : EggType.Volt;
+                    check(mv.Type == expect,
+                          mv.Name + " inflicts " + rider + ", so it should be " + expect + " (is " + mv.Type + ")");
+                }
+            }
+
             // ---- the title screen: the first prose anyone reads ----
             // 1500x460 at font 24, and the controls list is the widest thing in the game.
             {

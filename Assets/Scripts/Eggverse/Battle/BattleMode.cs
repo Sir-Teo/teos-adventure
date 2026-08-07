@@ -239,6 +239,10 @@ namespace Eggverse
 
         void Finish(BattleOutcome result)
         {
+            // Conditions last the fight and no longer. Clearing here rather than on the way
+            // out means a caught egg and a fainted one are both handed back clean.
+            for (int i = 0; i < State.Party.Count; i++) State.Party[i].ClearStatus();
+            if (Foe != null) Foe.ClearStatus();
             battleOver = true;
             outcome = result;
         }
@@ -473,8 +477,18 @@ namespace Eggverse
             return best;
         }
 
+        /// <summary>How often a dazed egg loses its turn outright.</summary>
+        const float DazeSkipChance = 0.25f;
+
         IEnumerator UseMove(EggInstance user, EggInstance target, MoveSlot slot, bool userIsPlayer)
         {
+            // Checked before the move is chosen off the slot, so a lost turn costs no PP.
+            if (user.Status == EggStatus.Dazed && EggRandom.Value < DazeSkipChance)
+            {
+                yield return Say(user.Name + " is too dazed to move!");
+                yield break;
+            }
+
             MoveDef move;
             if (slot == null || !slot.Usable)
             {
@@ -559,6 +573,12 @@ namespace Eggverse
                 case MoveEffect.SpdDownFoe:
                     yield return LowerFoeSpeed(target);
                     break;
+
+                case MoveEffect.Scorch:
+                case MoveEffect.Chill:
+                case MoveEffect.Daze:
+                    yield return Inflict(target, BattleCalc.RiderOf(move.Effect));
+                    break;
             }
 
             RefreshCards(false);
@@ -598,6 +618,41 @@ namespace Eggverse
             }
         }
 
+        static string StatusVerb(EggStatus s)
+        {
+            switch (s)
+            {
+                case EggStatus.Scorched: return " is scorched, and will keep burning!";
+                case EggStatus.Chilled:  return " is chilled, and has slowed right down!";
+                case EggStatus.Dazed:    return " is dazed, and may lose its footing!";
+            }
+            return "";
+        }
+
+        /// <summary>Lands a lingering condition, or says why it did not.</summary>
+        IEnumerator Inflict(EggInstance target, EggStatus status)
+        {
+            if (target.IsFainted || status == EggStatus.None) yield break;
+
+            if (target.Status == status)
+            {
+                yield return Say(target.Name + " is already " + status.ToString().ToLowerInvariant() + ".");
+                yield break;
+            }
+            if (!target.CanCatch(status))
+            {
+                // Either it is already carrying something else, or its own element shrugs this off.
+                if (target.Status == EggStatus.None)
+                    yield return Say(TypeChart.Name(target.Type) + " eggs do not take that.");
+                yield break;
+            }
+
+            target.Afflict(status);
+            dir.Audio.Play(Sfx.Debuff);
+            RefreshCards(false);
+            yield return Say(target.Name + StatusVerb(status));
+        }
+
         IEnumerator LowerFoeSpeed(EggInstance target)
         {
             int stage = target.SpdStage;
@@ -629,6 +684,29 @@ namespace Eggverse
             {
                 RefreshCards(false);
                 yield return Say(Foe.Name + " mended " + theirs + ".");
+            }
+
+            // Burn ticks after regeneration, so Warm Yolk offsets it rather than racing it.
+            foreach (var burning in new[] { Mine, Foe })
+            {
+                int tick = burning.StatusTickDamage();
+                if (tick <= 0 || burning.IsFainted) continue;
+                burning.TakeDamage(tick);
+                yield return AnimateHit(burning == Mine ? myEggImage : foeEggImage,
+                                        burning == Mine ? myHpBar : foeHpBar, burning);
+                yield return Say(burning.Name + " burned for " + tick + ".");
+                if (burning.IsFainted) break;
+            }
+
+            // Then count the conditions down, so the round it lands is a full round of it.
+            foreach (var egg in new[] { Mine, Foe })
+            {
+                var had = egg.Status;
+                if (egg.TickStatus())
+                {
+                    RefreshCards(false);
+                    yield return Say(egg.Name + " shook off the " + had.ToString().ToLowerInvariant() + ".");
+                }
             }
         }
 
@@ -964,6 +1042,18 @@ namespace Eggverse
         }
 
         /// <summary>Arrows for any raised or lowered stat, so buffs are not invisible.</summary>
+        /// <summary>The condition chip that sits on a combatant's card, or nothing.</summary>
+        static string StatusTag(EggInstance egg)
+        {
+            switch (egg.Status)
+            {
+                case EggStatus.Scorched: return "  <color=#E5734A>SCORCHED</color>";
+                case EggStatus.Chilled:  return "  <color=#8FE3F2>CHILLED</color>";
+                case EggStatus.Dazed:    return "  <color=#FFC24D>DAZED</color>";
+            }
+            return "";
+        }
+
         static string Stages(EggInstance egg)
         {
             var sb = new System.Text.StringBuilder();
@@ -986,7 +1076,7 @@ namespace Eggverse
         {
             var foe = Foe;
             foeNameText.text = foe.Name + "  <size=22><color=#A8B2C4>Lv " + foe.Level + "</color></size>";
-            foeMetaText.text = TypeChart.TraitName(foe.Trait) + Stages(foe);
+            foeMetaText.text = TypeChart.TraitName(foe.Trait) + StatusTag(foe) + Stages(foe);
             foeTypeText.text = TypeChart.Name(foe.Type);
             foeTypeChip.color = TypeChart.ColorOf(foe.Type);
             foeHpBar.SetFraction(foe.HPFraction);
@@ -1006,7 +1096,7 @@ namespace Eggverse
 
             var mine = Mine;
             myNameText.text = mine.Name + "  <size=22><color=#A8B2C4>Lv " + mine.Level + "</color></size>";
-            myMetaText.text = TypeChart.TraitName(mine.Trait) + Stages(mine);
+            myMetaText.text = TypeChart.TraitName(mine.Trait) + StatusTag(mine) + Stages(mine);
             myTypeText.text = TypeChart.Name(mine.Type);
             myTypeChip.color = TypeChart.ColorOf(mine.Type);
             myHpBar.SetFraction(mine.HPFraction);

@@ -108,6 +108,31 @@ riff for battles, a swelling chord for Amaranth Prime, and — for the Shattered
 sustained note** with its own overtones drifting in and out, because that is exactly what Pim
 says the Belt is doing. Crossing into Sector III is audible before it is visible.
 
+### Lingering conditions
+
+Every other move effect in the game resolves the instant it lands. These are the ones you are
+still paying for three turns later:
+
+| Condition | Dealt by | Effect |
+|---|---|---|
+| **Scorched** | Molten — *Lava Yolk* | burns a sixteenth of its bulk at the end of each round |
+| **Chilled** | Frost — *Frost Crack* | moves at half speed |
+| **Dazed** | Volt — *Volt Crack* | loses the turn outright one time in four |
+
+One at a time, three rounds each, and **an egg cannot catch the condition its own element deals
+out** — Molten never burns, Frost never chills, Volt is never dazed. They clear when the fight
+ends, so nothing goes home with one and nothing touches the save file.
+
+They were permanent at first, which did not add tactics so much as decide fights: a boss match
+runs about twenty rounds, and a burn at a sixteenth a round is 119% of the target's health over
+that. A bare-minimum gate-legal nest went from beating Amy 61% of the time to 84%.
+
+Three rounds keeps them worth landing and worth landing again. Amy's ace went up one level to
+absorb the rest — the player has three ways to wear her down where she has one. Bumping all
+three of her eggs was far too coarse a knob: it took the fight from 82% to 42% in a single
+level. She now sits at **54%** against the worst legal nest, and salves matter much more than
+they did (+16 points, up from +5) because a salve is how you outlast a burn.
+
 ### The type ring
 
 Each element beats the **next two** in this order, and is beaten by the previous two:

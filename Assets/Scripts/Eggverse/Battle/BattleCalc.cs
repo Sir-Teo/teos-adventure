@@ -75,6 +75,18 @@ namespace Eggverse
         /// How good a move looks: expected damage, roughly. Mirrors the passives the damage
         /// formula applies, so the chooser does not recommend moves the maths then blunts.
         /// </summary>
+        /// <summary>The lingering condition a move leaves behind, if any.</summary>
+        public static EggStatus RiderOf(MoveEffect effect)
+        {
+            switch (effect)
+            {
+                case MoveEffect.Scorch: return EggStatus.Scorched;
+                case MoveEffect.Chill:  return EggStatus.Chilled;
+                case MoveEffect.Daze:   return EggStatus.Dazed;
+            }
+            return EggStatus.None;
+        }
+
         public static float AiScore(EggInstance user, EggInstance target, MoveDef move)
         {
             if (move.IsStatus)
@@ -108,6 +120,13 @@ namespace Eggverse
 
             // Recoil is real damage to yourself, and worse when you are nearly out.
             if (move.Effect == MoveEffect.Recoil25) score *= user.HPFraction < 0.3f ? 0.7f : 0.9f;
+
+            // A lingering condition is worth a great deal early and nothing at all once it has
+            // landed, or against an element that shrugs it off. Without this the AI reads these
+            // as ordinary 75-power moves and throws them at an already-scorched target.
+            var rider = RiderOf(move.Effect);
+            if (rider != EggStatus.None && target.CanCatch(rider))
+                score *= target.HPFraction > 0.5f ? 1.35f : 1.1f;
 
             return score;
         }

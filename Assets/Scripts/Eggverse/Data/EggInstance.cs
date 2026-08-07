@@ -3,6 +3,18 @@ using UnityEngine;
 
 namespace Eggverse
 {
+    /// <summary>
+    /// A lingering battle condition. One at a time, no natural recovery, gone when the fight is.
+    /// Each is dealt out by one element and cannot be caught by an egg of that element.
+    /// </summary>
+    public enum EggStatus
+    {
+        None,
+        Scorched,   // Molten: burns off a sixteenth of its bulk at the end of every round
+        Chilled,    // Frost: moves at half speed
+        Dazed,      // Volt: sometimes loses the turn outright
+    }
+
     public class MoveSlot
     {
         public readonly MoveDef Move;
@@ -27,6 +39,24 @@ namespace Eggverse
 
         // Battle-only modifiers, cleared on switch-out and at battle end.
         public int AtkStage, DefStage, SpdStage;
+
+        /// <summary>
+        /// A condition that lasts the rest of the battle. Every other move effect in the game
+        /// resolves the instant it lands, which makes every turn a self-contained trade; these
+        /// are the ones you are still paying for three turns later.
+        ///
+        /// Not saved: they clear when the battle ends, so a run never carries one home.
+        /// </summary>
+        public EggStatus Status;
+        public int StatusTurns;
+
+        /// <summary>
+        /// How long a condition sticks. Permanent ones wrecked the long fights: a boss match
+        /// runs about twenty rounds, and a burn at a sixteenth a round is 119% of the target's
+        /// health over that — it did not add tactics, it decided the fight. Four rounds is a
+        /// quarter of a bar, worth landing and worth landing again.
+        /// </summary>
+        public const int StatusDuration = 3;
 
         /// <summary>A rare, older wild egg: tougher, worth more, and much harder to keep.</summary>
         public bool Elder { get; private set; }
@@ -63,6 +93,7 @@ namespace Eggverse
             {
                 float speed = RawSpd * StageMul(SpdStage);
                 if (Trait == EggTrait.Featherlight) speed *= 1.15f;
+                if (Status == EggStatus.Chilled) speed *= 0.5f;
                 return Mathf.Max(1, Mathf.RoundToInt(speed));
             }
         }
@@ -100,6 +131,39 @@ namespace Eggverse
         }
 
         public void ClearStages() { AtkStage = DefStage = SpdStage = 0; }
+        public void ClearStatus() { Status = EggStatus.None; StatusTurns = 0; }
+
+        public void Afflict(EggStatus status)
+        {
+            Status = status;
+            StatusTurns = StatusDuration;
+        }
+
+        /// <summary>Counts a condition down at the end of a round. True when it has just worn off.</summary>
+        public bool TickStatus()
+        {
+            if (Status == EggStatus.None) return false;
+            if (--StatusTurns > 0) return false;
+            ClearStatus();
+            return true;
+        }
+
+        /// <summary>An egg cannot catch the condition its own element deals out.</summary>
+        public bool CanCatch(EggStatus status)
+        {
+            if (status == EggStatus.None || Status != EggStatus.None || IsFainted) return false;
+            switch (status)
+            {
+                case EggStatus.Scorched: return Type != EggType.Molten;
+                case EggStatus.Chilled:  return Type != EggType.Frost;
+                case EggStatus.Dazed:    return Type != EggType.Volt;
+            }
+            return false;
+        }
+
+        /// <summary>Damage taken at the end of a round from a lingering condition, or zero.</summary>
+        public int StatusTickDamage() =>
+            Status == EggStatus.Scorched ? Mathf.Max(1, MaxHP / 16) : 0;
 
         // ---------- health ----------
 

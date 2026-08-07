@@ -12,7 +12,10 @@ namespace Eggverse
         SpdDownFoe,  // -1 speed stage for the target
         Lifesteal50, // user recovers half the damage dealt
         MultiHit2,   // strikes twice
-        Recoil25     // user takes a quarter of the damage dealt
+        Recoil25,    // user takes a quarter of the damage dealt
+        Scorch,      // Molten: leaves the target burning for the rest of the fight
+        Chill,       // Frost: halves the target's speed for the rest of the fight
+        Daze         // Volt: the target sometimes loses its turn
     }
 
     public class MoveDef
@@ -63,6 +66,10 @@ namespace Eggverse
     public static class MoveDatabase
     {
         static readonly Dictionary<string, MoveDef> byId = new Dictionary<string, MoveDef>();
+        static readonly List<MoveDef> ordered = new List<MoveDef>();
+
+        /// <summary>Every move, in declaration order — the self-check needs to sweep them.</summary>
+        public static IReadOnlyList<MoveDef> All => ordered;
 
         public static MoveDef Get(string id)
         {
@@ -72,7 +79,7 @@ namespace Eggverse
 
         public static bool Has(string id) => byId.ContainsKey(id);
 
-        static void Add(MoveDef m) { byId[m.Id] = m; }
+        static void Add(MoveDef m) { byId[m.Id] = m; ordered.Add(m); }
 
         static MoveDatabase()
         {
@@ -87,7 +94,8 @@ namespace Eggverse
 
             // ---- Molten ----
             Add(new MoveDef("embercrack", "Ember Crack", EggType.Molten, 45, 100, 25));
-            Add(new MoveDef("lavayolk", "Lava Yolk", EggType.Molten, 75, 95, 15));
+            Add(new MoveDef("lavayolk", "Lava Yolk", EggType.Molten, 75, 95, 15, MoveEffect.Scorch,
+                            "Sticks and keeps burning."));
             Add(new MoveDef("flareshell", "Flare Shell", EggType.Molten, 100, 80, 8));
 
             // ---- Tidal ----
@@ -102,12 +110,14 @@ namespace Eggverse
 
             // ---- Volt ----
             Add(new MoveDef("staticsnap", "Static Snap", EggType.Volt, 45, 100, 25));
-            Add(new MoveDef("voltcrack", "Volt Crack", EggType.Volt, 75, 95, 15));
+            Add(new MoveDef("voltcrack", "Volt Crack", EggType.Volt, 75, 95, 15, MoveEffect.Daze,
+                            "Rattles the yolk about."));
             Add(new MoveDef("chargeup", "Charge Up", EggType.Volt, 0, 100, 20, MoveEffect.SpdUp, "Builds a static charge."));
 
             // ---- Frost ----
             Add(new MoveDef("chillshell", "Chill Shell", EggType.Frost, 45, 100, 25));
-            Add(new MoveDef("frostcrack", "Frost Crack", EggType.Frost, 75, 95, 15));
+            Add(new MoveDef("frostcrack", "Frost Crack", EggType.Frost, 75, 95, 15, MoveEffect.Chill,
+                            "Leaves a rime that will not shift."));
             Add(new MoveDef("coldsnap", "Cold Snap", EggType.Frost, 55, 95, 15, MoveEffect.SpdDownFoe, "Numbs the target."));
 
             // ---- Stone ----

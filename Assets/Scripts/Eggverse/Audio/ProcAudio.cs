@@ -9,7 +9,8 @@ namespace Eggverse
         Hit, HitStrong, HitWeak, Crit,
         Faint, LevelUp, Evolve, Heal,
         CartonThrow, CartonWobble, CatchSuccess, CatchFail,
-        Encounter, Land, Liftoff, Talk, Chart, Save
+        Encounter, Land, Liftoff, Talk, Chart, Save,
+        Debuff
     }
 
     public enum MusicTrack { None, Explore, Belt, Battle, Amaranth }
@@ -212,6 +213,15 @@ namespace Eggverse
                     AddArpeggio(buf, new[] { 523.25f, 659.25f, 783.99f, 1046.5f }, 0.11f, 0.24f, 1);
                     AddNote(buf, 0.44f, 0.52f, 1046.5f, 1046.5f, 0.18f, 0, 1.8f);
                     AddNote(buf, 0.44f, 0.52f, 1567.98f, 1567.98f, 0.10f, 0, 1.8f);
+                    break;
+
+                // A condition landing: two notes sagging apart, so it reads as something
+                // settling in rather than a hit that is over.
+                case Sfx.Debuff:
+                    buf = Buffer(0.55f);
+                    AddNote(buf, 0f,    0.50f, 392.00f, 311.13f, 0.17f, 2, 1.8f);
+                    AddNote(buf, 0.05f, 0.46f, 261.63f, 207.65f, 0.14f, 2, 1.8f);
+                    AddNoise(buf, 0f, 0.10f, 0.05f, 0.30f, 5f);
                     break;
 
                 case Sfx.CatchFail:

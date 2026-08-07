@@ -208,7 +208,11 @@ namespace Eggverse
 
             AddTrainer(new TrainerDef("amy", "Amy",
                 new[] { "solyolk", "obsidyolk", "reginova" },
-                new[] { 19, 20, 22 },
+                // Reginova is a level up on what it used to be. Lingering conditions gave the
+                // player three ways to wear this fight down where Amy has one, and a bare-legal
+                // nest went from winning 61% to 84%. Her ace absorbs the difference; bumping all
+                // three was far too coarse, taking it from 82% to 42% in a single level.
+                new[] { 19, 20, 23 },
                 "beat_amy",
                 new[]
                 {
