@@ -365,6 +365,14 @@ static class Program
         }
 
         {
+            // The pause menu, both pages. It had never been drawn.
+            WriteBmpRect(Pause.Render(false, 0), Battle.W, Battle.H, "pause.bmp");
+            WriteBmpRect(Pause.Render(false, 3), Battle.W, Battle.H, "pause-quit.bmp");
+            WriteBmpRect(Pause.Render(true, 1), Battle.W, Battle.H, "pause-settings.bmp");
+            Console.WriteLine(Pause.Report());
+        }
+
+        {
             // The ending, both ways it can land.
             foreach (var all in new[] { false, true })
             {

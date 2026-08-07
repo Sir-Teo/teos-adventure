@@ -1626,6 +1626,89 @@ namespace Eggverse
                 check(elder.Elder && !ordinary.Elder, "and knows it");
             }
 
+            // ---- the pause menu is a list, not four centred sentences ----
+            {
+                // This screen had never been rendered. Drawing it showed every row laid out
+                // from its own width: nothing lined up, the caret slid sideways down the list,
+                // and on the settings page the values change width - so toggling sound on to
+                // off, or stepping text speed to "instant", moved the row sideways underneath
+                // the cursor while the player was looking straight at it.
+                Func<string, float> w = t =>
+                    System.Text.RegularExpressions.Regex.Replace(t ?? "", "<[^>]+>", "").Length
+                    * PauseView.RowFont * 0.52f;
+
+                // Every reachable state of both pages, not one flattering sample.
+                var pages = new System.Collections.Generic.List<(string label, string value)[]>();
+                pages.Add(PauseView.MainRows(false));
+                pages.Add(PauseView.MainRows(true));
+                for (int sp = 0; sp < GameState.TextSpeedCount; sp++)
+                    foreach (bool muted in new[] { false, true })
+                        foreach (bool motion in new[] { false, true })
+                            pages.Add(PauseView.SettingsRows(
+                                muted, 0.6f, 1f, motion, new GameState { TextSpeed = sp }.TextSpeedName));
+
+                float widestLabel = 0f, widestValue = 0f;
+                foreach (var page in pages)
+                    foreach (var row in page)
+                    {
+                        check(row.label.Length > 0, "every pause row has a label");
+                        widestLabel = Mathf.Max(widestLabel, w(row.label));
+                        widestValue = Mathf.Max(widestValue, w(row.value));
+                    }
+
+                check(widestLabel <= PauseView.LabelWidth,
+                      "the widest pause label fits its column (" + Mathf.CeilToInt(widestLabel) +
+                      " of " + PauseView.LabelWidth + ")");
+                check(widestValue <= PauseView.ValueWidth,
+                      "the widest pause value fits its column (" + Mathf.CeilToInt(widestValue) +
+                      " of " + PauseView.ValueWidth + ")");
+
+                // The two columns must not run into each other, or aligning them bought nothing.
+                check(PauseView.LabelX + widestLabel <= PauseView.ValueX,
+                      "the label column stops before the value column starts (" +
+                      Mathf.CeilToInt(PauseView.LabelX + widestLabel) + " against " + PauseView.ValueX + ")");
+                check(PauseView.GutterX + PauseView.GutterWidth <= PauseView.LabelX,
+                      "the caret gutter stops before the labels start");
+                check(PauseView.ValueX + PauseView.ValueWidth <= PauseView.RowWidth * 0.5f,
+                      "the value column stays inside the box");
+
+                // The defect itself: what the cursor is pointing at must not move when the
+                // value beside it changes. Labels are the anchor, so they are what gets fixed.
+                for (int i = 0; i < pages[0].Length; i++)
+                    check(pages[0][i].label == pages[1][i].label,
+                          "confirming a quit does not reword the row (" + pages[0][i].label + ")");
+                for (int p = 3; p < pages.Count; p++)
+                    for (int i = 0; i < pages[2].Length; i++)
+                        check(pages[2][i].label == pages[p][i].label,
+                              "settings row " + i + " reads the same whatever it is set to");
+
+                // The heading rule the title and ending cards follow, applied to the one other
+                // screen in the game with a heading over a block of text.
+                float headingFloor = -38f - 48f * 0.5f;
+                float firstRowTop = PauseView.FirstRowY + PauseView.RowHeight * 0.5f;
+                check(headingFloor - firstRowTop >= UiLayout.MinHeadingGap,
+                      "PAUSED has air under it before the first row (" +
+                      Mathf.RoundToInt(headingFloor - firstRowTop) + "px)");
+
+                // Six settings rows, then the footer. The main page also has a rule and the
+                // controls block between them, and both pages share one box that must not move.
+                float lastSettingRow = PauseView.FirstRowY - 5 * PauseView.RowStep - PauseView.RowHeight * 0.5f;
+                float footerTop = -PauseView.BoxHeight + 42f + 30f;
+                check(lastSettingRow > footerTop,
+                      "the last setting clears the footer (" + Mathf.RoundToInt(lastSettingRow) +
+                      " against " + Mathf.RoundToInt(footerTop) + ")");
+
+                float lastMainRow = PauseView.FirstRowY - 3 * PauseView.RowStep - PauseView.RowHeight * 0.5f;
+                check(lastMainRow > PauseView.RuleY, "the last main row clears the rule");
+                float lastControl = PauseView.ControlsY - (UiCopy.PauseControls.Length - 1) *
+                                    PauseView.ControlsStep - 14f;
+                check(lastControl > footerTop, "the controls block clears the footer");
+
+                foreach (var line in UiCopy.PauseControls)
+                    check(lines(line, PauseView.RowWidth, (int)PauseView.ControlsFont) == 1,
+                          "a pause controls line fits on one line: " + line);
+            }
+
             // ---- the action menu explains itself ----
             {
                 // The move menu has explained whichever move is highlighted since it was
