@@ -219,6 +219,102 @@ static class AudioCheck
                       $"the inscription outlasts the line it opens ({stone.Length / (float)SR:0.0}s)");
             }
 
+            // ---- sounds stacked at the speed the game actually plays them ----
+            //
+            // Say() holds each battle line for a second, scaled by the text-speed setting - and
+            // at "instant" that scale is zero, so the line appears and the coroutine moves on in
+            // the same frame. Every sound in a sequence then fires on top of the one before it.
+            //
+            // The inscription-under-a-typewriter check further up was written for exactly this
+            // and covers exactly one pair. These are the sequences the game actually produces,
+            // mixed at the real gaps, at every text speed the pause menu offers.
+            {
+                var sfx = new Dictionary<Sfx, float[]>();
+                foreach (Sfx id in Enum.GetValues(typeof(Sfx)))
+                    sfx[id] = (float[])sfxMethod.Invoke(null, new object[] { id });
+
+                // (sound, fixed seconds after it, Say-holds after it). The holds are what the
+                // text-speed setting divides; the fixed seconds are animations, which it does not.
+                var sequences = new (string what, (Sfx id, float fixedAfter, float holdAfter)[] steps)[]
+                {
+                    ("a carton lands", new[]
+                    {
+                        (Sfx.CartonThrow,  0f,   1.0f),   // "You lobbed an egg carton!"
+                        (Sfx.CartonWobble, 0.4f, 0.35f),  // the wobble, then ". . ."
+                        (Sfx.CartonWobble, 0.4f, 0.35f),
+                        (Sfx.CartonWobble, 0.4f, 0.35f),
+                        (Sfx.CatchSuccess, 0f,   1.0f),
+                    }),
+                    ("a carton fails", new[]
+                    {
+                        (Sfx.CartonThrow,  0f,   1.0f),
+                        (Sfx.CartonWobble, 0.4f, 0.35f),
+                        (Sfx.CatchFail,    0f,   1.0f),
+                    }),
+                    ("the foe goes down", new[]
+                    {
+                        (Sfx.Faint,   0f, 2.0f),   // "cracked and gave up", "gained N XP"
+                        (Sfx.LevelUp, 0f, 1.0f),   // one line per level gained
+                        (Sfx.Evolve,  0f, 1.0f),
+                    }),
+                    ("a critical finishes it", new[]
+                    {
+                        (Sfx.Crit,  0f, 1.0f),
+                        (Sfx.Faint, 0f, 2.0f),
+                        (Sfx.LevelUp, 0f, 1.0f),
+                    }),
+                    ("walking into something", new[]
+                    {
+                        (Sfx.Rustle,    0f, 0f),
+                        (Sfx.Encounter, 0f, 0f),
+                    }),
+                };
+
+                float[] speeds = { 0.6f, 1f, 1.8f, 0f };   // GameState.TextSpeedScale
+                string[] speedNames = { "relaxed", "normal", "brisk", "instant" };
+
+                float worst = 0f; string worstWhat = "", worstSpeed = "";
+                for (int sp = 0; sp < speeds.Length; sp++)
+                    foreach (var seq in sequences)
+                    {
+                        // Lay each sound down at the moment the game would start it.
+                        float at = 0f;
+                        var starts = new List<(int sample, Sfx id)>();
+                        foreach (var step in seq.steps)
+                        {
+                            starts.Add(((int)(at * SR), step.id));
+                            at += step.fixedAfter + (speeds[sp] <= 0f ? 0f : step.holdAfter / speeds[sp]);
+                        }
+
+                        int len = 0;
+                        foreach (var st in starts) len = Math.Max(len, st.sample + sfx[st.id].Length);
+                        var mix = new float[len];
+                        foreach (var st in starts)
+                        {
+                            var b = sfx[st.id];
+                            for (int i = 0; i < b.Length; i++) mix[st.sample + i] += b[i];
+                        }
+
+                        float peak = 0f;
+                        foreach (var v in mix) peak = Math.Max(peak, Math.Abs(v));
+                        if (peak > worst) { worst = peak; worstWhat = seq.what; worstSpeed = speedNames[sp]; }
+
+                        check(peak <= 1.0f,
+                              $"{seq.what} does not clip at \"{speedNames[sp]}\" text speed (peak {peak:0.000})");
+
+                        if (sp == speeds.Length - 1)
+                            WriteWav(Path.Combine(outDir, "seq-" +
+                                     seq.what.Replace(' ', '-') + "-instant.wav"), mix);
+                    }
+
+                Console.WriteLine($"  worst stack: {worstWhat} at \"{worstSpeed}\" text speed, peak {worst:0.000}");
+
+                // And the same headroom rule the single sounds are held to. A sequence that peaks
+                // at 0.99 passes by a rounding error and the next sound anybody tunes puts it over.
+                check(worst <= 0.97f,
+                      $"the worst stack leaves headroom ({worst:0.000}: {worstWhat} at {worstSpeed})");
+            }
+
             // Nothing was ever comparing one effect against another. A sound is not just
             // audible or clipping - it is loud or quiet *relative to the ones around it*, and a
             // single effect several times the loudness of its neighbours is the one that makes a

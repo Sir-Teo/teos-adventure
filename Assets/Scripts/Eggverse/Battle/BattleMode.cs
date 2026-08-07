@@ -844,9 +844,14 @@ namespace Eggverse
             int reward = Foe.XpRewardFor();
             var log = new List<string>();
             var evolved = new List<EggInstance>();
+
+            // Worked out before the award, because AwardXp mutates the egg on the spot and the
+            // path is gone the moment it does.
+            var path = XpFill.Path(Mine.Level, Mine.Xp, EggInstance.MaxLevel, reward);
             State.AwardXp(Mine, reward, evolved, log);
+
             yield return Say(Mine.Name + " gained " + reward + " XP.");
-            if (log.Count > 0) dir.Audio.Play(Sfx.LevelUp);
+            yield return AnimateXp(path);
             for (int i = 0; i < log.Count; i++) yield return Say(log[i]);
 
             if (evolved.Contains(Mine))
@@ -981,6 +986,43 @@ namespace Eggverse
             bar.SetFraction(to);
             bar.SetFillColor(UIKit.HealthColor(to));
             RefreshCards(false);
+        }
+
+        /// <summary>
+        /// Runs the XP bar along its path, sounding each level as the bar completes rather than
+        /// once at the end of all of them. The bar used to snap - and when the award crossed a
+        /// level it snapped backwards, so the one moment worth watching never happened.
+        /// </summary>
+        IEnumerator AnimateXp(List<XpFill.Step> path)
+        {
+            if (path == null || path.Count == 0) yield break;
+
+            float each = XpFill.SecondsFor(path.Count);
+            foreach (var step in path)
+            {
+                if (Mathf.Approximately(step.From, step.To))
+                {
+                    myXpBar.SetFraction(step.To);
+                    continue;
+                }
+
+                float t = 0f;
+                while (t < each)
+                {
+                    t += Time.deltaTime;
+                    myXpBar.SetFraction(Mathf.Lerp(step.From, step.To, Mathf.Clamp01(t / each)));
+                    yield return null;
+                }
+                myXpBar.SetFraction(step.To);
+
+                // The note lands on the bar filling, not two lines of text later.
+                if (step.Levels)
+                {
+                    dir.Audio.Play(Sfx.LevelUp);
+                    myXpBar.SetFraction(XpFill.Rests(step));
+                    yield return null;
+                }
+            }
         }
 
         IEnumerator AnimateHit(Image victim, BarWidget bar, EggInstance target)

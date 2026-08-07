@@ -1640,6 +1640,75 @@ namespace Eggverse
                 check(elder.Elder && !ordinary.Elder, "and knows it");
             }
 
+            // ---- the XP bar takes the path the egg actually took ----
+            {
+                // The HP bar has eased since it was written; the XP bar under it snapped, and
+                // when an award crossed a level it snapped backwards - from most of the way
+                // along to nearly empty, with nothing in between. The bar completing is the
+                // whole payoff of a levelling system and it never once happened on screen.
+                //
+                // The path is computed before the award because GainXp mutates the egg on the
+                // spot. So the arithmetic exists twice, in two files, and the only thing worth
+                // checking is that they agree - against the real egg, not against itself.
+                foreach (var species in SpeciesDatabase.All)
+                    for (int lv = 1; lv <= 40; lv += 7)
+                        foreach (int award in new[] { 0, 1, 12, 40, 96, 300, 4000 })
+                        {
+                            var egg = EggInstance.Wild(species.Id, lv);
+                            int startLevel = egg.Level, startXp = egg.Xp;
+
+                            var path = XpFill.Path(startLevel, startXp, EggInstance.MaxLevel, award);
+                            egg.GainXp(award, null);
+
+                            check(path.Count > 0,
+                                  "there is always something to draw (" + species.Id + " lv" + lv + " +" + award + ")");
+
+                            // Every stretch runs forwards, and each one starts where the last
+                            // ended - or at nothing, if the last one filled the bar.
+                            for (int i = 0; i < path.Count; i++)
+                            {
+                                check(path[i].To >= path[i].From,
+                                      "the XP bar never runs backwards (" + species.Id + " +" + award + ")");
+                                check(path[i].From >= 0f && path[i].To <= 1f,
+                                      "the XP bar stays inside itself (" + species.Id + " +" + award + ")");
+                                if (i > 0)
+                                    check(Mathf.Approximately(path[i].From, XpFill.Rests(path[i - 1])),
+                                          "the XP bar does not jump between stretches (" + species.Id + " +" + award + ")");
+                                if (path[i].Levels)
+                                    check(Mathf.Approximately(path[i].To, 1f),
+                                          "a level only lands when the bar is full (" + species.Id + " +" + award + ")");
+                            }
+
+                            // And it has to stop where the egg actually is. This is the one that
+                            // catches the two curves drifting apart.
+                            int need = XpFill.Need(egg.Level, EggInstance.MaxLevel);
+                            float real = need <= 0 ? 1f : egg.Xp / (float)need;
+                            float ends = XpFill.Rests(path[path.Count - 1]);
+                            check(Mathf.Abs(ends - real) < 0.001f,
+                                  "the XP bar stops where the egg is (" + species.Id + " lv" + lv +
+                                  " +" + award + ": bar " + ends.ToString("0.000") +
+                                  ", egg " + real.ToString("0.000") + ")");
+
+                            // A big award must not turn into a long wait.
+                            check(path.Count <= XpFill.MostSteps,
+                                  "no award takes more than " + XpFill.MostSteps + " stretches (" +
+                                  species.Id + " +" + award + " took " + path.Count + ")");
+                            check(path.Count * XpFill.SecondsFor(path.Count) <= 1.3f,
+                                  "the whole fill is over inside a beat and a half (" +
+                                  (path.Count * XpFill.SecondsFor(path.Count)).ToString("0.00") + "s)");
+                        }
+
+                // XpToNext on a live egg and Need() off it are the same curve, or the bar draws
+                // one thing while the egg counts another.
+                for (int lv = 1; lv <= EggInstance.MaxLevel; lv++)
+                {
+                    var egg = EggInstance.Wild(SpeciesDatabase.All[0].Id, lv);
+                    check(egg.XpToNext == XpFill.Need(egg.Level, EggInstance.MaxLevel),
+                          "the bar and the egg agree on level " + lv + " (" + egg.XpToNext +
+                          " against " + XpFill.Need(egg.Level, EggInstance.MaxLevel) + ")");
+                }
+            }
+
             // ---- the dialogue hint says what the key actually does ----
             {
                 // It read "Space to continue" at every moment of every line - including while
