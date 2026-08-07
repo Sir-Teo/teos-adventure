@@ -344,6 +344,31 @@ namespace Eggverse
         }
 
         /// <summary>
+        /// Whether the pad on this world will do anything for you.
+        ///
+        /// Four stations in the game have gone cold - Yolkhaven, Brineholt, Mosswell, Vesper -
+        /// and the chart never said so. That is where you heal and restock, so flying somewhere
+        /// expecting to rest and finding dead stone is exactly what a navigation chart exists to
+        /// prevent. It is also the plot: Amy has been pulling the warmth off them for eleven
+        /// years, and after she is beaten they come back. Watching four worlds on your own chart
+        /// warm up again is the only report the ending gives you of what you actually changed.
+        ///
+        /// Only for worlds you have stood on. That is the rule the cache and the landmark
+        /// already follow here - nothing is announced before it is found.
+        /// </summary>
+        public static string StationLine(PlanetDef def, GameState state, StoryState story)
+        {
+            if (!state.Visited.Contains(def.Id)) return "";
+
+            bool everCold = PlanetDatabase.StationCold(def.Id);
+            bool warmBack = story != null && story.HasFlag("beat_amy");
+
+            if (!everCold) return "<color=#A8B2C4>The nest station here runs warm.</color>";
+            if (warmBack) return "<color=#5FD068>The nest station here is warm again.</color>";
+            return "<color=#E55555>The nest station here has gone cold.</color>";
+        }
+
+        /// <summary>
         /// How far outside a world's level band you have to be before it is worth saying so.
         /// The same number the descent prompt uses for Amy - two readings of "comfortable" that
         /// disagree would be the chart and the prompt telling a player different things about
@@ -496,6 +521,13 @@ namespace Eggverse
                 // was left to arithmetic in the player's head.
                 string ready = Readiness(def, state);
                 if (ready.Length > 0) sb.Append('\n').Append(ready).Append('\n');
+
+                string pad = StationLine(def, state, story);
+                if (pad.Length > 0) sb.Append(pad).Append('\n');
+
+                // What it costs and what you have already done here - separated from the two
+                // lines above, which are about you rather than about the world.
+                if (ready.Length > 0 || pad.Length > 0) sb.Append('\n');
 
                 // How far it is, from wherever you are standing. The chart is where a course is
                 // chosen and it has never said what choosing one costs.

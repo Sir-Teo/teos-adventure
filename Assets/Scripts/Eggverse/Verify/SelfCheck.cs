@@ -1671,6 +1671,66 @@ namespace Eggverse
                 check(elder.Elder && !ordinary.Elder, "and knows it");
             }
 
+            // ---- the chart knows which pads are dead ----
+            {
+                // Four stations have gone cold and the chart never said so - on the screen
+                // where you decide where to fly, about the place you heal and restock. It is
+                // also the plot, and the plot has a payoff: after Amy they come back.
+                var fresh = new GameState(false);
+                var early = new StoryState();
+                var after = new StoryState();
+                after.SetFlag("beat_amy");
+
+                int cold = 0, warm = 0, returned = 0;
+                foreach (var w in PlanetDatabase.All)
+                {
+                    // Nothing is announced before it is found. Same rule as the cache and the
+                    // landmark on this panel.
+                    check(GalaxyMapView.StationLine(w, fresh, early).Length == 0,
+                          w.Name + "'s pad is not described before you have stood on it");
+
+                    var been = new GameState(false);
+                    been.Visited.Add(w.Id);
+
+                    string before = GalaxyMapView.StationLine(w, been, early);
+                    string later  = GalaxyMapView.StationLine(w, been, after);
+                    check(before.Length > 0, w.Name + "'s pad says something once you have been");
+                    check(lines(before, 720f, 22) == 1, w.Name + "'s pad line fits: " + before);
+                    check(lines(later, 720f, 22) == 1, w.Name + "'s later pad line fits: " + later);
+
+                    if (PlanetDatabase.StationCold(w.Id))
+                    {
+                        cold++;
+                        check(before.Contains("E55555"),
+                              w.Name + "'s dead pad reads as a warning");
+                        // The payoff. If this ever stops changing, beating Amy stops being
+                        // visible anywhere a player would look for it.
+                        check(later != before, w.Name + "'s pad comes back after Amy");
+                        check(!later.Contains("E55555"), w.Name + "'s pad stops warning after Amy");
+                        returned++;
+                    }
+                    else
+                    {
+                        warm++;
+                        check(!before.Contains("E55555"), w.Name + "'s live pad is not a warning");
+                        check(later == before,
+                              w.Name + " was never cold, so beating Amy does not change it");
+                    }
+                }
+
+                // Both states have to exist on the real roster, or one branch is decoration.
+                check(cold > 0, "some world in the game has a cold station (" + cold + ")");
+                check(warm > 0, "and some world does not (" + warm + ")");
+                check(returned == cold, "every cold pad comes back (" + returned + " of " + cold + ")");
+
+                // The chart and the surface have to agree about which pads are dead. The
+                // surface gates its cold pad on the same story flag; two lists would drift.
+                foreach (var id in PlanetDatabase.ColdStations)
+                    check(PlanetDatabase.Exists(id), "cold station " + id + " is a real world");
+                check(PlanetDatabase.StationCold(PlanetDatabase.Home.Id),
+                      "your own station is one of the cold ones - it is what starts the game");
+            }
+
             // ---- the chart says where you stand against a world ----
             {
                 // The panel said "Wild eggs Lv 14-18" and never said what yours are. So the

@@ -8,7 +8,7 @@ static class Map
 {
     /// The world the detail panel describes. The map and the panel have to agree, or the render
     /// shows one world highlighted and describes another.
-    const string Selected = "glacierim";
+    const string Selected = "mosswell";
 
     static System.Collections.Generic.List<(string text, Col col)> Runs(string line, Col baseCol)
     {
@@ -60,7 +60,9 @@ static class Map
     static Eggverse.StoryState Chapters()
     {
         var story = new Eggverse.StoryState();
-        story.RestoreFrom(new string[0], Eggverse.StoryDatabase.Beats.Length - 1);
+        // Mid-run: far enough in to have a chart, not far enough to have beaten Amy - which is
+        // the state that shows the cold pads as cold rather than as the payoff.
+        story.RestoreFrom(new string[0], Eggverse.StoryDatabase.Beats.Length - 3);
         return story;
     }
 
