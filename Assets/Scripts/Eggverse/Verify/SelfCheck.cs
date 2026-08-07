@@ -1626,6 +1626,52 @@ namespace Eggverse
                 check(elder.Elder && !ordinary.Elder, "and knows it");
             }
 
+            // ---- nothing defined goes unused ----
+            {
+                // Dead content is quiet: a sound nobody plays, an effect no move has, a shell
+                // pattern no species wears. It costs nothing at runtime and it is invisible in
+                // review, which is exactly why it accumulates. Checked as a sweep rather than
+                // by hand, because the hand version only ever gets run once.
+                foreach (MoveEffect e in System.Enum.GetValues(typeof(MoveEffect)))
+                {
+                    if (e == MoveEffect.None) continue;
+                    bool used = false;
+                    foreach (var mv in MoveDatabase.All) if (mv.Effect == e) used = true;
+                    check(used, "some move uses the " + e + " effect");
+                }
+
+                foreach (EggTrait t in System.Enum.GetValues(typeof(EggTrait)))
+                {
+                    if (t == EggTrait.None) continue;
+                    bool worn = false;
+                    foreach (EggType ty in System.Enum.GetValues(typeof(EggType)))
+                        if (TypeChart.TraitOf(ty) == t) worn = true;
+                    check(worn, "some element carries the " + t + " trait");
+                }
+
+                foreach (EggPattern pat in System.Enum.GetValues(typeof(EggPattern)))
+                {
+                    // Auto is a sentinel, not a pattern: it is the default argument meaning
+                    // "pick one from the seed", and the constructor resolves it before anything
+                    // sees it. That no species keeps it is asserted where the resolution happens.
+                    if (pat == EggPattern.Auto) continue;
+
+                    bool worn = false;
+                    foreach (var sp in SpeciesDatabase.All) if (sp.Pattern == pat) worn = true;
+                    check(worn, "some species wears the " + pat + " shell");
+                }
+
+                // And every element is on at least one species, or a whole column of the type
+                // chart would be unreachable.
+                foreach (EggType ty in System.Enum.GetValues(typeof(EggType)))
+                {
+                    if (ty == EggType.Plain) continue;   // moves only, never a species
+                    bool exists = false;
+                    foreach (var sp in SpeciesDatabase.All) if (sp.Type == ty) exists = true;
+                    check(exists, "some species is " + TypeChart.Name(ty));
+                }
+            }
+
             // ---- the Belt is stripped, and then it is not ----
             {
                 // Garrow, on Cairnhold, after Amy: "The old ones are coming out of the rock
