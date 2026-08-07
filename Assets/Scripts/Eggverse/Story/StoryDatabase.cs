@@ -388,7 +388,8 @@ namespace Eggverse
                 case "hob": return Resident(story, "Hob", new[]
                 {
                     "Forty years I've farmed ash. You learn the trick of it: never fight fire with fire.",
-                    "Every egg on this rock is Molten. Bring something wet, or something clever, and you'll walk out with a full carton.",
+                    "Everything on this rock is Molten, near enough. Bring something wet, or something clever, and you'll walk out with a full carton.",
+                    "The odd Cobblet rolls down off the scree. Forty years, and I have never once counted it as ash.",
                     "Bring another Molten and you'll walk out carrying it.",
                 }, new[]
                 {

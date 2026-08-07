@@ -983,6 +983,59 @@ namespace Eggverse
                     }
             }
 
+            // ---- what residents claim about their own worlds ----
+            {
+                // Every world carries at least one off-element egg. That is deliberate - it is
+                // why there is a reason to look at a world whose theme you already have - and it
+                // means no resident can truthfully say their rock is all one thing. Hob did:
+                // "Every egg on this rock is Molten", on a world where one spawn in five is a
+                // Stone Cobblet, and his advice for the place is to bring a Molten counter.
+                foreach (var w in PlanetDatabase.All)
+                {
+                    if (w.Spawns == null || w.Spawns.Length == 0) continue;
+                    // Amaranth is exempt and should be: it is the boss world, it is the first
+                    // egg, and everything on it being one thing is the point of the place.
+                    if (w.IsBossWorld) continue;
+
+                    bool anyOff = false;
+                    foreach (var sp in w.Spawns)
+                        if (SpeciesDatabase.Get(sp.SpeciesId).Type != w.Theme) anyOff = true;
+                    check(anyOff, w.Name + " has something on it that is not " + TypeChart.Name(w.Theme));
+                }
+
+                // And no resident claims otherwise. Anything saying "every egg" alongside an
+                // element name is checked against the world that resident lives on.
+                foreach (var npc in StoryDatabase.Npcs)
+                {
+                    var script = StoryDatabase.GetDialogue(npc.Id, new StoryState(), new GameState());
+                    if (script == null) continue;
+                    var world = PlanetDatabase.Get(npc.PlanetId);
+                    if (world == null || world.Spawns == null) continue;
+
+                    foreach (var line in script.Lines)
+                    {
+                        // Only claims pinned to the speaker's own world. The first version
+                        // caught Moth saying "every egg carries a knack from its element" -
+                        // true, and about eggs everywhere rather than about Umbralux.
+                        string low = line.Text.ToLowerInvariant();
+                        if (!low.Contains("every egg") && !low.Contains("all the eggs")) continue;
+                        if (!low.Contains("this rock") && !low.Contains("this world") &&
+                            !low.Contains("this place") && !low.Contains("round here")) continue;
+
+                        foreach (EggType t in System.Enum.GetValues(typeof(EggType)))
+                        {
+                            if (!low.Contains(TypeChart.Name(t).ToLowerInvariant())) continue;
+                            bool allThat = true;
+                            foreach (var sp in world.Spawns)
+                                if (SpeciesDatabase.Get(sp.SpeciesId).Type != t) allThat = false;
+                            check(allThat,
+                                  npc.Name + " does not overclaim " + TypeChart.Name(t) +
+                                  " on " + world.Name + ": \"" + line.Text + "\"");
+                        }
+                    }
+                }
+            }
+
             // ---- cold stations ----
             {
                 // The list and the dialogue have to agree. Ori names the dead ones in the
