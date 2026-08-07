@@ -92,6 +92,8 @@ static class Prose
         AddLayout("ending coda", UiCopy.VictoryCoda);
         for (int i = 0; i < UiCopy.RestIdle.Length; i++) Add("rest line " + i, UiCopy.RestIdle[i]);
         for (int i = 0; i < UiCopy.RestCold.Length; i++) Add("cold rest line " + i, UiCopy.RestCold[i]);
+        Add("woke warm", UiCopy.WokeWarm);
+        Add("woke cold", UiCopy.WokeCold);
 
         // And what each resident says about their own world's landmark.
         foreach (var npc in StoryDatabase.Npcs)

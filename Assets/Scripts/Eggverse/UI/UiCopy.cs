@@ -85,6 +85,14 @@ namespace Eggverse
             "The straw is old and the pad is dead. Your six manage it anyway.",
         };
 
+        /// <summary>
+        /// Waking up after losing. There is no mechanical penalty and there should not be -
+        /// this is a game about looking after eggs - but it read the same everywhere, on a
+        /// world whose station the game had just spent four commits establishing was dead.
+        /// </summary>
+        public const string WokeWarm = "You woke at the Nest Station. The pad was warm, and everything is patched up.";
+        public const string WokeCold = "You woke on cold stone. It took a while. Everything is patched up, and nobody is saying how.";
+
         public static readonly string[] RestIdle =
         {
             "Nothing needed doing. The pad is warm anyway.",

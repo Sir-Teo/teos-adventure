@@ -983,6 +983,23 @@ namespace Eggverse
                     }
             }
 
+            // ---- waking up after losing ----
+            {
+                // Both lines land in the toast, which is 1000px wide with 20px either side at
+                // font 24 and holds 76px of height.
+                foreach (var line in new[] { UiCopy.WokeWarm, UiCopy.WokeCold })
+                    check(lines(line, 1000f - 40f, 24) <= capacity(76f, 24),
+                          "the waking line fits its toast: " + line);
+
+                // They have to be different, or there was no point looking at which world it
+                // was - and the cold one must not promise a warm pad.
+                check(UiCopy.WokeWarm != UiCopy.WokeCold, "waking cold reads differently from waking warm");
+                check(!UiCopy.WokeCold.Contains("warm"),
+                      "the cold line does not claim a warm pad: " + UiCopy.WokeCold);
+                check(UiCopy.WokeWarm.Contains("warm"),
+                      "and the warm one says so");
+            }
+
             // ---- the chart never asks for what you already have ----
             {
                 // The sealed-route panel used to print the whole objective and then the

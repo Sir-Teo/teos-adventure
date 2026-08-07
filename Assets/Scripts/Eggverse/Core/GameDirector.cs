@@ -562,7 +562,12 @@ namespace Eggverse
                 case BattleOutcome.Lost:
                     State.HealAll();
                     Teo.Warp(Surface.LandingPoint());
-                    Hud.Toast("You woke up at the Nest Station. Everything is patched up.");
+                    {
+                        bool coldPad = CurrentPlanet != null &&
+                                       PlanetDatabase.StationCold(CurrentPlanet.Id) &&
+                                       !Story.HasFlag("beat_amy");
+                        Hud.Toast(coldPad ? UiCopy.WokeCold : UiCopy.WokeWarm);
+                    }
                     break;
 
                 case BattleOutcome.Won:
