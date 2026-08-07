@@ -54,6 +54,8 @@ namespace Eggverse
         Transform nestStation;
         Transform cache;
         Vector2 cachePos;
+        Transform landmark;
+        LandmarkDef landmarkDef;
         Transform amyFigure;
 
         float fieldDistance;
@@ -99,6 +101,7 @@ namespace Eggverse
             if (!planet.IsBossWorld) BuildShellFields(planet, rng, R);
             BuildNestStation(planet);
             BuildCache(planet, R);
+            BuildLandmark(planet, R);
             if (planet.IsBossWorld) BuildAmy(planet);
             else BuildRoamers(planet, rng, R);
             BuildNpcs(planet);
@@ -121,6 +124,8 @@ namespace Eggverse
             nestStation = null;
             amyFigure = null;
             cache = null;
+            landmark = null;
+            landmarkDef = null;
         }
 
         SpriteRenderer Spawn(string name, Sprite sprite, Vector2 pos, float diameter, Color tint, int order, Transform parent = null)
@@ -136,6 +141,18 @@ namespace Eggverse
             sr.sortingOrder = order;
             float spriteWorld = sprite.rect.width / sprite.pixelsPerUnit;
             go.transform.localScale = Vector3.one * (diameter / spriteWorld);
+            return sr;
+        }
+
+        /// <summary>
+        /// A rectangle in world units. Spawn scales uniformly, which is right for eggs and
+        /// blobs and useless for a post, a beam or a seam - the things landmarks are made of.
+        /// </summary>
+        SpriteRenderer SpawnBar(string name, Vector2 pos, Vector2 size, Color tint, int order, Transform parent)
+        {
+            var sr = Spawn(name, ProcArt.White, pos, size.x, tint, order, parent);
+            float spriteWorld = ProcArt.White.rect.width / ProcArt.White.pixelsPerUnit;
+            sr.transform.localScale = new Vector3(size.x / spriteWorld, size.y / spriteWorld, 1f);
             return sr;
         }
 
@@ -402,10 +419,7 @@ namespace Eggverse
             if (!PlanetDatabase.HasCache(planet.Id)) return;
             if (dir.State.Caches.Contains(planet.Id)) return;
 
-            var rng = new System.Random(planet.Seed ^ 0x5EED);
-            float angle = (float)rng.NextDouble() * Mathf.PI * 2f;
-            float dist = R * (0.68f + 0.22f * (float)rng.NextDouble());
-            cachePos = new Vector2(Mathf.Cos(angle) * dist, Mathf.Sin(angle) * dist);
+            cachePos = SurfaceLayout.CachePosition(planet);
 
             var go = new GameObject("Cache");
             go.transform.SetParent(root, false);
@@ -425,6 +439,33 @@ namespace Eggverse
         }
 
         const float CacheRange = 1.6f;
+        const float LandmarkRange = 2.6f;
+
+        /// <summary>
+        /// The one thing on this world worth walking to. Placed from the planet's own seed, out
+        /// past the shell fields and on the opposite side from the cache, so a world with both
+        /// is worth crossing twice.
+        /// </summary>
+        void BuildLandmark(PlanetDef planet, float R)
+        {
+            landmarkDef = LandmarkDatabase.For(planet.Id);
+            if (landmarkDef == null) return;
+
+            var pos = SurfaceLayout.LandmarkPosition(planet);
+
+            var go = new GameObject("Landmark");
+            go.transform.SetParent(root, false);
+            go.transform.localPosition = pos;
+            landmark = go.transform;
+
+            // Coloured against the ground like everything else out here, then built into
+            // whatever this particular landmark actually is.
+            var stone = AgainstGround(new Color(0.62f, 0.64f, 0.72f), planet.Land, 0.5f, 0.42f);
+            BuildLandmarkForm(go.transform, landmarkDef.Form, stone);
+
+            AddLabel(go.transform, new Vector2(0f, 2.1f),
+                     "<b>" + landmarkDef.Name + "</b>\n<size=18><color=#A8B2C4>press E to read</color></size>", 22);
+        }
 
         /// <summary>Walking over the cache digs it up. No prompt: finding it is the point.</summary>
         int restIdle;
@@ -473,6 +514,115 @@ namespace Eggverse
 
             dir.Audio.Play(Sfx.CatchSuccess);
             dir.Hud.Toast("A buried supply cache! You can carry " + dir.State.MaxCartons + " cartons now.");
+        }
+
+        /// <summary>
+        /// Builds the landmark's silhouette. Every world had the same grey disc, which at any
+        /// distance is a rock - so a bell, a ship's bow and nine hundred cairns all read as
+        /// "some scenery". Each form is built from the same two primitives, arranged so the
+        /// shape is legible before the label is.
+        /// </summary>
+        void BuildLandmarkForm(Transform parent, LandmarkForm form, Color stone)
+        {
+            var dark = new Color(stone.r * 0.66f, stone.g * 0.66f, stone.b * 0.72f, 1f);
+            var shadow = new Color(dark.r, dark.g, dark.b, 0.85f);
+            var glow = new Color(1f, 0.92f, 0.7f, 0.26f);
+
+            // The same trick that makes Teo legible on a bright world: a dark shape behind the
+            // light one. Without it every form was a grey smudge the colour of terrain mottling,
+            // which the render made obvious and no assertion ever could.
+            var outline = new Color(0.07f, 0.08f, 0.13f, 0.85f);
+
+            // Everything stands on a scuffed patch - except the seam, which is not built on
+            // anything. It is a line in the ground; giving it a plinth made it a monument.
+            if (form != LandmarkForm.Seam)
+                Spawn("base", ProcArt.Blob("landmarkbase", Color.white, 13), new Vector2(0f, -1.0f), 3.4f,
+                      new Color(shadow.r, shadow.g, shadow.b, 0.55f), -29, parent);
+
+            switch (form)
+            {
+                case LandmarkForm.Post:
+                    // One upright with a carved head. It was a 0.5u stick that read as a twig;
+                    // the head is what tells you somebody put it there.
+                    SpawnBar("shaftEdge", new Vector2(0f, 0.55f), new Vector2(1.06f, 3.66f), outline, -21, parent);
+                    SpawnBar("shaft", new Vector2(0f, 0.55f), new Vector2(0.82f, 3.4f), stone, -19, parent);
+                    SpawnBar("headEdge", new Vector2(0f, 2.3f), new Vector2(1.74f, 0.86f), outline, -21, parent);
+                    SpawnBar("head", new Vector2(0f, 2.3f), new Vector2(1.5f, 0.62f), stone, -19, parent);
+                    Spawn("cap", ProcArt.Disc("lmcap", Color.white, new Color(1f, 1f, 1f, 0f), 1.4f, 64, 64f),
+                          new Vector2(0f, 2.5f), 2.8f, glow, -18, parent);
+                    break;
+
+                case LandmarkForm.Frame:
+                    // Two uprights with something hung between them.
+                    SpawnBar("postLEdge", new Vector2(-1.0f, 0.5f), new Vector2(0.58f, 3.24f), outline, -21, parent);
+                    SpawnBar("postREdge", new Vector2(1.0f, 0.5f), new Vector2(0.58f, 3.24f), outline, -21, parent);
+                    SpawnBar("beamEdge", new Vector2(0f, 1.9f), new Vector2(2.84f, 0.54f), outline, -21, parent);
+                    SpawnBar("postL", new Vector2(-1.0f, 0.5f), new Vector2(0.34f, 3.0f), stone, -19, parent);
+                    SpawnBar("postR", new Vector2(1.0f, 0.5f), new Vector2(0.34f, 3.0f), stone, -19, parent);
+                    SpawnBar("beam", new Vector2(0f, 1.9f), new Vector2(2.6f, 0.3f), stone, -19, parent);
+                    Spawn("hungEdge", ProcArt.Blob("lmhung", Color.white, 4), new Vector2(0f, 1.0f), 1.42f,
+                          outline, -18, parent);
+                    Spawn("hung", ProcArt.Blob("lmhung", Color.white, 4), new Vector2(0f, 1.0f), 1.15f,
+                          dark, -17, parent);
+                    break;
+
+                case LandmarkForm.Stones:
+                    // Five, set apart. At 0.72u spacing they merged into one dark caterpillar;
+                    // you have to be able to count them for it to read as somebody's work.
+                    for (int i = 0; i < 5; i++)
+                    {
+                        float t = (i - 2f) * 1.18f;
+                        float h = 1.5f - Mathf.Abs(i - 2f) * 0.26f;
+                        Spawn("stoneEdge" + i, ProcArt.Blob("lmstone", Color.white, i * 3 + 1),
+                              new Vector2(t, h * 0.34f), h * 1.22f, outline, -20 - i, parent);
+                        Spawn("stone" + i, ProcArt.Blob("lmstone", Color.white, i * 3 + 1),
+                              new Vector2(t, h * 0.34f), h, i == 2 ? stone : dark, -19 - i, parent);
+                    }
+                    break;
+
+                case LandmarkForm.Hollow:
+                    // A ring around an opening, and the opening is darker than anything near it.
+                    Spawn("rimEdge", ProcArt.Ring("lmrimE", Color.white, 0.26f, 128, 64f),
+                          Vector2.zero, 3.5f, outline, -20, parent);
+                    Spawn("rim", ProcArt.Ring("lmrim", Color.white, 0.20f, 128, 64f),
+                          Vector2.zero, 3.2f, stone, -19, parent);
+                    Spawn("mouth", ProcArt.Disc("lmmouth", Color.white, Color.white, 0.05f, 64, 64f),
+                          Vector2.zero, 2.1f, new Color(0.04f, 0.05f, 0.09f, 0.92f), -18, parent);
+                    break;
+
+                case LandmarkForm.Hulk:
+                    // Canted. Symmetrical it was a rock with a stripe; the whole point is that it
+                    // is a made thing lying at an angle nothing natural would.
+                    Spawn("massEdge", ProcArt.Blob("lmhulk", Color.white, 9), new Vector2(0f, 0.5f), 4.0f,
+                          outline, -21, parent);
+                    Spawn("mass", ProcArt.Blob("lmhulk", Color.white, 9), new Vector2(0f, 0.5f), 3.6f,
+                          dark, -19, parent);
+                    var prowEdge = SpawnBar("prowEdge", new Vector2(0.75f, 1.85f), new Vector2(3.5f, 0.78f), outline, -18, parent);
+                    prowEdge.transform.localRotation = Quaternion.Euler(0f, 0f, 26f);
+                    var prow = SpawnBar("prow", new Vector2(0.75f, 1.85f), new Vector2(3.2f, 0.5f), stone, -17, parent);
+                    prow.transform.localRotation = Quaternion.Euler(0f, 0f, 26f);
+                    break;
+
+                case LandmarkForm.Seam:
+                    // Not built - a line across the ground, filled and refilled.
+                    SpawnBar("seam", Vector2.zero, new Vector2(7.0f, 0.26f),
+                             new Color(0.05f, 0.05f, 0.09f, 0.9f), -19, parent);
+                    SpawnBar("mortar", new Vector2(0f, 0.02f), new Vector2(6.6f, 0.13f),
+                             new Color(stone.r, stone.g, stone.b, 0.8f), -18, parent);
+                    break;
+            }
+        }
+
+        /// <summary>
+        /// Reading a landmark uses the dialogue box, with the landmark as the speaker. It is the
+        /// same weight as talking to somebody, which is right - these are the only voices on the
+        /// map older than the people living on it.
+        /// </summary>
+        static DialogueScript LandmarkScript(LandmarkDef def)
+        {
+            var lines = new DialogueLine[def.Lines.Length];
+            for (int i = 0; i < def.Lines.Length; i++) lines[i] = new DialogueLine(def.Name, def.Lines[i]);
+            return new DialogueScript(lines);
         }
 
         void BuildRoamers(PlanetDef planet, System.Random rng, float R)
@@ -796,6 +946,25 @@ namespace Eggverse
                 {
                     var script = StoryDatabase.GetDialogue(nearest.Def.Id, dir.Story, dir.State);
                     if (script != null) { dir.PlayDialogue(script); return; }
+                }
+                if (EggInput.LiftoffPressed) dir.LiftOff();
+                return;
+            }
+
+            // The landmark sits between people and the station: worth stopping for, never in
+            // the way of resting.
+            if (landmark != null && landmarkDef != null &&
+                Vector2.Distance(teo, landmark.position) < LandmarkRange &&
+                (nestStation == null || Vector2.Distance(teo, nestStation.position) >= NestRange))
+            {
+                dir.Hud.SetPrompt("Press <b>E</b> to read <b>" + landmarkDef.Name + "</b>");
+                if (EggInput.InteractPressed)
+                {
+                    // Reading it changes nothing and unlocks nothing. It is remembered because
+                    // the player will want to know which ones they have found, and because a
+                    // thing you found should stay found across a save.
+                    dir.State.Landmarks.Add(current.Id);
+                    dir.PlayDialogue(LandmarkScript(landmarkDef));
                 }
                 if (EggInput.LiftoffPressed) dir.LiftOff();
                 return;

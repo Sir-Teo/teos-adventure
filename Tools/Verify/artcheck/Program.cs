@@ -342,8 +342,15 @@ static class Program
             var d = Eggverse.PlanetDatabase.Get(id);
             // The camera framing the player actually has: 30 world units tall.
             var pxw = Surface.Render(560, ToHex(d.Ocean), ToHex(d.Land), ToHex(d.Atmosphere),
-                                     d.Theme.ToString(), d.Seed, "Scattered", 30f);
+                                     d.Theme.ToString(), d.Seed, "Scattered", 30f, id);
             WriteBmp(pxw, 560, "teo-" + id + ".bmp");
+        }
+
+        {
+            // The six landmark forms, at camera scale, with Teo for size.
+            var (lpx, lw, lh) = Landmarks.Render();
+            WriteBmpRect(lpx, lw, lh, "landmarks.bmp");
+            Console.WriteLine("  landmark forms rendered: 6");
         }
 
         foreach (var kv in Eggverse.PlanetDatabase.CacheWorlds)
@@ -351,18 +358,17 @@ static class Program
             var def = Eggverse.PlanetDatabase.Get(kv.Key);
             float R = def.SurfaceRadius;
 
-            // Exactly the game's placement: same seed, same two draws, same order.
-            var crng = new Random(def.Seed ^ 0x5EED);
-            float ang = (float)crng.NextDouble() * (float)Math.PI * 2f;
-            float dist = R * (0.68f + 0.22f * (float)crng.NextDouble());
-            float cx = (float)Math.Cos(ang) * dist, cy = (float)Math.Sin(ang) * dist;
+            // The game's own placement, called rather than copied.
+            var cpos = Eggverse.SurfaceLayout.CachePosition(def);
+            float cx = cpos.x, cy = cpos.y;
+            float dist = (float)Math.Sqrt(cx * cx + cy * cy);
 
             float walkSeconds = dist / 13f;             // WalkSpeed
             Console.WriteLine($"  {def.Name,-12} ({cx,6:0.0},{cy,6:0.0})  {dist,5:0.0} of {R:0} units out"
                               + $"  ~{walkSeconds:0.0}s walk from the pad");
 
             var px = Surface.Render(560, ToHex(def.Ocean), ToHex(def.Land), ToHex(def.Atmosphere),
-                                    def.Theme.ToString(), def.Seed, "Scattered");
+                                    def.Theme.ToString(), def.Seed, "Scattered", 0f, def.Id);
             // Mark where the cache sits, at the same scale Surface.Render uses.
             float scale = 560 / (R * 2.25f);
             // Draw it the way the game now does, through the contrast rule rather than a fixed

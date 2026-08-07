@@ -63,7 +63,7 @@ static class Surface
             }
     }
 
-    public static Col[] Render(int size, int ocean, int land, int atmo, string theme, int seed, string layout, float viewUnits = 0f)
+    public static Col[] Render(int size, int ocean, int land, int atmo, string theme, int seed, string layout, float viewUnits = 0f, string planetId = null)
     {
         // viewUnits > 0 renders the in-game camera framing (30 units tall) rather than the disc.
         float span = viewUnits > 0f ? viewUnits : R * 2.25f;
@@ -191,6 +191,25 @@ static class Surface
             var halo = Col.Lerp(landC, haloTarget, 0.84f);
             Dot(c, cxs[0], cys[0], 4.2f, new Col(halo.r, halo.g, halo.b, 0.55f), 0.9f);
             Ellipse(c, cxs[0], cys[0], 1.5f, 1.9f, themeCol, 0.10f);
+        }
+
+        // The landmark, at the real placement, so the one thing on this world worth walking to
+        // can actually be looked at against the ground it stands on.
+        {
+            var lm = planetId == null ? null : Eggverse.LandmarkDatabase.For(planetId);
+            if (lm != null)
+            {
+                var lp = Eggverse.SurfaceLayout.LandmarkPosition(Eggverse.PlanetDatabase.Get(planetId));
+                float lx = lp.x, ly = lp.y;
+
+                float lum3 = 0.2126f * landC.r + 0.7152f * landC.g + 0.0722f * landC.b;
+                var toward = lum3 > 0.5f ? new Col(0, 0, 0) : new Col(1, 1, 1);
+                var stone = Col.Lerp(Col.Lerp(new Col(0.62f, 0.64f, 0.72f), landC, 0.5f), toward, 0.42f);
+
+                Dot(c, lx, ly - 0.9f, 3.4f, new Col(stone.r * 0.7f, stone.g * 0.7f, stone.b * 0.75f, 0.9f), 0.3f);
+                Dot(c, lx, ly + 1.5f, 2.6f, new Col(1f, 0.92f, 0.7f, 0.28f), 0.9f);
+                Ellipse(c, lx, ly, 1.5f, 1.5f, new Col(stone.r, stone.g, stone.b, 1f), 0.08f);
+            }
         }
 
         // Nest station at the centre, and Teo just below it.

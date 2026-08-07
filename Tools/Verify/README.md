@@ -46,9 +46,9 @@ silence and loop seams, and a prose pass over every string the game can display.
 Tools/Verify/artcheck/run.sh
 ```
 
-It renders the battle screen, the navigation chart, the collection screen, a planet surface and
-the star map at the canvas reference resolution, using the real `PlanetDatabase` and
-`SpeciesDatabase`. Several real layout problems were only ever visible this way — a chart wasting
+It renders the battle screen, the navigation chart, the collection screen, a planet surface, the
+six landmark silhouettes and the star map at the canvas reference resolution, using the real
+`PlanetDatabase` and `SpeciesDatabase`. Several real layout problems were only ever visible this way — a chart wasting
 44% of its width, a card carrying a third of its height as dead space, a collection column half
 empty.
 
@@ -73,6 +73,11 @@ It distinguishes three outcomes, which is the whole point:
 - `caught:` — with the failures listed, and a note if the expected one is among them.
 
 A check that has never failed is a check nobody has verified.
+
+Landmarks are the clearest case for rendering. All seventeen were drawn as one identical grey
+disc — every assertion passed, and a bell, a ship's bow and nine hundred cairns were the same
+rock. `landmarks.png` puts the six forms side by side at the camera's own scale with Teo in each
+cell for size, which is the only way that was ever going to show up.
 
 ## A warning about the mocks
 

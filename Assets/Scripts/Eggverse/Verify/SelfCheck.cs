@@ -947,6 +947,58 @@ namespace Eggverse
                       "the widest distance line fits (" + worstPx.ToString("0") + "px, " + worstPair + ")");
             }
 
+            // ---- landmarks ----
+            {
+                check(LandmarkDatabase.Count == PlanetDatabase.All.Count,
+                      "every world has a landmark (" + LandmarkDatabase.Count + " of " +
+                      PlanetDatabase.All.Count + ")");
+
+                // A form nobody uses is art that never ships; a form used once is a shape the
+                // player sees exactly once and never learns to recognise.
+                var formUse = new Dictionary<LandmarkForm, int>();
+                foreach (LandmarkForm f in System.Enum.GetValues(typeof(LandmarkForm))) formUse[f] = 0;
+                foreach (var lm in LandmarkDatabase.All) formUse[lm.Form]++;
+                foreach (var kv in formUse)
+                    check(kv.Value >= 1, "the " + kv.Key + " form is used somewhere (" + kv.Value + " worlds)");
+
+                var seenNames = new HashSet<string>();
+                foreach (var w in PlanetDatabase.All)
+                {
+                    var lm = LandmarkDatabase.For(w.Id);
+                    check(lm != null, w.Name + " has something worth walking to");
+                    if (lm == null) continue;
+
+                    check(seenNames.Add(lm.Name), "landmark name \"" + lm.Name + "\" is not reused");
+                    check(lm.Lines.Length >= 2 && lm.Lines.Length <= 4,
+                          lm.Name + " says two to four lines (has " + lm.Lines.Length + ")");
+
+                    // The dialogue box holds five lines, so "does it fit" is nearly impossible to
+                    // fail and proves nothing. Every authored line in the game already draws as
+                    // exactly one line, and that is the real rule: one line, one beat, one pause
+                    // in the typewriter reveal. A landmark that wraps reads as a paragraph.
+                    foreach (var line in lm.Lines)
+                        check(lines(line, 1380f, 28) == 1,
+                              lm.Name + " reads as one line: \"" + line + "\"");
+
+                    // The cache sits at 0.68-0.90 of the radius and the landmark at 0.55-0.80,
+                    // from independent streams - so on a cache world they can land on each
+                    // other, and two "press E" prompts would fight over the same patch of
+                    // ground. Reproduce both placements and measure.
+                    if (PlanetDatabase.HasCache(w.Id))
+                    {
+                        float gap = Vector2.Distance(SurfaceLayout.CachePosition(w),
+                                                     SurfaceLayout.LandmarkPosition(w));
+                        check(gap > SurfaceLayout.LandmarkClearance,
+                              w.Name + "'s landmark and cache do not overlap (" +
+                              gap.ToString("0.0") + "u apart)");
+                    }
+
+                    // And the label that floats over it while you walk up.
+                    check(lines("<b>" + lm.Name + "</b>", 420f, 22) == 1,
+                          lm.Name + "'s marker label fits");
+                }
+            }
+
             // ---- evolution lines read both ways ----
             {
                 int roots = 0, grown = 0;

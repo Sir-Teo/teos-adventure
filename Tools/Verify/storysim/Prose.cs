@@ -91,6 +91,13 @@ static class Prose
         AddLayout("ending tally", UiCopy.VictoryTally(120, 24, 24, 8));
         for (int i = 0; i < UiCopy.RestIdle.Length; i++) Add("rest line " + i, UiCopy.RestIdle[i]);
 
+        // Landmarks are authored prose too - seventeen of them, read in the dialogue box.
+        foreach (var lm in LandmarkDatabase.All)
+        {
+            Add(lm.Name, lm.Name);
+            foreach (var line in lm.Lines) Add(lm.Name, line);
+        }
+
         // the same conversation is reachable from many beats
         var seen = new HashSet<string>();
         var unique = new List<KeyValuePair<string, string>>();

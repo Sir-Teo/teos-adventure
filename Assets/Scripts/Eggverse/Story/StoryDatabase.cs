@@ -462,6 +462,8 @@ namespace Eggverse
                     new DialogueLine("Ori", "Take Sprouteg. It's been yours since it was the size of a thumbnail anyway."),
                     new DialogueLine("Ori", "Shell fields are the pale patches. Eggs hide in them. Some just wander about in the open, the bold ones."),
                     new DialogueLine("Ori", "Wear one down before you throw a carton at it. A healthy egg will kick straight back out, every time."),
+                    new DialogueLine("Ori", "And walk out past the fields sometime. There's a post out there with my name cut in it."),
+                    new DialogueLine("Ori", "I was your height when I cut it. Every world has one of something, if you go far enough."),
                 }, "met_ori");
             }
 

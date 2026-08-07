@@ -33,6 +33,9 @@ namespace Eggverse
         /// <summary>Ids of worlds whose hidden cache has been dug up. One each, for good.</summary>
         public readonly HashSet<string> Caches = new HashSet<string>();
 
+        /// <summary>Ids of worlds whose landmark has been read. Nothing unlocks; it is a memory.</summary>
+        public readonly HashSet<string> Landmarks = new HashSet<string>();
+
         /// <summary>Twelve, plus one for every cache dug up.</summary>
         public int MaxCartons
         {
