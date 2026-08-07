@@ -20,7 +20,7 @@ namespace Eggverse
         Canvas canvas;
         Image foeEggImage, myEggImage;
         Text foeNameText, foeTypeText, myNameText, myTypeText, myHpText, messageText, menuHint;
-        Text foeMetaText, myMetaText;
+        Text foeMetaText, myMetaText, foeRecordText;
         Image foeTypeChip, myTypeChip;
         BarWidget foeHpBar, myHpBar, myXpBar;
         RectTransform actionPanel, movePanel, partyPanel, shakeRoot;
@@ -83,6 +83,14 @@ namespace Eggverse
 
             BuildCard(rootRt, "FoeCard", new Vector2(0f, 1f), new Vector2(0f, 1f), new Vector2(70f, -70f), new Vector2(660f, 150f),
                       out foeNameText, out foeTypeChip, out foeTypeText, out foeHpBar, out _, out foeMetaText);
+
+            // The foe card deliberately shows no HP numbers, which left 52px of the panel — a
+            // third of its height — empty. Whether this species is already in the record is
+            // exactly what you want to know before spending a carton on it, so it goes here.
+            var foeCard = (RectTransform)foeNameText.transform.parent;
+            foeRecordText = UIKit.Label(foeCard, "Record", "", 20, UIKit.Accent, TextAnchor.MiddleLeft);
+            UIKit.Place(foeRecordText.rectTransform, new Vector2(0f, 1f), new Vector2(0f, 1f),
+                        new Vector2(24f, -104f), new Vector2(500f, 26f));
 
             // --- mine ---
             myEggImage = UIKit.Picture(rootRt, "MyEgg", ProcArt.White);
@@ -983,6 +991,18 @@ namespace Eggverse
             foeTypeChip.color = TypeChart.ColorOf(foe.Type);
             foeHpBar.SetFraction(foe.HPFraction);
             foeHpBar.SetFillColor(UIKit.HealthColor(foe.HPFraction));
+            if (IsTrainer)
+                foeRecordText.text = "";                       // not yours to take, so the note is noise
+            else if (State.Caught.Contains(foe.Species.Id))
+            {
+                foeRecordText.text = "Already in your record";
+                foeRecordText.color = UIKit.InkDim;
+            }
+            else
+            {
+                foeRecordText.text = "New species — not in your record";
+                foeRecordText.color = UIKit.Accent;
+            }
 
             var mine = Mine;
             myNameText.text = mine.Name + "  <size=22><color=#A8B2C4>Lv " + mine.Level + "</color></size>";

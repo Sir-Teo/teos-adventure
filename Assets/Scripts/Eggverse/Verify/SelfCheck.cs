@@ -447,6 +447,10 @@ namespace Eggverse
             check(lines("Cartons 12/12 · Salves 4/4", 524f, 19) == 1, "the HUD supply line wraps");
             check(lines("Nest 240 · Types 8/8 · Record 24/24", 524f, 19) == 1, "the HUD collection line wraps");
 
+            // The foe card's record note sits in a 500px box on one line.
+            foreach (string note in new[] { "New species — not in your record", "Already in your record" })
+                check(lines(note, 500f, 20) == 1, "foe record note \"" + note + "\" wraps");
+
             // The five battle actions share a 330px button each.
             foreach (string action in new[] { "FIGHT", "CARTON (12)", "SALVE (4)", "SWAP", "RUN" })
                 check(lines(action, 330f, 26) == 1, "battle action \"" + action + "\" wraps its button");
