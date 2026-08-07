@@ -1552,6 +1552,29 @@ namespace Eggverse
                       whole.ToString("0.0") + "s)");
             }
 
+            // ---- an Elder announces itself ----
+            {
+                // The stir is rolled when it starts rather than when it finishes, so it can be
+                // about something. An Elder is the biggest thing a field turns up - three
+                // levels above its neighbours, lit round the shell - and it used to arrive with
+                // no more warning than a Sprouteg.
+                check(EggInstance.ElderChance > 0f && EggInstance.ElderChance < 0.25f,
+                      "an Elder stays rare enough for the deeper stir to mean something (" +
+                      (EggInstance.ElderChance * 100f).ToString("0") + "%)");
+
+                // That Elders are gated behind Ori's three eggs is asserted in the balance
+                // suite already ("a brand new run meets no Elders"), and planting the gate away
+                // fires it. Not repeated here.
+
+                // An Elder is genuinely three levels up, which is what the warning is for.
+                var ordinary = EggInstance.Wild("cobblet", 12);
+                var elder = EggInstance.WildElder("cobblet", 12);
+                check(elder.Level > ordinary.Level,
+                      "an Elder outlevels its neighbours (" + elder.Level + " against " +
+                      ordinary.Level + ")");
+                check(elder.Elder && !ordinary.Elder, "and knows it");
+            }
+
             // ---- the stir before an encounter ----
             {
                 // A field turning something up used to be a cut with no tell at all. The stir

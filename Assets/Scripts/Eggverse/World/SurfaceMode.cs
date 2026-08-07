@@ -170,6 +170,7 @@ namespace Eggverse
             landmark = null;
             landmarkDef = null;
             landmarkLabel = null;
+            pending = null;
         }
 
         SpriteRenderer Spawn(string name, Sprite sprite, Vector2 pos, float diameter, Color tint, int order, Transform parent = null)
@@ -1089,16 +1090,32 @@ namespace Eggverse
             var t = fields[index];
             if (t == null) return;
 
-            // Breathes faster as it rises: 3.2 Hz at the start of the stir, 7 at the end.
-            float beat = Mathf.Sin(Time.time * Mathf.Lerp(3.2f, 7f, amount));
-            float lift = 1f + amount * (0.045f + 0.02f * beat);
+            // An Elder shifts more of the field and shifts it slower - a big thing moving
+            // rather than a small thing scuffling. The player has about a second to read the
+            // difference, which is the same second the ordinary stir already gave them.
+            bool big = pending != null && pending.Elder;
+
+            float beat = Mathf.Sin(Time.time * Mathf.Lerp(big ? 2.1f : 3.2f, big ? 4.4f : 7f, amount));
+            float lift = 1f + amount * ((big ? 0.085f : 0.045f) + (big ? 0.03f : 0.02f) * beat);
             t.localScale = Vector3.one * (fieldBaseScale[index] * lift);
 
             if (amount > 0.02f && !stirAnnounced)
             {
                 stirAnnounced = true;
-                dir.Audio.Play(Sfx.Rustle);
+                dir.Audio.Play(big ? Sfx.RustleDeep : Sfx.Rustle);
             }
+        }
+
+        /// <summary>What this field is about to turn up. Held from the stir to the encounter.</summary>
+        EggInstance pending;
+
+        EggInstance RollFieldEncounter()
+        {
+            string speciesId = current.RollSpecies();
+            int level = current.RollLevel();
+            return dir.State.ElderesAllowed && EggRandom.Value < EggInstance.ElderChance
+                ? EggInstance.WildElder(speciesId, level)
+                : EggInstance.Wild(speciesId, level);
         }
 
         void TickFieldEncounters(float dt)
@@ -1116,7 +1133,10 @@ namespace Eggverse
 
             if (!inside)
             {
+                // Stepping out drops the roll as well as the stir. Keeping it would let a
+                // player peek at what is coming, step out, and step back in when it suited them.
                 fieldDistance = Mathf.Max(0f, fieldDistance - dt * 0.5f);
+                pending = null;
                 SetStir(-1, 0f);
                 return;
             }
@@ -1127,6 +1147,12 @@ namespace Eggverse
             // breathes a little faster the closer it gets. A player who is paying attention has
             // a second to stop, and one who is not loses nothing.
             float tension = nextEncounterDistance > 0.01f ? fieldDistance / nextEncounterDistance : 0f;
+
+            // Rolled when the stir starts rather than when it finishes, so the stir can be
+            // about something. An Elder is the biggest thing the field turns up - three levels
+            // above its neighbours and lit round the shell - and it used to arrive with no more
+            // warning than a Sprouteg.
+            if (tension >= StirBegins && pending == null) pending = RollFieldEncounter();
             SetStir(insideIndex, Mathf.InverseLerp(StirBegins, 1f, tension));
 
             if (fieldDistance < nextEncounterDistance) return;
@@ -1135,11 +1161,10 @@ namespace Eggverse
             nextEncounterDistance = Random.Range(EncounterWalkMin, EncounterWalkMax);
             engagedRoamer = -1;
 
-            string speciesId = current.RollSpecies();
-            int level = current.RollLevel();
-            dir.BeginWildBattle(dir.State.ElderesAllowed && EggRandom.Value < EggInstance.ElderChance
-                ? EggInstance.WildElder(speciesId, level)
-                : EggInstance.Wild(speciesId, level));
+            var coming = pending ?? RollFieldEncounter();
+            pending = null;
+            SetStir(-1, 0f);
+            dir.BeginWildBattle(coming);
         }
 
         void TickInteractions()

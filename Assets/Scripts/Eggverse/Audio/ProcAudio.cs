@@ -9,7 +9,7 @@ namespace Eggverse
         Hit, HitStrong, HitWeak, Crit,
         Faint, LevelUp, Evolve, Heal,
         CartonThrow, CartonWobble, CatchSuccess, CatchFail,
-        Encounter, Land, Liftoff, Talk, Chart, Save, Inscription, Rustle,
+        Encounter, Land, Liftoff, Talk, Chart, Save, Inscription, Rustle, RustleDeep,
         Debuff
     }
 
@@ -267,6 +267,14 @@ namespace Eggverse
                     // the decay power is high so it is gone almost before you register it.
                     AddNoise(buf, 0f, 0.20f, 0.075f, 0.08f, 4.2f);
                     AddNote(buf, 0.01f, 0.06f, 1760f, 1520f, 0.025f, 1, 6f);
+                    break;
+
+                case Sfx.RustleDeep:
+                    // The same grit, lower and longer, with a note under it. Something with
+                    // weight shifting in the shell field rather than something small scuffling.
+                    buf = Buffer(0.42f);
+                    AddNoise(buf, 0f, 0.40f, 0.10f, 0.34f, 2.6f);
+                    AddNote(buf, 0.02f, 0.30f, 128f, 112f, 0.05f, 0, 2.2f);
                     break;
 
                 case Sfx.Inscription:
