@@ -64,6 +64,9 @@ namespace Eggverse
             return byId.TryGetValue(id, out s) ? s : ordered[0];
         }
 
+        /// <summary>Whether this id names a real species — see PlanetDatabase.Exists.</summary>
+        public static bool Exists(string id) => !string.IsNullOrEmpty(id) && byId.ContainsKey(id);
+
         public static IReadOnlyList<SpeciesDef> All => ordered;
         public static int Count => ordered.Count;
 

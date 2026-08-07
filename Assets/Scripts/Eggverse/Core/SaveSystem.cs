@@ -153,15 +153,40 @@ namespace Eggverse
 
             var data = Peek();
             if (data == null) return false;
+            if (!Restore(data, out state, out story, out planetId, out playSeconds)) return false;
+
+            if (StaleEntriesDropped > 0)
+                Debug.LogWarning("Eggverse: dropped " + StaleEntriesDropped +
+                                 " save entries naming content that no longer exists.");
+            return true;
+        }
+
+        /// <summary>How many entries the last Restore threw away for naming missing content.</summary>
+        public static int StaleEntriesDropped { get; private set; }
+
+        /// <summary>
+        /// Turns save data into live state. Split from Load so it can be exercised without a
+        /// filesystem — the interesting failures are all about hostile *content*, not bad bytes.
+        /// Deliberately free of Debug logging: UnityEngine.Debug cannot run outside a player, and
+        /// a purity check that cannot be run headlessly is not much of a check. Load does the
+        /// reporting instead.
+        /// </summary>
+        public static bool Restore(SaveData data, out GameState state, out StoryState story,
+                                   out string planetId, out float playSeconds)
+        {
+            state = null; story = null; planetId = null; playSeconds = 0f;
+            if (data == null) return false;
 
             try
             {
                 state = new GameState(false);
-                Fill(state.Party, data.party);
-                Fill(state.Nest, data.nest);
-                AddAll(state.Seen, data.seen);
-                AddAll(state.Caught, data.caught);
-                AddAll(state.Visited, data.visited);
+                int stale = 0;
+                stale += Fill(state.Party, data.party);
+                stale += Fill(state.Nest, data.nest);
+                stale += AddKnown(state.Seen, data.seen, SpeciesDatabase.Exists);
+                stale += AddKnown(state.Caught, data.caught, SpeciesDatabase.Exists);
+                stale += AddKnown(state.Visited, data.visited, PlanetDatabase.Exists);
+                StaleEntriesDropped = stale;
                 state.Cartons = Mathf.Clamp(data.cartons, 0, GameState.MaxCartons);
                 state.Salves = Mathf.Clamp(data.salves, 0, GameState.MaxSalves);
                 state.AmyDefeated = data.amyDefeated;
@@ -173,7 +198,9 @@ namespace Eggverse
                 story = new StoryState();
                 story.RestoreFrom(data.flags, data.beatIndex);
 
-                planetId = string.IsNullOrEmpty(data.planet) ? PlanetDatabase.Home.Id : data.planet;
+                // An unknown world would be stored, re-saved, and carried forward forever; Get()
+                // would quietly land the player on Yolkhaven while the file still said otherwise.
+                planetId = PlanetDatabase.Exists(data.planet) ? data.planet : PlanetDatabase.Home.Id;
                 state.CurrentPlanetId = planetId;
                 playSeconds = Mathf.Max(0f, data.playSeconds);
                 return true;
@@ -186,23 +213,41 @@ namespace Eggverse
             }
         }
 
-        static void Fill(List<EggInstance> target, EggSave[] saves)
+        /// <summary>
+        /// Restores a list of eggs, skipping any whose species no longer exists.
+        ///
+        /// SpeciesDatabase.Get falls back to the first species, which is the right answer for a
+        /// lookup and the wrong one here: a save naming a species that has since been renamed or
+        /// removed would silently turn the player's Elder Glacegg into a level-30 Sprouteg. Better
+        /// to drop it and say so than to hand back something the player never caught.
+        /// </summary>
+        static int Fill(List<EggInstance> target, EggSave[] saves)
         {
             target.Clear();
-            if (saves == null) return;
+            if (saves == null) return 0;
+            int dropped = 0;
             for (int i = 0; i < saves.Length; i++)
             {
                 var s = saves[i];
                 if (s == null || string.IsNullOrEmpty(s.species)) continue;
+                if (!SpeciesDatabase.Exists(s.species)) { dropped++; continue; }
                 target.Add(EggInstance.Restore(s.species, s.nickname, s.level, s.xp, s.hp, s.moveIds, s.movePP, s.elder));
             }
+            return dropped;
         }
 
-        static void AddAll(HashSet<string> set, string[] values)
+        /// <summary>Copies in only the ids that still name something, and reports how many did not.</summary>
+        static int AddKnown(HashSet<string> target, string[] ids, Func<string, bool> exists)
         {
-            if (values == null) return;
-            for (int i = 0; i < values.Length; i++)
-                if (!string.IsNullOrEmpty(values[i])) set.Add(values[i]);
+            if (ids == null) return 0;
+            int dropped = 0;
+            for (int i = 0; i < ids.Length; i++)
+            {
+                if (string.IsNullOrEmpty(ids[i])) continue;
+                if (exists(ids[i])) target.Add(ids[i]);
+                else dropped++;
+            }
+            return dropped;
         }
 
         public static void Delete()

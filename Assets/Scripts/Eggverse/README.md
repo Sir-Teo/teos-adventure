@@ -233,6 +233,18 @@ edit the chart, keep the ring or the dominance check in the harness will tell yo
 One slot at `Application.persistentDataPath/eggverse_save.json`. Autosaves on landing, story
 beats, battle end and dialogue; explicit save when you rest at a Nest Station.
 
+A save can name content the game no longer has — three worlds were added this session, and
+renaming or dropping any id would leave exactly that file on a returning player's disk.
+`SpeciesDatabase.Get` and `PlanetDatabase.Get` both fall back to their first entry, which is
+right for a lookup and wrong for a save: it would quietly turn an Elder Glacegg into a
+level-30 Sprouteg, and land you on Yolkhaven while the file still said otherwise.
+
+So loading drops what it cannot resolve — eggs, record entries and visited worlds alike — and
+falls back to home for an unknown current world rather than storing it and carrying it forward.
+`SaveSystem.Restore` is split from `Load` and kept free of Unity logging so it can be run
+headlessly against a deliberately hostile file: fake species, blank ids, a world called
+Atlantis, 99 cartons and -4 salves. What survives is what should.
+
 ## Colour and readability
 
 The nine type colours carry real information, so they are measured rather than eyeballed. The

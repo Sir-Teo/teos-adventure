@@ -94,6 +94,10 @@ namespace Eggverse
             return byId.TryGetValue(id, out p) ? p : ordered[0];
         }
 
+        /// <summary>Whether this id names a real world. Get() falls back to Yolkhaven, which
+        /// is right for a lookup and wrong for validating a save file.</summary>
+        public static bool Exists(string id) => !string.IsNullOrEmpty(id) && byId.ContainsKey(id);
+
         public static PlanetDef Home => ordered[0];
 
         public static string SectorName(Sector s)
