@@ -334,6 +334,16 @@ static class Program
         }
         // ---- cache worlds: is the buried cache findable on foot, and clear of everything? ----
         Console.WriteLine("buried caches:");
+        // Also render the brightest and darkest worlds, to see Teo against both.
+        foreach (var id in new[] { "glacierim", "nullreach" })
+        {
+            var d = Eggverse.PlanetDatabase.Get(id);
+            // The camera framing the player actually has: 30 world units tall.
+            var pxw = Surface.Render(560, ToHex(d.Ocean), ToHex(d.Land), ToHex(d.Atmosphere),
+                                     d.Theme.ToString(), d.Seed, "Scattered", 30f);
+            WriteBmp(pxw, 560, "teo-" + id + ".bmp");
+        }
+
         foreach (var kv in Eggverse.PlanetDatabase.CacheWorlds)
         {
             var def = Eggverse.PlanetDatabase.Get(kv.Key);

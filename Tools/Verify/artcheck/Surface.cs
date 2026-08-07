@@ -63,9 +63,11 @@ static class Surface
             }
     }
 
-    public static Col[] Render(int size, int ocean, int land, int atmo, string theme, int seed, string layout)
+    public static Col[] Render(int size, int ocean, int land, int atmo, string theme, int seed, string layout, float viewUnits = 0f)
     {
-        var c = new Ctx { Px = new Col[size * size], Size = size, Scale = size / (R * 2.25f) };
+        // viewUnits > 0 renders the in-game camera framing (30 units tall) rather than the disc.
+        float span = viewUnits > 0f ? viewUnits : R * 2.25f;
+        var c = new Ctx { Px = new Col[size * size], Size = size, Scale = size / span };
         var bg = Col.Hex(0x05060E);
         for (int i = 0; i < c.Px.Length; i++) c.Px[i] = bg;
 
@@ -185,6 +187,9 @@ static class Surface
         Dot(c, 0, 0, 5.4f, new Col(1f, 0.78f, 0.30f, 0.55f), 0.10f);
         Dot(c, 0, 0, 4.9f, Col.Lerp(landC, new Col(0, 0, 0), 0.2f), 0.06f);
         Dot(c, 0, 0, 2.6f, Col.Hex(0xFFE0A0), 0.2f);
+        // Teo, with the dark outline the sprite now carries. On a bright world this is the
+        // only thing separating a white suit from the ground.
+        Dot(c, 0, -6.5f, 1.6f * 1.30f, Col.Hex(0x141824), 0.30f);
         Dot(c, 0, -6.5f, 1.6f, Col.Hex(0xECF1F7), 0.25f);
         Dot(c, 0, -6.9f, 0.9f, Col.Hex(0x142A4A), 0.35f);
 

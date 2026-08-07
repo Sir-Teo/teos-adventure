@@ -447,6 +447,92 @@ namespace Eggverse
             check(lines("Cartons 12/12 · Salves 4/4", 524f, 19) == 1, "the HUD supply line wraps");
             check(lines("Nest 240 · Types 8/8 · Record 24/24", 524f, 19) == 1, "the HUD collection line wraps");
 
+            // ---- a wild egg has to be visible on the world it lives on ----
+            // Species colour comes from the element, ground colour from the planet, and the two
+            // were never held against each other: a Frost egg on an ice world is pale on pale by
+            // construction. The sprite carries a darkened rim, so either the body or the rim may
+            // do the separating - but one of them has to.
+            foreach (var w in PlanetDatabase.All)
+            {
+                float ground = SurfaceMode.Luminance(w.Land);
+                for (int i = 0; i < w.Spawns.Length; i++)
+                {
+                    var sp = SpeciesDatabase.Get(w.Spawns[i].SpeciesId);
+                    float byBody = Mathf.Abs(SurfaceMode.Luminance(sp.Body) - ground);
+                    float byRim = Mathf.Abs(SurfaceMode.Luminance(sp.Accent * 0.55f) - ground);
+                    // Roamers sit on a backing disc coloured against the ground, so that is a
+                    // third way to separate and the one that always works.
+                    var halo = SurfaceMode.AgainstGround(w.Land, w.Land, 0f, 0.62f);
+                    float byHalo = Mathf.Abs(SurfaceMode.Luminance(halo) - ground);
+                    check(Mathf.Max(Mathf.Max(byBody, byRim), byHalo) >= 0.20f,
+                          sp.Name + " reads against " + w.Name + "'s ground (body " +
+                          byBody.ToString("0.00") + ", rim " + byRim.ToString("0.00") +
+                          ", halo " + byHalo.ToString("0.00") + ")");
+                }
+            }
+
+            // ---- the player character must be visible on every world ----
+            // Teo is a white suit, which vanished on ice: 0.064 luminance from Glacierim's
+            // ground, with four more worlds under 0.25. He now carries a dark outline, so on a
+            // bright world the outline separates him and on a dark one the suit does. Either
+            // may do the work; at least one of them has to.
+            foreach (var w in PlanetDatabase.All)
+            {
+                float ground = SurfaceMode.Luminance(w.Land);
+                float bySuit = Mathf.Abs(SurfaceMode.Luminance(ProcArt.TeoSuit) - ground);
+                float byLine = Mathf.Abs(SurfaceMode.Luminance(ProcArt.TeoOutline) - ground);
+                check(Mathf.Max(bySuit, byLine) >= 0.25f,
+                      "Teo stands out on " + w.Name + " (suit " + bySuit.ToString("0.00") +
+                      ", outline " + byLine.ToString("0.00") + ")");
+            }
+
+            // ---- surface decoration has to be visible on the ground it sits on ----
+            // A fixed colour reads on some worlds and vanishes on others. This has caught three
+            // decorations now - shell fields on ice, caches on Nullreach, pools on Brineholt -
+            // so every ground-relative decoration is measured against every world that has it.
+            {
+                foreach (var w in PlanetDatabase.All)
+                {
+                    float ground = SurfaceMode.Luminance(w.Land);
+
+                    if (w.Theme == EggType.Tidal)
+                    {
+                        var pool = Color.Lerp(w.Land, w.Ocean, 0.85f);
+                        var drawn = Color.Lerp(w.Land, pool, 0.88f);
+                        float gap = Mathf.Abs(ground - SurfaceMode.Luminance(drawn));
+                        check(gap >= 0.12f, w.Name + "'s pools read against its ground (gap " + gap.ToString("0.000") + ")");
+                    }
+
+                    if (w.Theme == EggType.Verdant)
+                    {
+                        var canopy = Color.Lerp(w.Land, Color.black, 0.34f);
+                        float gap = Mathf.Abs(ground - SurfaceMode.Luminance(canopy));
+                        check(gap >= 0.12f, w.Name + "'s canopies read against its ground (gap " + gap.ToString("0.000") + ")");
+                    }
+
+                    if (w.Theme == EggType.Stone)
+                    {
+                        var boulder = Color.Lerp(w.Ocean, Color.black, 0.22f);
+                        float gap = Mathf.Abs(ground - SurfaceMode.Luminance(boulder));
+                        check(gap >= 0.12f, w.Name + "'s boulders read against its ground (gap " + gap.ToString("0.000") + ")");
+                    }
+
+                    if (w.Theme == EggType.Void)
+                    {
+                        var rift = Color.Lerp(w.Land, new Color(0.03f, 0.02f, 0.08f), 0.88f);
+                        float gap = Mathf.Abs(ground - SurfaceMode.Luminance(rift));
+                        check(gap >= 0.12f, w.Name + "'s rifts read against its ground (gap " + gap.ToString("0.000") + ")");
+                    }
+
+                    if (w.Theme == EggType.Molten)
+                    {
+                        var cinder = Color.Lerp(w.Land, new Color(0.16f, 0.11f, 0.10f), 0.9f);
+                        float gap = Mathf.Abs(ground - SurfaceMode.Luminance(cinder));
+                        check(gap >= 0.12f, w.Name + "'s cinders read against its ground (gap " + gap.ToString("0.000") + ")");
+                    }
+                }
+            }
+
             // ---- hidden caches ----
             {
                 var st2 = new GameState();

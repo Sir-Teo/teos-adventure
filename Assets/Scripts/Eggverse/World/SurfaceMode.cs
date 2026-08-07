@@ -11,6 +11,7 @@ namespace Eggverse
         {
             public Transform Root;
             public SpriteRenderer Sprite;
+            public SpriteRenderer Halo;
             public string SpeciesId;
             public int Level;
             public Vector2 Heading;
@@ -214,8 +215,14 @@ namespace Eggverse
 
                     case EggType.Tidal:
                     {
+                        // Tinted toward this world's own ocean rather than a fixed bright blue.
+                        // A pale blue over a blue world is nearly the same colour: on Brineholt
+                        // the pools sat 0.077 luminance from the ground they lay on, which is
+                        // less separation than the shell fields have and those were once
+                        // invisible. Water should read darker than the land in any case.
+                        Color poolCol = Color.Lerp(planet.Land, planet.Ocean, 0.85f);
                         var pool = Spawn("pool", ProcArt.Blob("pool", Color.white, (i % 5) * 9 + 4), pos, 3.2f * scale,
-                                         new Color(0.42f, 0.76f, 0.95f, 0.42f), -44);
+                                         new Color(poolCol.r, poolCol.g, poolCol.b, 0.88f), -44);
                         pool.transform.localScale = new Vector3(pool.transform.localScale.x, pool.transform.localScale.y * 0.55f, 1f);
                         if (roll < 0.4f)
                             Spawn("reed", ProcArt.Disc("reed", new Color(0.35f, 0.62f, 0.45f), new Color(0.2f, 0.4f, 0.3f), 1f, 32, 64f),
@@ -451,6 +458,21 @@ namespace Eggverse
 
                 var spriteGo = new GameObject("Sprite");
                 spriteGo.transform.SetParent(go.transform, false);
+                // A soft backing disc, coloured against this world's ground. Species colour comes
+                // from the element and ground colour from the planet, so the two collide whenever
+                // an egg lives on a world of its own element - a Void Shadowhisk on Void
+                // Nullreach sat 0.13 luminance from the ground, and its darkened rim only 0.19.
+                // Dark on a bright world, pale on a dark one, the same rule the shell fields and
+                // the caches use.
+                var haloGo = new GameObject("Halo");
+                haloGo.transform.SetParent(r.Root, false);
+                r.Halo = haloGo.AddComponent<SpriteRenderer>();
+                r.Halo.sprite = ProcArt.Disc("roamerhalo", Color.white, new Color(1f, 1f, 1f, 0f), 1.5f, 64, 64f);
+                r.Halo.material = ProcArt.SpriteMaterial;
+                r.Halo.sortingOrder = 7;
+                var haloTint = AgainstGround(planet.Land, planet.Land, 0f, 0.62f);
+                r.Halo.color = new Color(haloTint.r, haloTint.g, haloTint.b, 0.55f);
+
                 r.Sprite = spriteGo.AddComponent<SpriteRenderer>();
                 r.Sprite.material = ProcArt.SpriteMaterial;
                 r.Sprite.sortingOrder = 8;
@@ -472,6 +494,8 @@ namespace Eggverse
             // Elders are visibly bigger, so you can decide whether to approach.
             r.Sprite.transform.localScale = Vector3.one * ((r.IsElder ? 2.15f : 1.5f) / spriteWorld);
             r.Sprite.color = Color.white;
+            if (r.Halo != null)
+                r.Halo.transform.localScale = Vector3.one * (r.IsElder ? 2.9f : 2.1f);
 
             if (r.Aura != null) Destroy(r.Aura.gameObject);
             r.Aura = null;

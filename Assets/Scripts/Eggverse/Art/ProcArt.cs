@@ -321,6 +321,11 @@ namespace Eggverse
         // Teo
         // ------------------------------------------------------------------
 
+        /// <summary>Teo's two defining tones. Public so the self-check can hold them against
+        /// every world's ground without duplicating the numbers.</summary>
+        public static readonly Color TeoSuit = new Color32(0xEC, 0xF1, 0xF7, 0xFF);
+        public static readonly Color TeoOutline = new Color32(0x14, 0x18, 0x24, 0xFF);
+
         public static Sprite Teo(int size = 128, float ppu = 96f)
         {
             string key = "teo_" + size;
@@ -328,12 +333,29 @@ namespace Eggverse
             if (cache.TryGetValue(key, out cached) && cached != null) return cached;
 
             var px = NewBuffer(size);
-            Color suit = new Color32(0xEC, 0xF1, 0xF7, 0xFF);
+            Color suit = TeoSuit;
             Color suitShade = new Color32(0xB4, 0xC1, 0xD1, 0xFF);
             Color pack = new Color32(0x46, 0x51, 0x66, 0xFF);
             Color visor = new Color32(0x14, 0x2A, 0x4A, 0xFF);
             Color glass = new Color32(0x5E, 0xC8, 0xF2, 0xFF);
             Color trim = new Color32(0xFF, 0x8A, 0x3D, 0xFF);
+
+            // A dark silhouette a shade larger than the figure, drawn first so everything else
+            // sits on top of it. Teo is a white suit: against Glacierim's ice his luminance gap
+            // was 0.064, which is less separation than anything else in the game is allowed, and
+            // four more worlds sat under 0.25. Tinting him per planet would have fixed it and
+            // made the protagonist a different colour on every world; an outline keeps him
+            // himself and only shows where it is needed - on a dark world it disappears into
+            // the ground, which is exactly where he already stands out.
+            Color outline = TeoOutline;
+            const float O = 0.055f;   // how far the outline extends past the silhouette
+            FillEllipse(px, size, 0f, -0.10f, 0.52f + O, 0.46f + O, outline, 0.12f);
+            FillEllipse(px, size, -0.20f, -0.72f, 0.16f + O, 0.14f + O, outline, 0.2f);
+            FillEllipse(px, size, 0.20f, -0.72f, 0.16f + O, 0.14f + O, outline, 0.2f);
+            FillEllipse(px, size, -0.44f, -0.16f, 0.15f + O, 0.22f + O, outline, 0.25f);
+            FillEllipse(px, size, 0.44f, -0.16f, 0.15f + O, 0.22f + O, outline, 0.25f);
+            FillEllipse(px, size, 0f, -0.28f, 0.36f + O, 0.40f + O, outline, 0.10f);
+            FillEllipse(px, size, 0f, 0.30f, 0.44f + O, 0.44f + O, outline, 0.07f);
 
             FillEllipse(px, size, 0f, -0.10f, 0.52f, 0.46f, pack, 0.12f);          // jetpack
             FillEllipse(px, size, -0.20f, -0.72f, 0.16f, 0.14f, pack, 0.2f);       // boots

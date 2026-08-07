@@ -304,6 +304,29 @@ Colour is never the only signal: every type carries a unique three-letter tag (`
 `FRS`…) shown alongside the colour in the party strip, and type names appear in full on battle
 cards and in the field record.
 
+### One rule, applied everywhere
+
+Anything drawn on a planet's surface is held to a minimum luminance gap against that planet's
+ground, because a fixed colour reads on some worlds and vanishes on others. This has now caught
+five separate things:
+
+| What | Where it vanished | Gap before | After |
+|---|---|---|---|
+| Shell fields | Glacierim's ice | 0.035 | 0.284 |
+| Buried caches | Nullreach | 0.069 | 0.353 |
+| Tidal pools | Brineholt | 0.077 | 0.188 |
+| **Teo** | Glacierim's ice | **0.064** | 0.784 |
+| Wild eggs | Shadowhisk on Nullreach | 0.130 | 0.477 |
+
+Teo was the worst of them — a white suit on a white world — and the fix is a dark outline rather
+than a per-planet tint, so the protagonist stays one colour and the outline only does work where
+it is needed. Wild eggs sit on a backing disc coloured against the ground, since species colour
+comes from the element and ground colour from the planet: an egg living on a world of its own
+element collides by construction.
+
+The self-check measures every one of these against every world that has it, so the sixth instance
+fails a build instead of shipping.
+
 ## Self-check
 
 **Eggverse ▸ Run Self-Check** (`Cmd/Ctrl+Shift+E`) runs **~1,670 assertions** over the game's
