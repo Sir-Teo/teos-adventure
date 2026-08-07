@@ -910,6 +910,14 @@ namespace Eggverse
         {
             messageText.text = text;
             menuHint.text = "press Space to continue";
+
+            // The battle talks a great deal, and how long each line sits there is the same
+            // preference as how fast dialogue reveals. At "instant" the lines still appear, they
+            // just do not wait - a player who has read "It's super effective!" two hundred times
+            // should not be made to read it again.
+            float scale = State != null ? State.RevealScale : 1f;
+            hold = scale <= 0f ? 0f : hold / scale;
+
             float t = 0f;
             while (t < hold)
             {

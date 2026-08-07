@@ -372,6 +372,20 @@ swapping underneath — but at a third the strength and half the duration, so it
 wipe rather than the screen going white. It is saved with the run, and a file written before the
 option existed loads with motion **on**, so nobody's feedback quietly disappears.
 
+**Text speed** answers for both the dialogue reveal and how long a battle line sits on screen,
+because they are the same preference:
+
+| | reveal | a battle line holds |
+|---|---|---|
+| relaxed | 33 ch/s | 1.67s |
+| normal | 55 ch/s | 1.00s |
+| brisk | 99 ch/s | 0.56s |
+| instant | appears | no wait |
+
+There are 900 lines of dialogue and the battle talks constantly. Somebody who has read *"It's
+super effective!"* two hundred times should not be made to read it again, and somebody who has
+not should not be hurried.
+
 ## Colour and readability
 
 Every character's portrait tint comes from the cast list itself, not from a second table beside

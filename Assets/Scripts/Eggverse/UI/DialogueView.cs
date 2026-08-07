@@ -19,6 +19,11 @@ namespace Eggverse
 
         const float CharsPerSecond = 55f;
 
+        /// <summary>The reveal rate for this run, or 0 when text should simply appear.</summary>
+        float RevealRate => dir != null && dir.State != null
+            ? CharsPerSecond * dir.State.RevealScale
+            : CharsPerSecond;
+
         /// <summary>
         /// Portrait tints, built from the cast rather than kept beside it.
         ///
@@ -137,9 +142,12 @@ namespace Eggverse
         {
             bodyText.text = "";
             float shown = 0f;
+            // At "instant" the line is simply there; the loop below would spin a frame anyway.
+            if (RevealRate <= 0f) { bodyText.text = text; yield break; }
+
             while (shown < text.Length)
             {
-                shown += Time.deltaTime * CharsPerSecond;
+                shown += Time.deltaTime * RevealRate;
                 if (EggInput.ConfirmPressed || EggInput.InteractPressed)
                 {
                     bodyText.text = text;

@@ -468,12 +468,12 @@ namespace Eggverse
                 }
 
                 // And the box has to hold all of it: seven rows, a rule, two control lines, a footer.
-                const float BoxH = 862f;
-                const int PauseRows = 7;                    // resume, sound, music, effects, motion, save, quit
+                const float BoxH = 924f;
+                const int PauseRows = 8;   // resume, sound, music, effects, motion, text, save, quit
                 float rowsEnd = 118f + (PauseRows - 1) * 62f + 52f;
-                float controlsEnd = 602f + 32f + 28f;
+                float controlsEnd = 664f + 32f + 28f;
                 float footerTop = BoxH - 42f - 60f;
-                check(rowsEnd < 568f, "the pause rule clears the menu rows");
+                check(rowsEnd < 630f, "the pause rule clears the menu rows");
                 check(controlsEnd < footerTop, "the pause controls clear the footer");
                 check(BoxH <= 1080f - 80f, "the pause box fits the screen with margin");
             }
@@ -664,6 +664,38 @@ namespace Eggverse
                       Words.Spell(EggInstance.StatusDuration) + "\")");
                 check(Words.Count(1, "world") == "1 world" && Words.Count(2, "world") == "2 worlds",
                       "counts pluralise");
+            }
+
+            // ---- text speed ----
+            // Every setting has to name itself for the pause row, produce a sane multiplier, and
+            // survive a save. "Instant" is the one worth checking hardest: it is a zero, and a
+            // zero used as a divisor or a rate is how a reveal loop spins forever.
+            {
+                var st8 = new GameState();
+                check(st8.TextSpeed == 1, "text speed starts at normal");
+
+                for (int i = 0; i < GameState.TextSpeedCount; i++)
+                {
+                    st8.TextSpeed = i;
+                    check(!string.IsNullOrEmpty(st8.TextSpeedName), "text speed " + i + " has a name");
+                    check(lines("Text speed  " + st8.TextSpeedName, 700f, 28) == 1,
+                          "the text speed row fits: \"Text speed  " + st8.TextSpeedName + "\"");
+                    check(st8.RevealScale >= 0f, "text speed " + i + " has a non-negative rate");
+                }
+
+                st8.TextSpeed = GameState.TextSpeedCount - 1;
+                check(st8.RevealScale == 0f, "the fastest setting means no wait at all");
+                check(st8.TextSpeedName == "instant", "and it is called instant");
+
+                // Out-of-range values from a stale or edited save must not index off the end.
+                var data2 = new SaveData { version = 1, textSpeed = 99, cartons = 12, salves = 4 };
+                GameState back3; StoryState st9; string pl3; float s3;
+                SaveSystem.Restore(data2, out back3, out st9, out pl3, out s3);
+                check(back3 != null && back3.TextSpeed < GameState.TextSpeedCount,
+                      "an out-of-range text speed is clamped on load (got " +
+                      (back3 == null ? "null" : back3.TextSpeed.ToString()) + ")");
+                check(back3 != null && !string.IsNullOrEmpty(back3.TextSpeedName),
+                      "and still names itself afterwards");
             }
 
             // ---- screen motion can be turned off ----

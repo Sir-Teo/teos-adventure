@@ -8,7 +8,7 @@ namespace Eggverse
     /// <summary>Pause menu: sound, an explicit save, and a way back to the title card.</summary>
     public class PauseView : MonoBehaviour
     {
-        enum Row { Resume, Sound, Music, Effects, Motion, Save, Quit, Count }
+        enum Row { Resume, Sound, Music, Effects, Motion, TextSpeed, Save, Quit, Count }
 
         GameDirector dir;
         Canvas canvas;
@@ -30,7 +30,7 @@ namespace Eggverse
 
             var box = UIKit.Node(root, "Box");
             // 800 rather than 620: the extra 180 carries the controls reference below the menu.
-            UIKit.Place(box, new Vector2(0.5f, 0.5f), new Vector2(0.5f, 0.5f), Vector2.zero, new Vector2(760f, 862f));
+            UIKit.Place(box, new Vector2(0.5f, 0.5f), new Vector2(0.5f, 0.5f), Vector2.zero, new Vector2(760f, 924f));
             var bg = UIKit.Panel(box, "Bg", new Color32(0x11, 0x13, 0x22, 0xFA));
             UIKit.Stretch(bg.rectTransform, 0, 0, 0, 0);
             var edge = UIKit.Panel(box, "Edge", UIKit.Accent);
@@ -52,14 +52,14 @@ namespace Eggverse
             // player who has forgotten which key opens the chart can actually look.
             var rule = UIKit.Panel(box, "Rule", new Color32(0x2C, 0x32, 0x50, 0xFF));
             UIKit.Place(rule.rectTransform, new Vector2(0.5f, 1f), new Vector2(0.5f, 1f),
-                        new Vector2(0f, -568f), new Vector2(660f, 2f));
+                        new Vector2(0f, -630f), new Vector2(660f, 2f));
 
             for (int i = 0; i < UiCopy.PauseControls.Length; i++)
             {
                 var line = UIKit.Label(box, "Controls" + i, UiCopy.PauseControls[i],
                                        20, UIKit.InkDim, TextAnchor.MiddleCenter);
                 UIKit.Place(line.rectTransform, new Vector2(0.5f, 1f), new Vector2(0.5f, 1f),
-                            new Vector2(0f, -602f - i * 32f), new Vector2(700f, 28f));
+                            new Vector2(0f, -664f - i * 32f), new Vector2(700f, 28f));
             }
 
             footer = UIKit.Label(box, "Footer", "", 20, UIKit.InkDim, TextAnchor.MiddleCenter);
@@ -92,6 +92,7 @@ namespace Eggverse
                 "Music  " + Meter(audio.MusicVolume, 0.6f),
                 "Effects  " + Meter(audio.SfxVolume, 1f),
                 "Screen motion  <color=#FFC24D>" + (dir.State.ScreenMotion ? "on" : "off") + "</color>",
+                "Text speed  <color=#FFC24D>" + dir.State.TextSpeedName + "</color>",
                 "Save now",
                 confirmingQuit
                     ? "<color=#E55555>Quit to title — press Enter again</color>"
@@ -178,6 +179,12 @@ namespace Eggverse
                     case Row.Motion:
                         dir.State.ScreenMotion = !dir.State.ScreenMotion;
                         dir.ApplyMotionSetting();
+                        dir.Audio.Play(Sfx.UiConfirm);
+                        Refresh();
+                        break;
+
+                    case Row.TextSpeed:
+                        dir.State.TextSpeed = (dir.State.TextSpeed + 1) % GameState.TextSpeedCount;
                         dir.Audio.Play(Sfx.UiConfirm);
                         Refresh();
                         break;

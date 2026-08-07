@@ -40,6 +40,22 @@ namespace Eggverse
         /// anyone sensitive to motion, with no way to turn either off.
         /// </summary>
         public bool ScreenMotion = true;
+
+        /// <summary>
+        /// How fast text arrives, as a multiplier on both the dialogue reveal and the dwell on a
+        /// battle message. The game has 900 lines of dialogue and read them all at one fixed
+        /// rate, which is slow for someone rereading and fast for someone who is not.
+        /// </summary>
+        public int TextSpeed = 1;                       // 0 relaxed, 1 normal, 2 brisk, 3 instant
+        public const int TextSpeedCount = 4;
+
+        static readonly string[] TextSpeedNames = { "relaxed", "normal", "brisk", "instant" };
+        static readonly float[] TextSpeedScale = { 0.6f, 1f, 1.8f, 0f };   // 0 means no wait at all
+
+        public string TextSpeedName => TextSpeedNames[Mathf.Clamp(TextSpeed, 0, TextSpeedCount - 1)];
+
+        /// <summary>Characters per second for the reveal; 0 when text should simply appear.</summary>
+        public float RevealScale => TextSpeedScale[Mathf.Clamp(TextSpeed, 0, TextSpeedCount - 1)];
         public string CurrentPlanetId = PlanetDatabase.Home.Id;
         public bool AmyDefeated;
 
