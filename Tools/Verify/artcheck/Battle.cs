@@ -15,6 +15,10 @@ static class Battle
     {
         var f = new Dictionary<char, string[]>();
         void G(char c, string rows) => f[c] = rows.Split('|');
+        // The semicolon, which the ending's first line uses. It was printing as
+        // "IT IS NOT A CEREMONY? SHE SHIFTS HER WEIGHT".
+        G(';', ".....|..##.|..##.|.....|..##.|..#..|.#...");
+
         // The em dash. "New species — not in your record" is the game's own punctuation and it
         // was printing as "NEW SPECIES ? NOT IN YOUR RECORD".
         G('\u2014', ".....|.....|.....|#####|.....|.....|.....");

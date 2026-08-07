@@ -359,6 +359,16 @@ static class Program
             Console.WriteLine(Landmarks.Coverage());
         }
 
+        {
+            // The ending, both ways it can land.
+            foreach (var all in new[] { false, true })
+            {
+                var (epx, ew, eh) = Ending.Render(all);
+                WriteBmpRect(epx, ew, eh, all ? "ending-complete.bmp" : "ending.bmp");
+            }
+            Console.WriteLine("  ending card rendered: 2 variants");
+        }
+
         foreach (var kv in Eggverse.PlanetDatabase.CacheWorlds)
         {
             var def = Eggverse.PlanetDatabase.Get(kv.Key);

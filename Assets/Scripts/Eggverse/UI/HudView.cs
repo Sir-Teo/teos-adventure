@@ -258,11 +258,19 @@ namespace Eggverse
             UIKit.Stretch(bg.rectTransform, 0, 0, 0, 0);
 
             var heading = UIKit.Label(victoryPanel, "Heading", UiCopy.VictoryHeading, 82, UIKit.Accent, TextAnchor.MiddleCenter, FontStyle.Bold);
-            // 156, not 140: the heading's box ran down to 625 and the body's up to 630.
-            UIKit.Place(heading.rectTransform, new Vector2(0.5f, 0.5f), new Vector2(0.5f, 0.5f), new Vector2(0f, 156f), new Vector2(1400f, 110f));
+            // 186, not 156: at 156 the two boxes cleared each other by 11px, which was legal and
+            // looked it - an 82pt heading sitting straight on the first line of the scene under
+            // it. The body grew taller when the ending became a scene, so the heading moves up.
+            UIKit.Place(heading.rectTransform, new Vector2(0.5f, 0.5f), new Vector2(0.5f, 0.5f), new Vector2(0f, 186f), new Vector2(1400f, 110f));
 
-            var body = UIKit.Label(victoryPanel, "Body", "", 28, UIKit.Ink, TextAnchor.UpperCenter);
-            UIKit.Place(body.rectTransform, new Vector2(0.5f, 0.5f), new Vector2(0.5f, 0.5f), new Vector2(0f, -60f), new Vector2(1300f, 300f));
+            // Centred in the box, not hung from its top. The box is sized for the longer of the
+            // two endings, so the ordinary one sat high with 170px of nothing under it. Centring
+            // means both land balanced instead of one being built for the other.
+            var body = UIKit.Label(victoryPanel, "Body", "", 28, UIKit.Ink, TextAnchor.MiddleCenter);
+            // 460 tall, not 300: the ending is a scene now rather than two lines, and a player
+            // who read all seventeen inscriptions gets three more. Anchored lower so the top
+            // edge stays where it was, below the heading.
+            UIKit.Place(body.rectTransform, new Vector2(0.5f, 0.5f), new Vector2(0.5f, 0.5f), new Vector2(0f, -140f), new Vector2(1300f, 460f));
             body.name = "VictoryBody";
 
             var hint = UIKit.Label(victoryPanel, "Hint", "press SPACE to keep exploring", 26, UIKit.InkDim, TextAnchor.MiddleCenter);
@@ -332,6 +340,8 @@ namespace Eggverse
                 if (t != null)
                 {
                     t.text = UiCopy.VictoryBody +
+                             (dir.State.Landmarks.Count >= LandmarkDatabase.Count
+                                  ? UiCopy.VictoryCoda : "") +
                              UiCopy.VictoryTally(dir.State.TotalCollected,
                                                  dir.State.Caught.Count,
                                                  SpeciesDatabase.CatchableCount,

@@ -89,6 +89,7 @@ static class Prose
         Add("ending heading", UiCopy.VictoryHeading);
         AddLayout("ending body", UiCopy.VictoryBody);
         AddLayout("ending tally", UiCopy.VictoryTally(120, 24, 24, 8));
+        AddLayout("ending coda", UiCopy.VictoryCoda);
         for (int i = 0; i < UiCopy.RestIdle.Length; i++) Add("rest line " + i, UiCopy.RestIdle[i]);
 
         // And what each resident says about their own world's landmark.

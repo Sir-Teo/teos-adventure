@@ -80,11 +80,28 @@ namespace Eggverse
             "You sit a while. The station hums along with the shells.",
         };
 
-        public const string VictoryHeading = "AMY IS BEATEN";
+        // The card that follows Amy's last words. It used to read "AMY IS BEATEN" and "Fine.
+        // You cracked it." - written before the story was, and it undid the scene it followed.
+        // Amy is not beaten. Amaranth is the first egg, she has held it shut for eleven years by
+        // pulling warmth off every nest in the sector, and what she needed was somebody to turn
+        // up with a full nest and take a share of the weight. The ending is a relief, not a win.
+        public const string VictoryHeading = "THE SHELL HOLDS";
 
         public const string VictoryBody =
-            "Amy folds her arms, looks at your team, and nods once.\n\n" +
-            "\"Fine. You cracked it.\"\n\n";
+            "Amy moves over. It is not a ceremony; she shifts her weight and makes room.\n\n" +
+            "The seam under Amaranth stops widening that afternoon. Nobody anywhere notices.\n" +
+            "Cinderoost's ash goes warm. Brineholt's water stops climbing up the stones.\n" +
+            "Vesper stays dark a while longer. Vess says she can wait, now that it means something.\n\n" +
+            "Ori writes it down as a good year for hatching. That is all it will ever be called.\n\n";
+
+        /// <summary>
+        /// Only for a player who read every inscription. Sixteen of them record the year a thing
+        /// started going wrong and not one records anybody fixing it - which is the argument the
+        /// Shell Line's last word makes, and this is the moment it is answered.
+        /// </summary>
+        public const string VictoryCoda =
+            "<color=#A8B2C4>You read every stone in the sector. Not one of them recorded a mending.\n" +
+            "Neither will this.</color>\n\n";
 
         /// <summary>The run's numbers, appended under the ending card.</summary>
         public static string VictoryTally(int collected, int recorded, int catchable, int types) =>

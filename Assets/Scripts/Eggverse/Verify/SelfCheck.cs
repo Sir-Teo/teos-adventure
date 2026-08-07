@@ -1900,11 +1900,23 @@ namespace Eggverse
                 check(lines(UiCopy.Title, 1200f, 96) == 1, "the title fits");
                 check(lines(UiCopy.BeginHint, 1300f, 30) == 1, "the begin hint fits");
 
-                string ending = UiCopy.VictoryBody + UiCopy.VictoryTally(120, 24, 24, 8);
-                check(lines(ending, 1300f, 28) <= capacity(300f, 28),
-                      "the ending card fits (" + lines(ending, 1300f, 28) + " of " +
-                      capacity(300f, 28) + " lines)");
+                // Both endings, counted a row at a time - the card is many lines and measuring
+                // the whole string as one ignores every newline in it.
+                foreach (var coda in new[] { "", UiCopy.VictoryCoda })
+                {
+                    string ending = UiCopy.VictoryBody + coda + UiCopy.VictoryTally(120, 24, 24, 8);
+                    int used = 0;
+                    foreach (var row in ending.Split('\n')) used += lines(row, 1300f, 28);
+                    check(used <= capacity(460f, 28),
+                          "the ending card fits" + (coda.Length > 0 ? " with its last word" : "") +
+                          " (" + used + " of " + capacity(460f, 28) + " lines)");
+                }
                 check(lines(UiCopy.VictoryHeading, 1400f, 82) == 1, "the ending heading fits");
+
+                // The card must not contradict the scene it follows. Amy is relieved, not
+                // beaten; she says so in her own last lines, and the card used to say otherwise.
+                check(!UiCopy.VictoryHeading.Contains("BEATEN") && !UiCopy.VictoryBody.Contains("cracked it"),
+                      "the ending card does not call Amy beaten");
             }
 
             // ---- every catchable egg must actually live somewhere ----
