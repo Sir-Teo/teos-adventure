@@ -126,7 +126,11 @@ namespace Eggverse
         {
             var panel = UIKit.Node(root, "PartyStrip");
             partyStrip = panel;
-            UIKit.Place(panel, new Vector2(0f, 1f), new Vector2(0f, 1f), new Vector2(28f, -28f), new Vector2(360f, 380f));
+            // 420 wide, not 360. Every one of this panel's rows sat inside 4% of wrapping: at a
+            // font 4% wider than the model the checks use, all thirty-eight of them wrapped and
+            // nothing else in the game did. The real metric has never been measured in the
+            // editor, and this panel is over empty screen - the width was free.
+            UIKit.Place(panel, new Vector2(0f, 1f), new Vector2(0f, 1f), new Vector2(28f, -28f), new Vector2(420f, 380f));
 
             var bg = UIKit.Panel(panel, "Bg", UIKit.PanelDark);
             UIKit.Stretch(bg.rectTransform, 0, 0, 0, 0);
@@ -137,16 +141,16 @@ namespace Eggverse
             for (int i = 0; i < GameState.PartySize; i++)
             {
                 var slotRoot = UIKit.Node(panel, "Slot" + i);
-                UIKit.Place(slotRoot, new Vector2(0f, 1f), new Vector2(0f, 1f), new Vector2(14f, -44f - i * 54f), new Vector2(332f, 50f));
+                UIKit.Place(slotRoot, new Vector2(0f, 1f), new Vector2(0f, 1f), new Vector2(14f, -44f - i * 54f), new Vector2(392f, 50f));
 
                 var dot = UIKit.Panel(slotRoot, "Dot", Color.gray);
                 UIKit.Place(dot.rectTransform, new Vector2(0f, 0.5f), new Vector2(0f, 0.5f), new Vector2(6f, 0f), new Vector2(10f, 34f));
 
                 var label = UIKit.Label(slotRoot, "Label", "", 18, UIKit.Ink, TextAnchor.UpperLeft);
-                UIKit.Place(label.rectTransform, new Vector2(0f, 1f), new Vector2(0f, 1f), new Vector2(24f, -2f), new Vector2(300f, 24f));
+                UIKit.Place(label.rectTransform, new Vector2(0f, 1f), new Vector2(0f, 1f), new Vector2(24f, -2f), new Vector2(360f, 24f));
 
                 var hp = UIKit.Bar(slotRoot, "Hp", new Color32(0x0C, 0x0E, 0x18, 0xFF), UIKit.Good);
-                UIKit.Place(hp.Background.rectTransform, new Vector2(0f, 0f), new Vector2(0f, 0f), new Vector2(24f, 6f), new Vector2(296f, 8f));
+                UIKit.Place(hp.Background.rectTransform, new Vector2(0f, 0f), new Vector2(0f, 0f), new Vector2(24f, 6f), new Vector2(356f, 8f));
 
                 slots.Add(new PartySlot { Root = slotRoot, Dot = dot, Label = label, Hp = hp });
             }
@@ -262,7 +266,10 @@ namespace Eggverse
 
             collectionHint = UIKit.Label(collectionPanel, "Hint", "", 20, UIKit.InkDim, TextAnchor.MiddleCenter);
             var hint = collectionHint;
-            UIKit.Place(hint.rectTransform, new Vector2(0.5f, 0f), new Vector2(0.5f, 0f), new Vector2(0f, 24f), new Vector2(1200f, 26f));
+            // 1500, not 1200. The footer grew when naming moved into the collection, and a
+            // font 4% wider than the model wrapped it. The panel is 1760 across; the room was
+            // there and the risk was not worth keeping for 300 pixels of nothing.
+            UIKit.Place(hint.rectTransform, new Vector2(0.5f, 0f), new Vector2(0.5f, 0f), new Vector2(0f, 24f), new Vector2(1500f, 26f));
 
             collectionPanel.gameObject.SetActive(false);
         }

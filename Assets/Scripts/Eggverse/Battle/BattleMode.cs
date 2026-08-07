@@ -199,7 +199,10 @@ namespace Eggverse
             UIKit.Stretch(bg.rectTransform, 0, 0, 0, 0);
 
             nameText = UIKit.Label(card, "Name", "", 30, UIKit.Ink, TextAnchor.MiddleLeft, FontStyle.Bold);
-            UIKit.Place(nameText.rectTransform, new Vector2(0f, 1f), new Vector2(0f, 1f), new Vector2(24f, -14f), new Vector2(440f, 36f));
+            // 500, not 440. A twelve-character nickname on a three-digit HP at level 30 sat
+            // inside 4% of wrapping, and the card is 700 wide with the type chip on the far
+            // right - the name had 60 pixels of clear space it was not using.
+            UIKit.Place(nameText.rectTransform, new Vector2(0f, 1f), new Vector2(0f, 1f), new Vector2(24f, -14f), new Vector2(500f, 36f));
 
             typeChip = UIKit.Panel(card, "TypeChip", Color.gray);
             UIKit.Place(typeChip.rectTransform, new Vector2(1f, 1f), new Vector2(1f, 1f), new Vector2(-24f, -14f), new Vector2(150f, 32f));

@@ -146,6 +146,34 @@ existed to reveal, and captions drawn at fixed offsets where uGUI centres them.
 Anything the renders show should be confirmed against the game's own numbers before being treated
 as a bug. Where a mock can drive off the real database instead of a copy, it now does.
 
+## How much slack the layouts have
+
+Every text-fit check in this suite rests on one number: an average glyph 0.52em wide. That number
+has never been checked against the font Unity actually renders, and if it is optimistic then
+panels that pass here overflow on screen.
+
+So the model is stressed rather than trusted. Widening it and re-running says how much room the
+layouts actually have:
+
+| glyph width | fit failures |
+|---|---|
+| 0.52em (the model) | 0 |
+| 0.54em (+4%) | 0 |
+| 0.56em (+8%) | 3 |
+| 0.58em (+12%) | 26 |
+| 0.60em (+15%) | 57 |
+
+The first run of this was far worse: 38 failures at +4%, every one of them the surface HUD's party
+strip, which sat inside four percent of wrapping on every row it had. That panel is over empty
+screen; the width was free and it now has it. Two more — the collection footer and the battle
+card's name — were widened for the same reason.
+
+Re-run it after adding anything to a fixed-width panel:
+
+```bash
+# temporarily change 0.52f in SelfCheck's `lines` helper, run, change it back
+```
+
 ## Nothing here has run in Unity
 
 Every check in this directory is against Unity's compiler and this harness. Nothing has been

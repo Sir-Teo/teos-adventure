@@ -447,7 +447,7 @@ namespace Eggverse
             {
                 string slot = HudView.Shorten("Elder " + sp.Name, 14) + "  Lv 30  " +
                               TypeChart.Abbrev(sp.Type) + "  OUT";
-                check(lines(slot, 300f, 18) == 1, "party slot for " + sp.Name + " wraps");
+                check(lines(slot, 360f, 18) == 1, "party slot for " + sp.Name + " wraps");
             }
             // Two authored lines in a 50px box; each must stay on one rendered line. The nest
             // count is the one that grows without bound, so measure it at three digits.
@@ -1534,12 +1534,12 @@ namespace Eggverse
                         if (nicknamed) egg.Nickname = new string('W', NameEntryView.MaxLength);
 
                         string leading = HudView.PartyRow(egg, true);
-                        check(lines(leading, 300f, 18) == 1,
+                        check(lines(leading, 360f, 18) == 1,
                               sp.Name + "'s row fits while leading: " + leading);
 
                         egg.CurrentHP = 0;
                         string down = HudView.PartyRow(egg, false);
-                        check(lines(down, 300f, 18) == 1,
+                        check(lines(down, 360f, 18) == 1,
                               sp.Name + "'s row fits while out: " + down);
                     }
 
@@ -1893,7 +1893,7 @@ namespace Eggverse
                     full.Party.Add(EggInstance.Wild("sprouteg", 5));
                 full.Nest.Add(EggInstance.Wild("sprouteg", 5));
                 string hint = HudView.HintFor(full);
-                check(lines(hint, 1200f, 20) == 1, "the collection footer fits at its longest: " + hint);
+                check(lines(hint, 1500f, 20) == 1, "the collection footer fits at its longest: " + hint);
 
                 // And shrinks when there is nothing to say. A player with one egg and no nest
                 // is not told about columns or about leading with 1-6.
@@ -1994,7 +1994,7 @@ namespace Eggverse
 
                 string hint = HudView.HintFor(st);
                 check(hint.Contains("N names"), "the collection says naming is available: " + hint);
-                check(lines(hint, 1200f, 20) == 1, "and the footer still fits: " + hint);
+                check(lines(hint, 1500f, 20) == 1, "and the footer still fits: " + hint);
 
                 // A player with nothing at all is not told about a key that would do nothing.
                 check(!HudView.HintFor(new GameState(false)).Contains("N names"),
@@ -2592,7 +2592,7 @@ namespace Eggverse
                 string hp = widestHp + "/" + widestHp;
                 check(lines(fullName + "  Lv " + EggInstance.MaxLevel + "  VERDANT   " + hp, 720f, 20) == 1,
                       "a full-length nickname fits a collection row at " + fattest + "'s " + hp + " HP");
-                check(lines(fullName + "  Lv " + EggInstance.MaxLevel + "  " + hp, 440f, 30) == 1,
+                check(lines(fullName + "  Lv " + EggInstance.MaxLevel + "  " + hp, 500f, 30) == 1,
                       "the battle card holds a full nickname at " + hp + " HP");
 
                 // TotalCollected has no ceiling, so the strip is measured at six figures rather
