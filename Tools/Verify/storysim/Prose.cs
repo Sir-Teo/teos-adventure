@@ -81,6 +81,25 @@ static class Prose
         foreach (var p in PlanetDatabase.All) { Add(p.Name + " tagline", p.Tagline); Add("planet name", p.Name); }
         foreach (var s in SpeciesDatabase.All) { Add(s.Name + " blurb", s.Blurb); Add("species name", s.Name); }
 
+        // The words the game uses for its own machinery. These are on every battle plate and
+        // every egg panel in the game and had never been through the pass - the trait a player
+        // reads a hundred times a run was less checked than a landmark they may never find.
+        foreach (EggTrait t in Enum.GetValues(typeof(EggTrait)))
+        {
+            if (t == EggTrait.None) continue;
+            Add("trait name", TypeChart.TraitName(t));
+            Add("trait blurb", TypeChart.TraitBlurb(t));
+        }
+        foreach (EggType t in Enum.GetValues(typeof(EggType)))
+        {
+            Add("element name", TypeChart.Name(t));
+            Add("element tag", TypeChart.Abbrev(t));
+        }
+        foreach (Sector sec in Enum.GetValues(typeof(Sector)))
+            Add("sector name", PlanetDatabase.SectorName(sec));
+        for (int i = 0; i < UiCopy.PauseControls.Length; i++)
+            AddLayout("pause control " + i, UiCopy.PauseControls[i]);
+
         // ---- screen copy that is not dialogue ----
         AddLayout("title body", UiCopy.TitleBody);
         Add("title", UiCopy.Title);
@@ -212,7 +231,11 @@ static class Prose
             foreach (var entry in unique)
             {
                 string t = Plain(entry.Value);
-                foreach (Match m in Regex.Matches(t, Regex.Escape(term), RegexOptions.IgnoreCase))
+                // Whole words only. A bare substring match reads "Hatcher" inside "The
+                // Hatchery Reach" and reports the sector name as an inconsistent capitalisation
+                // of a job title.
+                foreach (Match m in Regex.Matches(t, @"\b" + Regex.Escape(term) + @"s?\b",
+                                                  RegexOptions.IgnoreCase))
                 {
                     // Sentence-initial words are capitalised for grammar, not as proper nouns.
                     // Look back past the whitespace: "...all year round. Hatchers tuck one in"
@@ -225,7 +248,10 @@ static class Prose
                     char before = t[k];
                     if (before == '.' || before == '!' || before == '?' || before == '"' ||
                         before == '*' || before == ':') continue;
-                    if (m.Value == term) upper++; else lower++;
+                    // Compare only the term's own length: "Hatchers" is the plural of the
+                    // same word and capitalises the same way.
+                    string head = m.Value.Substring(0, Math.Min(term.Length, m.Value.Length));
+                    if (head == term) upper++; else lower++;
                 }
             }
             if (upper + lower == 0) continue;
