@@ -447,6 +447,53 @@ namespace Eggverse
             check(lines("Cartons 12/12 · Salves 4/4", 524f, 19) == 1, "the HUD supply line wraps");
             check(lines("Nest 240 · Types 8/8 · Record 24/24", 524f, 19) == 1, "the HUD collection line wraps");
 
+            // ---- prose that states a number the code owns ----
+            // Some lines read better with the word in them than with a substitution: Nell saying
+            // "Twelve is all you get between rests" is better writing than "12 is all you get".
+            // The cost is that the line is true until somebody edits the constant. Where the
+            // number cannot be spelled from the constant, the constant is held to the line - and
+            // the message names the speaker so the fix is obvious.
+            {
+                check(GameState.BaseMaxCartons == 12,
+                      "Nell on Brineholt says \"Twelve is all you get between rests\" - update her line " +
+                      "if the base carton stack is not 12 (it is " + GameState.BaseMaxCartons + ")");
+                check(GameState.MaxSalves == 4,
+                      "Lune on Shimmerfen says \"Four in a stack, same as your cartons\" - update her line " +
+                      "if the salve stack is not 4 (it is " + GameState.MaxSalves + ")");
+                check(EggInstance.ElderLevelBonus == 3,
+                      "Garrow on Cairnhold says an Elder is \"three levels past its neighbours\" - update his " +
+                      "line if the bonus is not 3 (it is " + EggInstance.ElderLevelBonus + ")");
+                check(GameState.PartySize == 6,
+                      "Amy says \"Your six can hold it with me\" - update her line if the party is not 6 " +
+                      "(it is " + GameState.PartySize + ")");
+
+                // And the objectives, which do spell themselves, must actually agree with the gate.
+                foreach (var beat in StoryDatabase.Beats)
+                {
+                    if (beat.RequiredEggs > 0)
+                        check(beat.Objective.Contains(Words.Spell(beat.RequiredEggs)) ||
+                              beat.Objective.Contains(beat.RequiredEggs.ToString()),
+                              "beat '" + beat.Id + "' states the egg count it requires");
+                    if (beat.RequiredLevel > 0)
+                        check(beat.Objective.Contains(beat.RequiredLevel.ToString()),
+                              "beat '" + beat.Id + "' states the level it requires");
+                    if (beat.RequiredTypes > 0)
+                        check(beat.Objective.Contains(Words.Spell(beat.RequiredTypes)) ||
+                              beat.Objective.Contains(beat.RequiredTypes.ToString()),
+                              "beat '" + beat.Id + "' states the type count it requires");
+                }
+
+                // The move descriptions spell their duration rather than stating it, so the only
+                // thing worth asserting is that it still reads as a word in a sentence - pinning
+                // it to "three" would just be restating the constant, and would fail on a change
+                // the descriptions handle correctly by themselves.
+                check(Words.Spell(EggInstance.StatusDuration) != EggInstance.StatusDuration.ToString(),
+                      "the status duration reads as a word in \"it burns for ... rounds\" (got \"" +
+                      Words.Spell(EggInstance.StatusDuration) + "\")");
+                check(Words.Count(1, "world") == "1 world" && Words.Count(2, "world") == "2 worlds",
+                      "counts pluralise");
+            }
+
             // ---- moving eggs between nest and party ----
             // Until this existed, an egg that went to the nest stayed there: the party was
             // whichever six you caught first, for the whole run.

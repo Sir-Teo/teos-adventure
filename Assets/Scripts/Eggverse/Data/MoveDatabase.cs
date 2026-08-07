@@ -47,11 +47,19 @@ namespace Eggverse
         {
             switch (Effect)
             {
-                case MoveEffect.Scorch: return "Scorches the target: it burns for three rounds.";
-                case MoveEffect.Chill:  return "Chills the target: half speed for three rounds.";
-                case MoveEffect.Daze:   return "Dazes the target: it may skip a turn for three rounds.";
+                // Spelled from the constant, not written next to it. "three rounds" beside a
+                // StatusDuration of 3 is true until somebody changes the 3.
+                case MoveEffect.Scorch: return "Scorches the target: it burns for " + Rounds() + ".";
+                case MoveEffect.Chill:  return "Chills the target: half speed for " + Rounds() + ".";
+                case MoveEffect.Daze:   return "Dazes the target: it may skip a turn for " + Rounds() + ".";
             }
             return null;
+        }
+
+        static string Rounds()
+        {
+            int n = EggInstance.StatusDuration;
+            return Words.Spell(n) + (n == 1 ? " round" : " rounds");
         }
 
         public string Describe()

@@ -332,7 +332,7 @@ namespace Eggverse
         /// <summary>An elder of the species: three levels older, and it knows it.</summary>
         public static EggInstance WildElder(string speciesId, int level)
         {
-            var egg = new EggInstance(SpeciesDatabase.Get(speciesId), Mathf.Min(MaxLevel, level + 3));
+            var egg = new EggInstance(SpeciesDatabase.Get(speciesId), Mathf.Min(MaxLevel, level + ElderLevelBonus));
             egg.Elder = true;
             egg.CurrentHP = egg.MaxHP;
             return egg;
@@ -340,6 +340,9 @@ namespace Eggverse
 
         /// <summary>Roughly one in twelve wild eggs. Never on the boss world.</summary>
         public const float ElderChance = 0.085f;
+        /// <summary>How many levels an Elder is above its neighbours. Garrow says this out
+        /// loud on Cairnhold, so it is a constant rather than a literal in two places.</summary>
+        public const int ElderLevelBonus = 3;
 
         /// <summary>Rebuilds a saved egg exactly, including its remembered moves and PP.</summary>
         public static EggInstance Restore(string speciesId, string nickname, int level, int xp, int currentHP,

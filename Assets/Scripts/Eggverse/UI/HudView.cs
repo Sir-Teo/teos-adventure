@@ -550,8 +550,8 @@ namespace Eggverse
                 dexLore.text += "\n\n<color=#FFC24D>FOUND ON</color>\n<color=#A8B2C4>" +
                                 string.Join(" · ", known.ToArray()) + "</color>";
                 if (uncharted > 0)
-                    dexLore.text += "\n<color=#5A6072>and " + uncharted +
-                                    (uncharted == 1 ? " world" : " worlds") + " you have not charted</color>";
+                    dexLore.text += "\n<color=#5A6072>and " + Words.Count(uncharted, "world") +
+                                    " you have not charted</color>";
             }
             else if (homes.Count > 0)
             {

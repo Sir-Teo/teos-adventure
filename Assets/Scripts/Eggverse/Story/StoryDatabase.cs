@@ -89,18 +89,31 @@ namespace Eggverse
         // beats
         // ------------------------------------------------------------------
 
+        /// <summary>What Ori asks for before the cold-reading, and what Amaranth asks for at the end.
+        /// Named because the objectives and several characters say these numbers out loud.</summary>
+        public const int FirstCatchEggs = 3;
+        public const int GateEggs = 6;
+        public const int GateTypes = 4;
+        public const int GateLevel = 22;
+
+
         public static readonly StoryBeat[] Beats =
         {
             new StoryBeat("wake", "Chapter 1 · The Cold Nests",
                 "Find Ori at the Yolkhaven Nest Station.",
                 Sector.HatcheryReach, new[] { "met_ori" }),
 
+            // The objectives spell their own requirements. Written out by hand they were true
+            // beside the numbers they were written beside, and silently false the moment either
+            // moved - and an objective that misstates its own gate is the worst line in the game
+            // to get wrong.
             new StoryBeat("first_catch", "Chapter 1 · The Cold Nests",
-                "Collect eggs until you are carrying three, so Ori can show you the cold-reading.",
-                Sector.HatcheryReach, null, 3),
+                "Collect eggs until you are carrying " + Words.Spell(FirstCatchEggs) +
+                ", so Ori can show you the cold-reading.",
+                Sector.HatcheryReach, null, FirstCatchEggs),
 
             new StoryBeat("report_ori", "Chapter 1 · The Cold Nests",
-                "Take your three eggs back to Ori.",
+                "Take your " + Words.Spell(FirstCatchEggs) + " eggs back to Ori.",
                 Sector.HatcheryReach, new[] { "ori_briefed" }),
 
             new StoryBeat("drift_keepers", "Chapter 2 · The Long Drift",
@@ -122,8 +135,9 @@ namespace Eggverse
             // Note the sector here is the Belt, not Amaranth: the route only opens once the
             // nest requirement below is met and the story moves on to "finale".
             new StoryBeat("amaranth", "Chapter 4 · Amaranth Prime",
-                "Amaranth Prime will only open to a full nest. Bring six eggs, four types, and one raised to 22.",
-                Sector.ShatteredBelt, null, 6, 4, 22),
+                "Amaranth Prime will only open to a full nest. Bring " + Words.Spell(GateEggs) +
+                " eggs, " + Words.Spell(GateTypes) + " types, and one raised to " + GateLevel + ".",
+                Sector.ShatteredBelt, null, GateEggs, GateTypes, GateLevel),
 
             new StoryBeat("finale", "Chapter 4 · Amaranth Prime",
                 "Amy is waiting on Amaranth Prime.",

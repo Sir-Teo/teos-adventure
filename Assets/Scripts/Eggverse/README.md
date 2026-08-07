@@ -398,6 +398,23 @@ apostrophes and ellipses each pick one convention and keep it (currently 90 stra
 Keeper, the sector names — are capitalised the same way everywhere, skipping sentence-initial
 uses so ordinary grammar is not mistaken for drift.
 
+#### Numbers the writing says out loud
+
+A line like *"it burns for three rounds"* is true right up until somebody changes the constant it
+was written beside, and nothing complains. So:
+
+- Where the number can be spelled from the constant, it is. The move descriptions build their own
+  duration, and the story objectives spell their own gates — *"Bring six eggs, four types, and one
+  raised to 22"* is generated from the requirements that beat actually checks, because an objective
+  that misstates its own gate is the worst line in the game to get wrong.
+- Where the writing is better with the word in it — Nell's *"Twelve is all you get between rests"*
+  reads better than *"12 is all you get"* — the constant is held to the line instead, and the
+  failure message names the speaker and the world so the fix is obvious.
+
+Four characters state a number the code owns: Nell (carton stack), Lune (salve stack), Garrow
+(Elder level bonus) and Amy (party size). Change any of those constants and the build tells you
+whose line to rewrite.
+
 ## What is still not verified
 
 **Actual rendering.** Text overflow inside correctly-sized panels, font legibility, sprite draw
