@@ -15,6 +15,16 @@ static class Battle
     {
         var f = new Dictionary<char, string[]>();
         void G(char c, string rows) => f[c] = rows.Split('|');
+        // The evolution line's arrows, which the field record uses to say what a species grows
+        // from and becomes. Every glyph the game draws and the font lacked printed as "?", and
+        // a row of question marks reads as broken data rather than a missing mock glyph.
+        G('\u2190', ".....|..#..|.#...|#####|.#...|..#..|.....");
+        G('\u2192', ".....|..#..|...#.|#####|...#.|..#..|.....");
+
+        // The stat bars in the field record are drawn from '=', which the font also lacked -
+        // four rows of base stats had been rendering as rows of "?".
+        G('=', ".....|.....|#####|.....|#####|.....|.....");
+
         // The two effectiveness arrows the move cards carry. Substituting a caret for them
         // printed "?" - the font simply had no glyph - and a missing arrow is precisely the
         // thing this render exists to show.

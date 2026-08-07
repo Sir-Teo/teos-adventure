@@ -458,6 +458,83 @@ namespace Eggverse
             return string.Join("  ·  ", parts.ToArray());
         }
 
+        /// <summary>
+        /// The field record's right-hand column: matchups, base stats, where it is found, what it
+        /// grows from and into, and its notes. 450x600 at font 19, which is 27 lines for all of
+        /// it. Static so the checks can measure it and the renderer can draw it - the render had
+        /// simply never drawn this panel, which made the column look 500px emptier than it is.
+        /// </summary>
+        public static string DexLoreText(SpeciesDef species, GameState state, bool caught)
+        {
+            var lore = new System.Text.StringBuilder();
+
+            // The matchups a player actually needs, in the place they are looking them up.
+            lore.Append("<b><color=#FFC24D>MATCHUPS</color></b>\n");
+            lore.Append("<color=#A8B2C4>hits hard  </color>").Append(TypeChart.Join(TypeChart.StrongAgainst(species.Type))).Append('\n');
+            lore.Append("<color=#A8B2C4>weak to    </color>").Append(TypeChart.Join(TypeChart.VulnerableTo(species.Type))).Append('\n');
+            lore.Append("<color=#A8B2C4>shrugs off </color>").Append(TypeChart.Join(TypeChart.Resists(species.Type))).Append("\n\n");
+
+            lore.Append("<b><color=#FFC24D>BASE STATS</color></b>\n");
+            lore.Append(StatRow("HP ", species.BaseHP, 100));
+            lore.Append(StatRow("ATK", species.BaseAtk, 100));
+            lore.Append(StatRow("DEF", species.BaseDef, 100));
+            lore.Append(StatRow("SPD", species.BaseSpd, 100));
+            lore.Append("<color=#7A8090>total ").Append(species.BaseTotal).Append("</color>\n\n");
+
+            // Where it came from, on the same terms as where it is going: named only once you
+            // have met that form yourself.
+            var prev = SpeciesDatabase.EvolvesFrom(species.Id);
+            if (prev != null)
+            {
+                bool prevKnown = state.Seen.Contains(prev.Id) || state.Caught.Contains(prev.Id);
+                lore.Append("<color=#7A8090>← grows from ")
+                    .Append(prevKnown ? prev.Name : "something")
+                    .Append(" at level ").Append(prev.EvolveLevel).Append("</color>\n");
+            }
+
+            if (species.CanEvolve)
+            {
+                var next = SpeciesDatabase.Get(species.EvolvesIntoId);
+                bool nextKnown = state.Seen.Contains(next.Id) || state.Caught.Contains(next.Id);
+                lore.Append("<color=#62C8F5>→ becomes ")
+                    .Append(nextKnown ? next.Name : "something")
+                    .Append(" at level ").Append(species.EvolveLevel).Append("</color>\n\n");
+            }
+            else
+            {
+                lore.Append("<color=#7A8090>Final form.</color>\n\n");
+            }
+
+            // Where to go and get one. Only worlds you have actually charted - the record is
+            // built from what you have seen, and naming a world you have never visited would be
+            // the field record telling you about places instead of the other way round.
+            var worlds = PlanetDatabase.WorldsSpawning(species.Id);
+            var known = new List<string>();
+            foreach (var w in worlds) if (state.Visited.Contains(w.Id)) known.Add(w.Name);
+
+            lore.Append("<b><color=#FFC24D>FOUND ON</color></b>\n");
+            if (known.Count > 0)
+            {
+                lore.Append("<color=#A8B2C4>").Append(string.Join(", ", known)).Append("</color>");
+                if (known.Count < worlds.Count)
+                    lore.Append("<color=#5A6072>, and elsewhere</color>");
+                lore.Append("\n\n");
+            }
+            else if (worlds.Count > 0)
+            {
+                lore.Append("<color=#5A6072>Nowhere you have charted yet.</color>\n\n");
+            }
+            else
+            {
+                lore.Append("<color=#5A6072>Not found in the wild. It grows into this.</color>\n\n");
+            }
+
+            if (caught) lore.Append("<i><color=#D2D8E4>").Append(species.Blurb).Append("</color></i>");
+            else lore.Append("<color=#5A6072>Seen, but not yet collected. Catch one to record its notes.</color>");
+
+            return lore.ToString();
+        }
+
         void RefreshCollection()
         {
             var state = dir.State;
@@ -655,49 +732,7 @@ namespace Eggverse
                 "<color=#FFC24D>" + TypeChart.TraitName(TypeChart.TraitOf(species.Type)) + "</color>\n" +
                 "<color=#A8B2C4>" + TypeChart.TraitBlurb(TypeChart.TraitOf(species.Type)) + "</color>";
 
-            var lore = new System.Text.StringBuilder();
-
-            // The matchups a player actually needs, in the place they are looking them up.
-            lore.Append("<b><color=#FFC24D>MATCHUPS</color></b>\n");
-            lore.Append("<color=#A8B2C4>hits hard  </color>").Append(TypeChart.Join(TypeChart.StrongAgainst(species.Type))).Append('\n');
-            lore.Append("<color=#A8B2C4>weak to    </color>").Append(TypeChart.Join(TypeChart.VulnerableTo(species.Type))).Append('\n');
-            lore.Append("<color=#A8B2C4>shrugs off </color>").Append(TypeChart.Join(TypeChart.Resists(species.Type))).Append("\n\n");
-
-            lore.Append("<b><color=#FFC24D>BASE STATS</color></b>\n");
-            lore.Append(StatRow("HP ", species.BaseHP, 100));
-            lore.Append(StatRow("ATK", species.BaseAtk, 100));
-            lore.Append(StatRow("DEF", species.BaseDef, 100));
-            lore.Append(StatRow("SPD", species.BaseSpd, 100));
-            lore.Append("<color=#7A8090>total ").Append(species.BaseTotal).Append("</color>\n\n");
-
-            // Where it came from, on the same terms as where it is going: named only once you
-            // have met that form yourself.
-            var prev = SpeciesDatabase.EvolvesFrom(species.Id);
-            if (prev != null)
-            {
-                bool prevKnown = state.Seen.Contains(prev.Id) || state.Caught.Contains(prev.Id);
-                lore.Append("<color=#7A8090>← grows from ")
-                    .Append(prevKnown ? prev.Name : "something")
-                    .Append(" at level ").Append(prev.EvolveLevel).Append("</color>\n");
-            }
-
-            if (species.CanEvolve)
-            {
-                var next = SpeciesDatabase.Get(species.EvolvesIntoId);
-                bool nextKnown = state.Seen.Contains(next.Id) || state.Caught.Contains(next.Id);
-                lore.Append("<color=#62C8F5>→ becomes ")
-                    .Append(nextKnown ? next.Name : "something")
-                    .Append(" at level ").Append(species.EvolveLevel).Append("</color>\n\n");
-            }
-            else
-            {
-                lore.Append("<color=#7A8090>Final form.</color>\n\n");
-            }
-
-            if (caught) lore.Append("<i><color=#D2D8E4>").Append(species.Blurb).Append("</color></i>");
-            else lore.Append("<color=#5A6072>Seen, but not yet collected. Catch one to record its notes.</color>");
-
-            dexLore.text = lore.ToString();
+            dexLore.text = DexLoreText(species, state, caught);
 
             // Where to find it. Only worlds you have actually charted are listed — the record is
             // a reward for exploring, not a shopping list handed over at the start.

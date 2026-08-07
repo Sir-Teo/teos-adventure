@@ -113,6 +113,23 @@ namespace Eggverse
             { "nullreach",  1 },   // The Shattered Belt
         };
 
+        /// <summary>
+        /// Every world that spawns this species. The field record is where a player looks a
+        /// species up, and it could tell them everything about it except the one thing they
+        /// opened it to find out.
+        /// </summary>
+        public static List<PlanetDef> WorldsSpawning(string speciesId)
+        {
+            var outp = new List<PlanetDef>();
+            foreach (var w in All)
+            {
+                if (w.Spawns == null) continue;
+                for (int i = 0; i < w.Spawns.Length; i++)
+                    if (w.Spawns[i].SpeciesId == speciesId) { outp.Add(w); break; }
+            }
+            return outp;
+        }
+
         public static bool HasCache(string planetId) => CacheWorlds.ContainsKey(planetId);
 
         public static bool Exists(string id) => !string.IsNullOrEmpty(id) && byId.ContainsKey(id);

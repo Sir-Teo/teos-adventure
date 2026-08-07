@@ -145,11 +145,24 @@ static class Collection
             ty -= step19;
         }
 
+        // The game's own lore column. This used to draw the blurb and nothing else, so 500px
+        // of matchups, base stats and the evolution line simply were not in the picture - the
+        // column looked half empty in every render I ever took of this screen.
         float lx = x0 + 1280, ly2 = y1 - 262;
-        foreach (var line in WrapLines(cur.Blurb ?? "", 46))
+        var seenState = new Eggverse.GameState();
+        foreach (var w in Eggverse.PlanetDatabase.All) seenState.Visited.Add(w.Id);
+        foreach (var sp in Eggverse.SpeciesDatabase.All) seenState.Seen.Add(sp.Id);
+        seenState.Caught.Add(cur.Id);
+
+        foreach (var raw in Eggverse.HudView.DexLoreText(cur, seenState, true).Split('\n'))
         {
-            Battle.Text(c, line.ToUpperInvariant(), lx, ly2, 19, Battle.Ink);
-            ly2 -= step19;
+            var plain = System.Text.RegularExpressions.Regex.Replace(raw, "<[^>]+>", "");
+            if (plain.Length == 0) { ly2 -= step19; continue; }   // blank rows are spacing, not nothing
+            foreach (var line in WrapLines(plain, 46))
+            {
+                Battle.Text(c, line.ToUpperInvariant(), lx, ly2, 19, Battle.Ink);
+                ly2 -= step19;
+            }
         }
 
         Battle.TextCentre(c, fresh ? "UP/DOWN MOVE · TAB CLOSES"

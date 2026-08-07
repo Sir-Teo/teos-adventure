@@ -983,6 +983,67 @@ namespace Eggverse
                     }
             }
 
+            // ---- the field record's lore column ----
+            {
+                // 450x600 at font 19 - 27 lines for matchups, stats, where it is found, the
+                // evolution line and the notes. The FOUND ON line is the one that grows: a
+                // species that spawns on six charted worlds names all six.
+                var everywhere = new GameState();
+                foreach (var w in PlanetDatabase.All) everywhere.Visited.Add(w.Id);
+                foreach (var sp0 in SpeciesDatabase.All) { everywhere.Seen.Add(sp0.Id); everywhere.Caught.Add(sp0.Id); }
+
+                var nowhere = new GameState();
+
+                foreach (var sp in SpeciesDatabase.All)
+                    foreach (var st in new[] { everywhere, nowhere })
+                    {
+                        bool caught = st.Caught.Contains(sp.Id);
+                        string lore = HudView.DexLoreText(sp, st, caught);
+                        int used = 0;
+                        foreach (var row in lore.Split('\n')) used += lines(row, 450f, 19);
+                        check(used <= capacity(600f, 19),
+                              "field record lore fits for " + sp.Name + " (" + used + " of " +
+                              capacity(600f, 19) + " lines)");
+                    }
+
+                // A species you can only get by evolving says so, rather than leaving the
+                // section blank and looking like a bug.
+                foreach (var sp in SpeciesDatabase.All)
+                {
+                    var worlds = PlanetDatabase.WorldsSpawning(sp.Id);
+                    string lore = HudView.DexLoreText(sp, everywhere, true);
+                    check(lore.Contains("FOUND ON"), sp.Name + "'s entry says where it is found");
+                    if (worlds.Count == 0)
+                        check(lore.Contains("It grows into this"),
+                              sp.Name + " is only reachable by evolution, and says so");
+                    else
+                        check(lore.Contains(worlds[0].Name),
+                              sp.Name + "'s entry names " + worlds[0].Name);
+                }
+
+                // And it names only worlds you have charted. Stated the other way round first -
+                // "names no world at all on a fresh save" - and it failed, correctly: a new game
+                // has already visited Yolkhaven, because that is where you wake up.
+                foreach (var sp in SpeciesDatabase.All)
+                {
+                    string lore = HudView.DexLoreText(sp, nowhere, false);
+                    foreach (var w in PlanetDatabase.All)
+                    {
+                        if (nowhere.Visited.Contains(w.Id)) continue;
+                        check(!lore.Contains(w.Name),
+                              sp.Name + "'s entry does not name uncharted " + w.Name);
+                    }
+                }
+
+                // The home world is the one exception, and it is named because you have been.
+                {
+                    var home = PlanetDatabase.Home;
+                    var homeSpawn = home.Spawns[0].SpeciesId;
+                    check(HudView.DexLoreText(SpeciesDatabase.Get(homeSpawn), nowhere, false).Contains(home.Name),
+                          "the field record names " + home.Name + " from the start, because you woke up there");
+                }
+            }
+
             // ---- move cards and the message under them ----
             {
                 // 286px buttons, three lines at 20/17/17. Every move is measured against every
