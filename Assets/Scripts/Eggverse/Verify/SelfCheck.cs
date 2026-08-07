@@ -405,6 +405,13 @@ namespace Eggverse
             };
             Func<float, int, int> capacity = (height, font) => Mathf.FloorToInt(height / (font * 1.16f));
 
+            // The first species of an element, for probing a matchup without hardcoding an id.
+            Func<EggType, string> FirstSpeciesOfType = t =>
+            {
+                foreach (var sp in SpeciesDatabase.All) if (sp.Type == t) return sp.Id;
+                return SpeciesDatabase.All[0].Id;
+            };
+
             var probeState = new GameState();
             int longest = 0;
             foreach (var npc in StoryDatabase.Npcs)
@@ -1931,6 +1938,52 @@ namespace Eggverse
                     check(BattleMode.PlateRecord(egg, fresh, true) == "",
                           sp.Name + " carries no carton note when it belongs to a trainer");
                 }
+            }
+
+            // ---- the swap menu says how the switch lands ----
+            {
+                // It listed name, level, element and health - everything except the one thing
+                // the menu is opened to decide. Swapping means eating a hit on the way in, and
+                // the game knows exactly how that hit lands against each egg on the list.
+                //
+                // The read is defensive on purpose: the move cards already say whether your
+                // attacks land, and this is the half a player cannot work out from them.
+                foreach (EggType foeType in System.Enum.GetValues(typeof(EggType)))
+                {
+                    var foe = EggInstance.Wild(FirstSpeciesOfType(foeType), 20);
+                    if (foe == null) continue;
+
+                    foreach (var sp in SpeciesDatabase.All)
+                    {
+                        var mine = EggInstance.Wild(sp.Id, 20);
+                        string row = BattleMode.SwapRow(mine, foe, false);
+                        float incoming = TypeChart.Multiplier(foe.Type, mine.Type);
+
+                        if (incoming > 1.2f)
+                            check(row.Contains("weak to"),
+                                  sp.Name + " is told it is weak to " + TypeChart.Name(foe.Type));
+                        else if (incoming < 0.8f)
+                            check(row.Contains("resists"),
+                                  sp.Name + " is told it resists " + TypeChart.Name(foe.Type));
+                        else
+                            check(!row.Contains("weak to") && !row.Contains("resists"),
+                                  sp.Name + " is told nothing about an even matchup");
+
+                        // 860px at font 22, inside a 900px menu.
+                        check(lines(row, 860f, 22) == 1,
+                              sp.Name + "'s swap row fits: " + row);
+                    }
+                }
+
+                // A fainted egg, and the one already out, are told nothing - they are not
+                // choices, and a matchup beside them would read as an option.
+                var down = EggInstance.Wild("sprouteg", 20);
+                down.CurrentHP = 0;
+                var molten = EggInstance.Wild(FirstSpeciesOfType(EggType.Molten), 20);
+                check(!BattleMode.SwapRow(down, molten, false).Contains("weak to"),
+                      "a fainted egg is not offered a matchup");
+                check(!BattleMode.SwapRow(EggInstance.Wild("sprouteg", 20), molten, true).Contains("weak to"),
+                      "and neither is the one already out there");
             }
 
             // ---- who moves first ----

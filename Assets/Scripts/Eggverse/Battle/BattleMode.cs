@@ -1295,6 +1295,39 @@ namespace Eggverse
             }
         }
 
+        /// <summary>
+        /// One egg on the swap menu.
+        ///
+        /// It listed name, level, element and health - everything except the one thing you open
+        /// this menu to decide. Swapping means eating a hit on the way in, and the game knows
+        /// exactly how that hit lands against each egg on the list; it just never said.
+        ///
+        /// The read is defensive on purpose. The move cards already show whether your attacks
+        /// land; this shows whether you survive the switch, which is the half a player cannot
+        /// work out from the cards.
+        /// </summary>
+        public static string SwapRow(EggInstance egg, EggInstance foe, bool unavailable)
+        {
+            string hex = ColorUtility.ToHtmlStringRGB(TypeChart.ColorOf(egg.Type));
+            string status = egg.IsFainted ? "<color=#E55555>OUT COLD</color>"
+                                          : egg.CurrentHP + "/" + egg.MaxHP + " HP";
+
+            string facing = "";
+            if (foe != null && !egg.IsFainted && !unavailable)
+            {
+                float incoming = TypeChart.Multiplier(foe.Type, egg.Type);
+                facing = incoming > 1.2f
+                    ? "   <color=#E55555>weak to " + TypeChart.Abbrev(foe.Type) + "</color>"
+                    : incoming < 0.8f
+                        ? "   <color=#5FD068>resists " + TypeChart.Abbrev(foe.Type) + "</color>"
+                        : "";
+            }
+
+            return "  <color=#" + hex + ">●</color>  " + egg.Name +
+                   "   <size=19><color=#A8B2C4>Lv " + egg.Level + " · " +
+                   TypeChart.Name(egg.Type) + " · </color>" + status + facing + "</size>";
+        }
+
         void RefreshPartyButtons()
         {
             for (int i = 0; i < partyButtons.Count; i++)
@@ -1304,12 +1337,8 @@ namespace Eggverse
                 if (!has) continue;
 
                 var egg = State.Party[i];
-                string hex = ColorUtility.ToHtmlStringRGB(TypeChart.ColorOf(egg.Type));
-                string status = egg.IsFainted ? "<color=#E55555>OUT COLD</color>"
-                                              : egg.CurrentHP + "/" + egg.MaxHP + " HP";
                 UIKit.CaptionOf(partyButtons[i]).text =
-                    "  <color=#" + hex + ">●</color>  " + egg.Name +
-                    "   <size=19><color=#A8B2C4>Lv " + egg.Level + " · " + TypeChart.Name(egg.Type) + " · </color>" + status + "</size>";
+                    SwapRow(egg, Foe, egg.IsFainted || i == activeIndex);
                 partyButtons[i].interactable = !egg.IsFainted && i != activeIndex;
             }
         }
