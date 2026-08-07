@@ -171,6 +171,28 @@ namespace Eggverse
             return missing;
         }
 
+        /// <summary>The best level sitting in the nest, or 0 if it is empty.</summary>
+        public int BestNestLevel
+        {
+            get
+            {
+                int best = 0;
+                for (int i = 0; i < Nest.Count; i++) if (Nest[i].Level > best) best = Nest[i].Level;
+                return best;
+            }
+        }
+
+        /// <summary>Distinct elements sitting in the nest.</summary>
+        public int NestTypes
+        {
+            get
+            {
+                var set = new HashSet<EggType>();
+                for (int i = 0; i < Nest.Count; i++) set.Add(Nest[i].Type);
+                return set.Count;
+            }
+        }
+
         /// <summary>The egg Ori gave you, wherever it is now, or null if you let it go.</summary>
         public EggInstance EggFromOri
         {

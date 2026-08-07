@@ -1029,6 +1029,38 @@ namespace Eggverse
                     }
             }
 
+            // ---- what the nest header says ----
+            {
+                // The reason a player opens the nest is to ask whether it holds anything worth
+                // swapping in, and with fifty-nine eggs the answer was thirty keypresses away.
+                var empty = new GameState(false);
+                check(HudView.NestSummary(empty) == "empty", "an empty nest says so");
+
+                var full = new GameState(false);
+                foreach (var id in new[] { "sprouteg", "cobblet", "yolkano", "tidepoach" })
+                    full.Nest.Add(EggInstance.Wild(id, 12));
+                full.Nest.Add(EggInstance.Wild("shadowhisk", 29));
+
+                string line = HudView.NestSummary(full);
+                check(line.Contains("5 back home"), "the nest header counts what is in it: " + line);
+                check(line.Contains("best Lv 29"), "and names the best level in it: " + line);
+                check(line.Contains("5 elements"), "and how many elements: " + line);
+
+                // One of something reads as one, not as a plural with a 1 in front.
+                var single = new GameState(false);
+                single.Nest.Add(EggInstance.Wild("sprouteg", 7));
+                check(HudView.NestSummary(single).Contains("1 element") &&
+                      !HudView.NestSummary(single).Contains("1 elements"),
+                      "a one-element nest reads properly: " + HudView.NestSummary(single));
+
+                // The header shares a 720px column at font 20 with everything else.
+                var huge = new GameState(false);
+                for (int i = 0; i < 99; i++) huge.Nest.Add(EggInstance.Wild("cobblet", 30));
+                foreach (var sp in SpeciesDatabase.All) huge.Nest.Add(EggInstance.Wild(sp.Id, 30));
+                check(lines("NEST  " + HudView.NestSummary(huge), 720f, 20) == 1,
+                      "the nest header fits at its widest: " + HudView.NestSummary(huge));
+            }
+
             // ---- every egg in the nest can be reached ----
             {
                 // The nest list showed the first twenty and the cursor could not leave them,

@@ -40,6 +40,14 @@ namespace Eggverse
         /// ones that happen to be on screen - the window used to be the limit, which left an
         /// end-game nest mostly unreachable.
         /// </summary>
+        /// <summary>What the nest holds, in one line: how many, the best level, how many elements.</summary>
+        public static string NestSummary(GameState state)
+        {
+            if (state.Nest.Count == 0) return "empty";
+            return state.Nest.Count + " back home  ·  best Lv " + state.BestNestLevel +
+                   "  ·  " + Words.Count(state.NestTypes, "element");
+        }
+
         public static int CollectionRows(GameState state) => state.Party.Count + state.Nest.Count;
 
         /// <summary>First nest egg on screen. The window follows the cursor.</summary>
@@ -635,8 +643,11 @@ namespace Eggverse
             }
             else
             {
+                // What is in there, without making the player scroll fifty-nine rows to find
+                // out. The reason you open the nest is to ask whether it holds anything worth
+                // swapping in, and the answer was thirty keypresses away.
                 sb.Append("\n<b><color=#FFC24D>NEST</color></b>  <color=#A8B2C4>")
-                  .Append(state.Nest.Count).Append(" back home</color>\n");
+                  .Append(NestSummary(state)).Append("</color>\n");
 
                 // The nest is unbounded, so show a window of it. The column is 780px at font 20,
                 // which is 33 lines; the party costs at most 8 of those and the headers 2, so 20
