@@ -132,6 +132,26 @@ namespace Eggverse
 
         public int TotalCollected => Party.Count + Nest.Count;
 
+        /// <summary>
+        /// Elements you have nothing of. The gate asks for six distinct types and used to say
+        /// only "two more types", which tells a player what they lack and not one thing about
+        /// where to go and fix it.
+        /// </summary>
+        public List<EggType> TypesMissing
+        {
+            get
+            {
+                var held = new HashSet<EggType>();
+                for (int i = 0; i < Party.Count; i++) held.Add(Party[i].Type);
+                for (int i = 0; i < Nest.Count; i++) held.Add(Nest[i].Type);
+
+                var missing = new List<EggType>();
+                foreach (EggType t in System.Enum.GetValues(typeof(EggType)))
+                    if (t != EggType.Plain && !held.Contains(t)) missing.Add(t);
+                return missing;
+            }
+        }
+
         public int DistinctTypesHeld
         {
             get

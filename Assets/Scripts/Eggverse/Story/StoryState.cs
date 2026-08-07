@@ -113,7 +113,24 @@ namespace Eggverse
             if (beat.RequiredEggs > 0 && state.TotalCollected < beat.RequiredEggs)
                 parts.Add(Words.Count(beat.RequiredEggs - state.TotalCollected, "more egg"));
             if (beat.RequiredTypes > 0 && state.DistinctTypesHeld < beat.RequiredTypes)
-                parts.Add(Words.Count(beat.RequiredTypes - state.DistinctTypesHeld, "more type"));
+            {
+                // Which ones. "Two more types" is a number; the elements you have nothing of
+                // are somewhere to fly to, and the field record will say which worlds they
+                // live on once you have seen one.
+                var missing = state.TypesMissing;
+                string need = Words.Count(beat.RequiredTypes - state.DistinctTypesHeld, "more type");
+                // Five, not four. A player one type short of the gate is typically missing
+                // five elements outright - which is exactly when the hint is worth having,
+                // and where a cap of four left them with a bare number. Seven is a wall and
+                // stays a number.
+                if (missing.Count > 0 && missing.Count <= 5)
+                {
+                    var names = new List<string>();
+                    foreach (var t in missing) names.Add(TypeChart.Name(t));
+                    need += " (nothing yet from " + string.Join(", ", names.ToArray()) + ")";
+                }
+                parts.Add(need);
+            }
             if (beat.RequiredLevel > 0 && state.HighestPartyLevel < beat.RequiredLevel)
                 parts.Add("an egg at level " + beat.RequiredLevel +
                           " (best is " + state.HighestPartyLevel + ")");

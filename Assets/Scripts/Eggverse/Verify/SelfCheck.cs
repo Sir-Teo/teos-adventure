@@ -983,6 +983,52 @@ namespace Eggverse
                     }
             }
 
+            // ---- the gate says which elements are missing ----
+            {
+                // "Two more types" is a number. The elements you have nothing of are
+                // somewhere to fly to - and once you have seen one of a type, the field
+                // record will tell you which worlds it lives on.
+                var st = new GameState(false);
+                st.Party.Add(EggInstance.Wild("sprouteg", 10));   // Verdant only
+
+                check(st.TypesMissing.Count == 7,
+                      "a one-type party is missing seven elements (" + st.TypesMissing.Count + ")");
+                foreach (var t in st.TypesMissing)
+                    check(t != EggType.Plain, "Plain is not an element you can be missing");
+
+                // With four or fewer missing they are named; with more it stays a number,
+                // because listing seven elements in a 524px panel is not a hint, it is a wall.
+                var walk = new StoryState();
+                for (int i = 0; i < StoryDatabase.Beats.Length; i++)
+                {
+                    var at = new StoryState();
+                    at.RestoreFrom(new string[0], i);
+                    if (at.Current.RequiredTypes <= 0) continue;
+
+                    string wall = at.CurrentBlockerText(st);
+                    check(wall != null && !wall.Contains("nothing yet from"),
+                          "seven missing elements are not all listed at '" + at.Current.Id + "'");
+
+                    // One short of whatever the beat actually asks for, rather than of a
+                    // number I assumed. The gate wants four types, not six, so a five-type
+                    // party already satisfied it and the check below never ran.
+                    var nearly = new GameState(false);
+                    var stock = new[] { "sprouteg", "yolkano", "tidepoach", "yolty", "chillet",
+                                        "cobblet", "nebulegg", "duskle" };
+                    for (int k = 0; k < at.Current.RequiredTypes - 1 && k < stock.Length; k++)
+                        nearly.Party.Add(EggInstance.Wild(stock[k], 10));
+                    string close = at.CurrentBlockerText(nearly);
+                    // Not conditional. A check that only runs when the string happens to say
+                    // something can pass by never running - disabling the hint entirely left
+                    // this silent, which is the same vacuity the party-row check had.
+                    check(close != null && close.Contains("more type"),
+                          "a five-type party is still short of the gate at '" + at.Current.Id +
+                          "': " + close);
+                    check(close != null && close.Contains("nothing yet from"),
+                          "and is told which elements: " + close);
+                }
+            }
+
             // ---- waking up after losing ----
             {
                 // Both lines land in the toast, which is 1000px wide with 20px either side at
