@@ -52,6 +52,28 @@ the star map at the canvas reference resolution, using the real `PlanetDatabase`
 44% of its width, a card carrying a third of its height as dead space, a collection column half
 empty.
 
+## Checking that a check works
+
+```bash
+Tools/Verify/plant.sh <file> <find> <replace> [expected text in the failure]
+```
+
+Plants a fault, runs the suite, restores the file, and reports whether the fault was caught.
+
+It exists because twice a hand-run version of this produced no failure and I read that as the
+check passing — when in fact the `find` had matched nothing and the file was never touched. **A
+no-op edit and a working check look identical from the outside.** So this refuses to draw any
+conclusion unless it can prove the plant landed: it counts the occurrences, aborts at zero, and
+compares the file against its backup before running anything.
+
+It distinguishes three outcomes, which is the whole point:
+
+- `ABORT` — the pattern matched nothing. Nothing was tested; the result means nothing.
+- `NOT CAUGHT` — the fault landed and the suite still passed. The check is missing or toothless.
+- `caught:` — with the failures listed, and a note if the expected one is among them.
+
+A check that has never failed is a check nobody has verified.
+
 ## A warning about the mocks
 
 `artcheck` reimplements the game's *drawing*, not its data. That reimplementation has produced
