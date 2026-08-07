@@ -149,6 +149,9 @@ static class Prose
 
         Add("woke warm", UiCopy.WokeWarm);
         Add("woke cold", UiCopy.WokeCold);
+        for (int i = 0; i < UiCopy.WokeAfterAmy.Length; i++)
+            Add("woke after Amy " + i, UiCopy.WokeAfterAmy[i]);
+        Add("woke after a trainer", UiCopy.WokeAfter("Marn", false));
 
         // And what each resident says about their own world's landmark.
         foreach (var npc in StoryDatabase.Npcs)

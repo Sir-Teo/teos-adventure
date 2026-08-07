@@ -136,6 +136,36 @@ namespace Eggverse
         public const string WokeWarm = "You woke at the Nest Station. The pad was warm, and everything is patched up.";
         public const string WokeCold = "You woke on cold stone. It took a while. Everything is patched up, and nobody is saying how.";
 
+        /// <summary>
+        /// Losing to somebody who was trying to beat you, rather than to something that was
+        /// defending its field.
+        ///
+        /// The game had one thing to say about defeat and it was about the temperature of the
+        /// pad. Losing to a wild Craggle on Mosswell and losing the fight the entire game builds
+        /// to both read "You woke at the Nest Station." The pad line is right for a mauling in a
+        /// shell field; it is not what a person who has just been beaten by another person
+        /// notices.
+        /// </summary>
+        public static string WokeAfter(string trainerName, bool coldPad)
+        {
+            string pad = coldPad ? WokeCold : WokeWarm;
+            if (string.IsNullOrEmpty(trainerName)) return pad;
+            return trainerName + " sent you back. " + pad;
+        }
+
+        /// <summary>
+        /// And losing to Amy, which is not the same as losing to anybody else. She is the reason
+        /// every pad in the sector is cold, so a line about the pad being warm is the one thing
+        /// that must not be the whole of it. She also does not gloat: eleven years of holding the
+        /// first egg shut is not a thing you crow about.
+        /// </summary>
+        public static readonly string[] WokeAfterAmy =
+        {
+            "Amy carried you back up herself. She did not say anything on the way.",
+            "You came round at the pad. Somebody had set your cartons in a neat row beside you.",
+            "Amy put you back on the ship. \"Warm them up. Then come down again.\"",
+        };
+
         public static readonly string[] RestIdle =
         {
             "Nothing needed doing. The pad is warm anyway.",

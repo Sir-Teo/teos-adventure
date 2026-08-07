@@ -1671,6 +1671,54 @@ namespace Eggverse
                 check(elder.Elder && !ordinary.Elder, "and knows it");
             }
 
+            // ---- the game has more than one thing to say about losing ----
+            {
+                // It had exactly one, and it was about the temperature of the pad. Losing to a
+                // wild Craggle on Mosswell and losing the fight the whole game builds to both
+                // read "You woke at the Nest Station."
+                foreach (bool cold in new[] { false, true })
+                {
+                    string wild = UiCopy.WokeAfter(null, cold);
+                    string beaten = UiCopy.WokeAfter("Marn", cold);
+                    check(wild == (cold ? UiCopy.WokeCold : UiCopy.WokeWarm),
+                          "something wild that beat you leaves the pad line alone");
+                    check(beaten != wild, "a person who beat you gets named");
+                    check(beaten.Contains("Marn"), "and named by name: " + beaten);
+                    check(beaten.Contains(cold ? "cold stone" : "pad was warm"),
+                          "while still saying what the pad was like");
+                }
+
+                // Every resident who can beat you produces a line that fits a toast.
+                foreach (var npc in StoryDatabase.Npcs)
+                    foreach (bool cold in new[] { false, true })
+                    {
+                        string line = UiCopy.WokeAfter(npc.Name, cold);
+                        check(lines(line, 900f, 22) <= 2,
+                              "losing to " + npc.Name + " fits the toast: " + line);
+                    }
+
+                // Amy is not the same as anybody else. She is the reason every pad in the
+                // sector is cold, so a line about the pad being warm is the one thing that
+                // must not be the whole of it.
+                check(UiCopy.WokeAfterAmy.Length >= 3,
+                      "Amy has more than one thing to say about beating you (" +
+                      UiCopy.WokeAfterAmy.Length + ")");
+                foreach (var line in UiCopy.WokeAfterAmy)
+                {
+                    check(line != UiCopy.WokeWarm && line != UiCopy.WokeCold,
+                          "Amy's defeat line is not the pad line: " + line);
+                    check(!line.Contains("pad was warm"),
+                          "and does not tell you the pad is warm on the world that made it cold");
+                    check(lines(line, 900f, 22) <= 2, "Amy's defeat line fits the toast: " + line);
+                }
+
+                // All three different, or the rotation is decoration.
+                for (int i = 0; i < UiCopy.WokeAfterAmy.Length; i++)
+                    for (int j = i + 1; j < UiCopy.WokeAfterAmy.Length; j++)
+                        check(UiCopy.WokeAfterAmy[i] != UiCopy.WokeAfterAmy[j],
+                              "Amy does not repeat herself (" + i + " and " + j + ")");
+            }
+
             // ---- a cry is as loud as the moment is worth ----
             {
                 // Five places play one, and the ordering matters: something arriving to fight

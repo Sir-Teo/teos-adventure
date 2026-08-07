@@ -536,6 +536,12 @@ namespace Eggverse
             Audio.PlayCry(sp, AudioDirector.CryEncounter);
         }
 
+        // Amy has three things to say about beating you and says them in turn, because a player
+        // who goes down twice hearing the same sentence learns that she is a wall rather than a
+        // person. Not saved: it resets with the session, which is the right grain for a line
+        // whose only job is not repeating itself back to back.
+        int amyLosses;
+
         public void OnBattleFinished(BattleOutcome outcome)
         {
             var trainer = pendingTrainer;
@@ -570,7 +576,14 @@ namespace Eggverse
                         bool coldPad = CurrentPlanet != null &&
                                        PlanetDatabase.StationCold(CurrentPlanet.Id) &&
                                        !Story.HasFlag("beat_amy");
-                        Hud.Toast(coldPad ? UiCopy.WokeCold : UiCopy.WokeWarm);
+
+                        // Who beat you, if it was a who. The pad line is right for a mauling in
+                        // a shell field and it was also the whole of what the game said about
+                        // losing the fight it spends seventeen worlds building to.
+                        if (trainer != null && trainer.Id == "amy")
+                            Hud.Toast(UiCopy.WokeAfterAmy[amyLosses++ % UiCopy.WokeAfterAmy.Length]);
+                        else
+                            Hud.Toast(UiCopy.WokeAfter(trainer != null ? trainer.Name : null, coldPad));
                     }
                     break;
 
