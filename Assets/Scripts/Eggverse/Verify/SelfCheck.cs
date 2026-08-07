@@ -884,6 +884,32 @@ namespace Eggverse
                 }
             }
 
+            // ---- the chart's distance line ----
+            // Drawn in an 848px body at font 22, from every world to every other. The longest
+            // pairing is what has to fit, not a convenient one.
+            {
+                float worstPx = 0f; string worstPair = "";
+                foreach (var a in PlanetDatabase.All)
+                    foreach (var b in PlanetDatabase.All)
+                    {
+                        if (a.Id == b.Id) continue;
+                        float gap = Mathf.Max(0f, Vector2.Distance(a.SpacePosition, b.SpacePosition)
+                                                  - a.SpaceRadius - b.SpaceRadius);
+                        string line = Mathf.RoundToInt(gap) + " units from " + a.Name +
+                                      "  ·  about " + (gap / TeoController.FlyMaxSpeed).ToString("0.0") +
+                                      "s of flying";
+                        float px = line.Length * 22f * 0.52f;
+                        if (px > worstPx) { worstPx = px; worstPair = a.Name + " to " + b.Name; }
+                        check(lines(line, 848f, 22) == 1, "chart distance line fits: \"" + line + "\"");
+
+                        // A time of zero would read as though the world were free to reach.
+                        check(gap <= 0f || gap / TeoController.FlyMaxSpeed >= 0.05f,
+                              "the flight time from " + a.Name + " to " + b.Name + " is not rounded away");
+                    }
+                check(worstPx <= 848f,
+                      "the widest distance line fits (" + worstPx.ToString("0") + "px, " + worstPair + ")");
+            }
+
             // ---- evolution lines read both ways ----
             {
                 int roots = 0, grown = 0;

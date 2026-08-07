@@ -16,7 +16,9 @@ namespace Eggverse
         public float DistanceMovedThisFrame { get; private set; }
 
         const float FlyAccel = 46f;
-        const float FlyMaxSpeed = 22f;
+        /// <summary>Top speed in space. Public so the chart can turn a distance into a time
+        /// rather than keeping its own copy of the number.</summary>
+        public const float FlyMaxSpeed = 22f;
         const float FlyDrag = 1.4f;
         const float WalkSpeed = 13f;
         const float WalkSmoothing = 14f;

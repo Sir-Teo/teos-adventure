@@ -360,6 +360,24 @@ namespace Eggverse
                       .Append(known ? species.Name : "? ? ?").Append("</color>\n");
                 }
 
+                // How far it is, from wherever you are standing. The chart is where a course is
+                // chosen and it has never said what choosing one costs.
+                var from = dir.CurrentPlanet;
+                if (from != null && from.Id != m.Def.Id)
+                {
+                    float gap = Vector2.Distance(from.SpacePosition, m.Def.SpacePosition)
+                                - from.SpaceRadius - m.Def.SpaceRadius;
+                    sb.Append("<color=#A8B2C4>").Append(Mathf.RoundToInt(Mathf.Max(0f, gap)))
+                      .Append(" units from ").Append(from.Name)
+                      .Append("  ·  about ").Append((Mathf.Max(0f, gap) / TeoController.FlyMaxSpeed).ToString("0.0"))
+                      .Append("s of flying</color>\n");
+                }
+
+                // A recovered cache, as a record of what you have done here. Not announced
+                // before you find it - the whole point is that it is buried.
+                if (PlanetDatabase.HasCache(m.Def.Id) && state.Caches.Contains(m.Def.Id))
+                    sb.Append("<color=#5FD068>Supply cache recovered.</color>\n");
+
                 sb.Append("\n");
                 if (m.Def.IsBossWorld) sb.Append("<color=#FFC24D>Amy is here.</color>\n\n");
             }
