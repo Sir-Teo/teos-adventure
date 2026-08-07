@@ -581,6 +581,7 @@ namespace Eggverse
             dir.State.Cartons = Mathf.Min(dir.State.MaxCartons, dir.State.Cartons + gained);
             dir.State.RaiseChanged();
 
+            StartCoroutine(CacheBurst(cache.position));
             Destroy(cache.gameObject);
             cache = null;
 
@@ -946,6 +947,53 @@ namespace Eggverse
                 n.Bob += dt * 1.8f;
                 n.Visual.localPosition = new Vector3(0f, Mathf.Sin(n.Bob) * 0.13f, 0f);
             }
+        }
+
+        /// <summary>
+        /// A cache coming out of the ground.
+        ///
+        /// Four worlds hide one, it is not signposted, and finding it takes a deliberate walk
+        /// out past the shell fields - and then it vanished between frames with a line of text.
+        /// The one thing on a surface a player goes looking for deserves to be seen arriving.
+        /// </summary>
+        System.Collections.IEnumerator CacheBurst(Vector2 at)
+        {
+            const int Motes = 10;
+            const float Life = 0.85f;
+
+            var bits = new List<SpriteRenderer>();
+            var vel = new List<Vector2>();
+            var warm = new Color(1f, 0.82f, 0.42f, 1f);
+            var ground = TeoController.StepMoteTint(current.Land);
+
+            for (int i = 0; i < Motes; i++)
+            {
+                float a = (i / (float)Motes) * Mathf.PI * 2f + Random.Range(-0.2f, 0.2f);
+                // Half of it is the cache and half is the ground it came out of.
+                var tint = i % 2 == 0 ? warm : new Color(ground.r, ground.g, ground.b, 1f);
+                var sr = Spawn("cachebit", ProcArt.Disc("cachebit", Color.white, new Color(1f, 1f, 1f, 0f), 1.4f, 32, 64f),
+                               at, Random.Range(0.45f, 0.8f), tint, -13);
+                bits.Add(sr);
+                vel.Add(new Vector2(Mathf.Cos(a), Mathf.Sin(a)) * Random.Range(2.2f, 4.5f));
+            }
+
+            float t = 0f;
+            while (t < Life)
+            {
+                t += Time.deltaTime;
+                float k = t / Life;
+                for (int i = 0; i < bits.Count; i++)
+                {
+                    if (bits[i] == null) continue;
+                    // Thrown out and slowing, the way something dug up settles rather than flies.
+                    bits[i].transform.position += (Vector3)(vel[i] * (1f - k) * Time.deltaTime);
+                    var c = bits[i].color;
+                    bits[i].color = new Color(c.r, c.g, c.b, 1f - k);
+                }
+                yield return null;
+            }
+
+            for (int i = 0; i < bits.Count; i++) if (bits[i] != null) Destroy(bits[i].gameObject);
         }
 
         // ---- the drift, seen from the ground ----

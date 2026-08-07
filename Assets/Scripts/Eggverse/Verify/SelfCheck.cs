@@ -1626,6 +1626,40 @@ namespace Eggverse
                 check(elder.Elder && !ordinary.Elder, "and knows it");
             }
 
+            // ---- a cache is worth seeing arrive ----
+            {
+                // Four worlds hide one, it is not signposted, and finding it takes a deliberate
+                // walk out past the shell fields. Then it vanished between frames with a line
+                // of text. The burst is half warm and half the ground it came out of, so it has
+                // to read against that ground the way everything else on a surface does.
+                foreach (var id in PlanetDatabase.CacheWorlds.Keys)
+                {
+                    var w = PlanetDatabase.Get(id);
+                    var bit = TeoController.StepMoteTint(w.Land);
+                    float gap = Mathf.Abs(SurfaceMode.Luminance(bit) - SurfaceMode.Luminance(w.Land));
+                    check(gap > 0.10f,
+                          "the ground half of " + w.Name + "'s cache burst reads against its ground (" +
+                          gap.ToString("0.00") + ")");
+                }
+
+                // And the reward itself is real: every cache world gives capacity, and the
+                // total is what the supplies strip promises.
+                var st = new GameState(false);
+                int baseline = st.MaxCartons;
+                foreach (var id in PlanetDatabase.CacheWorlds.Keys) st.Caches.Add(id);
+                check(st.MaxCartons > baseline,
+                      "digging every cache raises what you can carry (" + baseline + " to " +
+                      st.MaxCartons + ")");
+
+                foreach (var id in PlanetDatabase.CacheWorlds.Keys)
+                {
+                    var one = new GameState(false);
+                    one.Caches.Add(id);
+                    check(one.MaxCartons > baseline,
+                          PlanetDatabase.Get(id).Name + "'s cache is worth carrying capacity");
+                }
+            }
+
             // ---- a shell field acknowledges you ----
             {
                 // Encounters only happen inside these patches and nothing confirmed you were
