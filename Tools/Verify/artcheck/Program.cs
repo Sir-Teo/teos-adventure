@@ -431,6 +431,8 @@ static class Program
         WriteBmpRect(Title.Render(), 1920, 1080, "title.bmp");
         Console.WriteLine("wrote title.bmp");
         WriteBmpRect(Collection.Render(9, 19), 1920, 1080, "collection.bmp");
+        WriteBmpRect(Collection.Render(9, 19, false, false, Eggverse.HudView.NestOrder.Element),
+                     1920, 1080, "collection-sorted.bmp");
         WriteBmpRect(Collection.Render(0, 1, true), 1920, 1080, "collection-fresh.bmp");
         WriteBmpRect(Collection.Render(9, 19, false, true), 1920, 1080, "collection-egg.bmp");
         Console.WriteLine("wrote collection-fresh.bmp");

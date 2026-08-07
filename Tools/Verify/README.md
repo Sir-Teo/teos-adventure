@@ -138,6 +138,22 @@ text builder from the view — `GalaxyMapView.DetailBody`, `BattleMode.MoveCardT
 
 If you add a panel to a render, do not type its contents.
 
+The collection screen was the last one still laying out a column itself. Converting its two
+columns to draw `CollectionBodyText` and `CollectionDexText` line for line immediately showed
+four things the render had been hiding: the party's 1-6 numbers, the nest's real summary line,
+the record's actual caught/seen marks, and a nest ordering line that had been added to the game
+and could never have appeared.
+
+It also found a fault of a different shape. The footer *did* call `HintFor` — from a state built
+separately, with one egg in the nest against the fifty-six drawn above it. **Two states in one
+screenshot**: a full nest and a footer describing a game that had almost nothing in it. One
+roster now feeds the whole picture.
+
+And a bug in the renderer's own tag parser: a `<` that matched none of `<b>`, `<color=…>` or
+their closers consumed zero characters and looped forever. The record column carries `<size=…>`.
+It presented as "Out of memory" halfway through a render, which is not what an infinite loop
+usually looks like. The same code had been copied into three files.
+
 `artcheck` reimplements the game's *drawing*, not its data. That reimplementation has produced
 false alarms seven times: a font metric that overstated every label by two thirds, sector captions
 placed by an older algorithm than the game's, a truncating text wrap that hid the overflow it

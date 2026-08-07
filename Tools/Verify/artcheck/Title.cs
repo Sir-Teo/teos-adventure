@@ -28,7 +28,10 @@ static class Title
                 i += m.Length;
                 continue;
             }
-            int next = line.IndexOf('<', i);
+            // A '<' that is not one of the tags above is literal text, and consuming zero
+            // characters here spins forever - which is what "Out of memory" after title.bmp
+            // actually was. The record column carries <size=...>, which this never matched.
+            int next = line.IndexOf('<', i + 1);
             if (next < 0) next = line.Length;
             outp.Add((line.Substring(i, next - i), current));
             i = next;

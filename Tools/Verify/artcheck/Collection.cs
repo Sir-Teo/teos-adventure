@@ -7,7 +7,8 @@ static class Collection
 {
     const float PW = 1760f, PH = 940f;
 
-    public static Col[] Render(int cursor, int caughtCount, bool fresh = false, bool showEgg = false)
+    public static Col[] Render(int cursor, int caughtCount, bool fresh = false, bool showEgg = false,
+                               Eggverse.HudView.NestOrder order = Eggverse.HudView.NestOrder.Caught)
     {
         var c = new Battle.Ctx { Px = new Col[Battle.W * Battle.H] };
         for (int i = 0; i < c.Px.Length; i++) c.Px[i] = Col.Hex(0x05060E);
@@ -23,45 +24,48 @@ static class Collection
         var grey = new Col(0.35f, 0.38f, 0.45f, 1f);
 
         // ---- column 1: party and nest ----
+        //
+        // Drawn from CollectionBodyText, line for line. This used to lay the column out itself:
+        // its own PARTY heading, its own rows, its own "56 BACK HOME", its own "36 MORE BELOW"
+        // typed as a literal. Every one of those was a guess about a string the game composes,
+        // and the column grew a line naming the nest's sort order that the render could never
+        // have shown. The rows were already being asked for from HudView; the composition was
+        // not.
         float bx = x0 + 34, by = y1 - 84;
         float step20 = 20f * 1.16f;
-        Battle.Text(c, "PARTY", bx, by, 20, Battle.Accent);
-        if (!fresh) Battle.Text(c, "PRESS 1-6 TO LEAD WITH THAT EGG", bx + 130, by, 20, grey);
-        // The game's own rows. These were six typed-out strings in a format the collection has
-        // never used - and being one line each, they hid that the real rows were two.
+
+        // One roster for the whole picture. The footer used to be computed from a state built
+        // separately, with one egg in the nest against the fifty-six drawn above it - so the
+        // render showed a full nest and a footer describing a game that had almost nothing in
+        // it. Two states in one screenshot is a render telling two different stories.
         var roster = new Eggverse.GameState(false);
         if (fresh) roster.Party.Add(Eggverse.EggInstance.Wild("sprouteg", 5));
-        else foreach (var id in new[] { "sprouteg", "frizzlebolt", "bubblenog", "glacegg", "shadowhisk", "boulderoo" })
-            roster.Party.Add(Eggverse.EggInstance.Wild(id, 21));
-
-        for (int i = 0; i < roster.Party.Count; i++)
-            Battle.Text(c, Strip(Eggverse.HudView.DescribeStoredEgg(roster.Party[i])).ToUpperInvariant(),
-                        bx, by - step20 * (i + 1), 20, Battle.Ink);
-
-        float ny = by - step20 * (roster.Party.Count + 2);
-        Battle.Text(c, "NEST", bx, ny, 20, Battle.Accent);
-        if (fresh)
+        else
         {
-            Battle.Text(c, "EMPTY. ONCE YOUR PARTY IS FULL, ANYTHING ELSE YOU", bx, ny - step20, 20, grey);
-            Battle.Text(c, "CATCH WAITS HERE - AND YOU CAN TRADE IT BACK IN.", bx, ny - step20 * 2, 20, grey);
+            foreach (var id in new[] { "sprouteg", "frizzlebolt", "bubblenog", "glacegg", "shadowhisk", "boulderoo" })
+                roster.Party.Add(Eggverse.EggInstance.Wild(id, 21));
+            var stored = new[] { "sprouteg", "tidepoach", "cobblet", "yolkano", "chillet" };
+            for (int i = 0; i < 56; i++)
+                roster.Nest.Add(Eggverse.EggInstance.Wild(stored[i % stored.Length], 12 + i % 19));
         }
-        else Battle.Text(c, "56 BACK HOME", bx + 110, ny, 20, dim);
-        // The nest rows, also from the game. These were invented too, in yet another format -
-        // full element names where the row uses three letters - which is how a column of
-        // two-line rows looked like a column of one-line rows for as long as it did.
-        var stored = new[] { "sprouteg", "tidepoach", "cobblet", "yolkano", "chillet" };
-        const int focusRow = 4;   // the nest cursor, four rows down
-        for (int i = 0; !fresh && i < Eggverse.HudView.NestWindowSize; i++)
+
+        int nestScroll = 0;
+        string column = Eggverse.HudView.CollectionBodyText(
+            roster, roster.Party.Count + 4, true, ref nestScroll, order);
+
+        int row = 0;
+        foreach (var raw in column.Split('\n'))
         {
-            bool here = i == focusRow;
-            var egg = Eggverse.EggInstance.Wild(stored[i % stored.Length], 12 + i);
-            if (here) Battle.Text(c, "\u25b8", bx, ny - step20 * (i + 1), 20, Battle.Accent);
-            Battle.Text(c, Strip(Eggverse.HudView.DescribeStoredEgg(egg)).ToUpperInvariant(),
-                        bx + 18, ny - step20 * (i + 1), 20, here ? Battle.Accent : Battle.Ink);
+            var runs = Runs(raw, Battle.Ink);
+            float pen = bx;
+            foreach (var r in runs)
+            {
+                if (r.text.Trim().Length > 0)
+                    Battle.Text(c, r.text.ToUpperInvariant(), pen, by - step20 * row, 20, r.col);
+                pen += Battle.TextWidth(r.text, 20);
+            }
+            row++;
         }
-        if (!fresh)
-            Battle.Text(c, "      36 MORE BELOW", bx,
-                        ny - step20 * (Eggverse.HudView.NestWindowSize + 1), 20, grey);
 
         // dividers
         Battle.Rect(c, x0 + 772, y1 - 82 - 786, x0 + 774, y1 - 82, Col.Hex(0x2C3250));
@@ -69,29 +73,33 @@ static class Collection
 
         // ---- column 2: the field record, every species, no window ----
         float dx = x0 + 800, dy = y1 - 84;
+        // ---- column 2: the field record ----
+        //
+        // From CollectionDexText, like the column beside it. This laid out its own header, its
+        // own "NN * NAME", its own caught/seen marks and its own counts - four guesses about
+        // strings the game composes, and the marks were not even the ones it uses (the record
+        // draws filled, half and empty circles; this drew *, - and 0).
         float step19 = 19f * 1.16f;
-        Battle.Text(c, "FIELD RECORD", dx, dy, 19, Battle.Accent);
-        Battle.Text(c, $"{caughtCount}/{SpeciesDatabase.CatchableCount} CAUGHT · {caughtCount + 2}/{SpeciesDatabase.Count} SEEN",
-                    dx + 150, dy, 19, dim);
-
-        for (int i = 0; i < all.Count; i++)
+        for (int i = 0; i < caughtCount && i < all.Count; i++)
         {
-            var sp = all[i];
-            bool caught = i < caughtCount;
-            bool seen = i < caughtCount + 2;
-            bool here = i == cursor;
-            float ly = dy - step19 * (i + 2);
-            var tint = caught ? Col.Hex(TypeHex(sp.Type)) : seen ? dim : grey;
-            string mark = caught ? "*" : seen ? "-" : "0";
-            string name = (caught || seen) ? sp.Name.ToUpperInvariant() : "? ? ?";
-            if (here) Battle.Text(c, ">", dx - 12, ly, 19, Battle.Accent);
-            // The element beside the name, at the size the record draws it — the list used to
-            // carry element by colour alone, which is the one thing this palette is not allowed
-            // to do.
-            string kind = (caught || seen) ? "  " + Eggverse.TypeChart.Abbrev(sp.Type) : "";
-            Battle.Text(c, $"{i + 1:00} {mark} {name}", dx + 8, ly, 19, tint);
-            if (kind.Length > 0)
-                Battle.Text(c, kind, dx + 8 + Battle.TextWidth($"{i + 1:00} {mark} {name}", 19), ly, 15, dim);
+            roster.Caught.Add(all[i].Id);
+            roster.Seen.Add(all[i].Id);
+        }
+        for (int i = caughtCount; i < caughtCount + 2 && i < all.Count; i++)
+            roster.Seen.Add(all[i].Id);
+
+        int dexRow = 0;
+        foreach (var raw in Eggverse.HudView.CollectionDexText(roster, cursor)
+                                   .Replace("<size=15>", "").Replace("</size>", "").Split('\n'))
+        {
+            float pen = dx;
+            foreach (var r in Runs(raw, Battle.Ink))
+            {
+                if (r.text.Trim().Length > 0)
+                    Battle.Text(c, r.text.ToUpperInvariant(), pen, dy - step19 * dexRow, 19, r.col);
+                pen += Battle.TextWidth(r.text, 19);
+            }
+            dexRow++;
         }
 
         // ---- column 3: detail on the cursor ----
@@ -134,7 +142,7 @@ static class Collection
                 }
             }
 
-            Battle.TextCentre(c, FooterFor(false),
+            Battle.TextCentre(c, FooterFor(roster),
                               Battle.W / 2f, y0 + 40, 20, dim);
             return c.Px;
         }
@@ -185,7 +193,7 @@ static class Collection
             }
         }
 
-        Battle.TextCentre(c, FooterFor(fresh),
+        Battle.TextCentre(c, FooterFor(roster),
                           Battle.W / 2f, y0 + 40, 20, dim);
         return c.Px;
     }
@@ -210,6 +218,35 @@ static class Collection
         return ((int)(col.r * 255) << 16) | ((int)(col.g * 255) << 8) | (int)(col.b * 255);
     }
 
+    /// Splits a rich-text line into coloured runs, the same way the title card does.
+    static System.Collections.Generic.List<(string text, Col col)> Runs(string line, Col baseCol)
+    {
+        var outp = new System.Collections.Generic.List<(string, Col)>();
+        int i = 0;
+        Col current = baseCol;
+        while (i < line.Length)
+        {
+            var m = System.Text.RegularExpressions.Regex.Match(
+                line.Substring(i), @"^<(/?)(b|color)(=#([0-9A-Fa-f]{6}))?>");
+            if (m.Success)
+            {
+                if (m.Groups[1].Value == "/") current = baseCol;
+                else if (m.Groups[2].Value == "color" && m.Groups[4].Success)
+                    current = Col.Hex(Convert.ToInt32(m.Groups[4].Value, 16));
+                i += m.Length;
+                continue;
+            }
+            // A '<' that is not one of the tags above is literal text, and consuming zero
+            // characters here spins forever - which is what "Out of memory" after title.bmp
+            // actually was. The record column carries <size=...>, which this never matched.
+            int next = line.IndexOf('<', i + 1);
+            if (next < 0) next = line.Length;
+            outp.Add((line.Substring(i, next - i), current));
+            i = next;
+        }
+        return outp;
+    }
+
     static string Strip(string t) =>
         System.Text.RegularExpressions.Regex.Replace(t, "<[^>]+>", "");
 
@@ -220,15 +257,6 @@ static class Collection
     }
 
     /// The game's own footer, which changes with what the player actually has.
-    static string FooterFor(bool fresh)
-    {
-        var st = new Eggverse.GameState();
-        if (!fresh)
-        {
-            while (st.Party.Count < Eggverse.GameState.PartySize)
-                st.Party.Add(Eggverse.EggInstance.Wild("sprouteg", 5));
-            st.Nest.Add(Eggverse.EggInstance.Wild("sprouteg", 5));
-        }
-        return Eggverse.HudView.HintFor(st).ToUpperInvariant();
-    }
+    static string FooterFor(Eggverse.GameState roster) =>
+        Eggverse.HudView.HintFor(roster).ToUpperInvariant();
 }
