@@ -31,7 +31,7 @@ namespace Eggverse
             distance <= 0f ? 0f : distance / FlyMaxSpeed + AccelerationPenalty;
 
         const float AccelerationPenalty = 0.34f;
-        const float WalkSpeed = 13f;
+        public const float WalkSpeed = 13f;
         /// <summary>How much speed the rim takes as you slide along it.</summary>
         const float RimFriction = 0.92f;
         const float WalkSmoothing = 14f;

@@ -983,6 +983,28 @@ namespace Eggverse
                     }
             }
 
+            // ---- the stir before an encounter ----
+            {
+                // A field turning something up used to be a cut with no tell at all. The stir
+                // has to last long enough to be a warning rather than a flicker, and the
+                // shortest walk is the one that decides it.
+                float stirShort = SurfaceMode.EncounterWalkMin * (1f - SurfaceMode.StirBegins);
+                float stirLong = SurfaceMode.EncounterWalkMax * (1f - SurfaceMode.StirBegins);
+                float shortSeconds = stirShort / TeoController.WalkSpeed;
+                float longSeconds = stirLong / TeoController.WalkSpeed;
+
+                check(shortSeconds > 0.2f,
+                      "the shortest stir is long enough to notice (" + shortSeconds.ToString("0.00") + "s)");
+                check(longSeconds < 1.5f,
+                      "the longest stir does not outstay its welcome (" + longSeconds.ToString("0.00") + "s)");
+
+                // And it must not be so early that a field is stirring most of the time you
+                // are standing in one, which would make it noise rather than a signal.
+                check(SurfaceMode.StirBegins > 0.4f,
+                      "a field is calm for most of the walk across it (stirs from " +
+                      (SurfaceMode.StirBegins * 100f).ToString("0") + "%)");
+            }
+
             // ---- roamer temperament ----
             {
                 // Split on the median, so both behaviours ship no matter how the roster grows.

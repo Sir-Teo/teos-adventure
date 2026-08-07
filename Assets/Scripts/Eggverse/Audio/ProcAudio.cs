@@ -9,7 +9,7 @@ namespace Eggverse
         Hit, HitStrong, HitWeak, Crit,
         Faint, LevelUp, Evolve, Heal,
         CartonThrow, CartonWobble, CatchSuccess, CatchFail,
-        Encounter, Land, Liftoff, Talk, Chart, Save, Inscription,
+        Encounter, Land, Liftoff, Talk, Chart, Save, Inscription, Rustle,
         Debuff
     }
 
@@ -256,6 +256,17 @@ namespace Eggverse
                 case Sfx.Talk:
                     buf = Buffer(0.045f);
                     AddNote(buf, 0f, 0.035f, 420f, 400f, 0.10f, 1, 4f);
+                    break;
+
+                case Sfx.Rustle:
+                    // Shell grit shifting, not a creature. Short, quiet and high, so it sits
+                    // clear of everything else on the surface and never competes with the
+                    // encounter sting that may be two steps behind it.
+                    buf = Buffer(0.22f);
+                    // Smoothing 0.08 keeps it bright - shell grit rather than a rumble - and
+                    // the decay power is high so it is gone almost before you register it.
+                    AddNoise(buf, 0f, 0.20f, 0.075f, 0.08f, 4.2f);
+                    AddNote(buf, 0.01f, 0.06f, 1760f, 1520f, 0.025f, 1, 6f);
                     break;
 
                 case Sfx.Inscription:

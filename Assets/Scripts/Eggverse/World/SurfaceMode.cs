@@ -63,6 +63,19 @@ namespace Eggverse
         PlanetDef current;
         readonly List<Transform> fields = new List<Transform>();
         readonly List<float> fieldRadii = new List<float>();
+        readonly List<float> fieldBaseScale = new List<float>();
+
+        // How close the field you are standing in is to turning something up. Walking used to
+        // produce a battle out of nowhere: no tell, no beat, just a cut. The whole pleasure of
+        // crossing tall grass is the moment before it gives.
+        int stirringField = -1;
+        float stirAmount;
+        bool stirAnnounced;
+        // 0.55, not 0.68. Walking is 13 units a second and an encounter is 7 to 15 units of it,
+        // so a stir starting at 0.68 gave between a third and three quarters of a second - not
+        // long enough to read as a warning at the short end, which is where it matters most.
+        public const float StirBegins = 0.55f;
+        public const float EncounterWalkMin = 7f, EncounterWalkMax = 15f;
         readonly List<Roamer> roamers = new List<Roamer>();
         readonly List<WorldLabel> labels = new List<WorldLabel>();
         readonly List<NpcView> npcs = new List<NpcView>();
@@ -127,7 +140,8 @@ namespace Eggverse
             BuildNpcs(planet);
 
             fieldDistance = 0f;
-            nextEncounterDistance = Random.Range(7f, 15f);
+            nextEncounterDistance = Random.Range(EncounterWalkMin, EncounterWalkMax);
+            SetStir(-1, 0f);
             encounterCooldown = 1.0f;
             engagedRoamer = -1;
         }
@@ -139,6 +153,9 @@ namespace Eggverse
             labels.Clear();
             fields.Clear();
             fieldRadii.Clear();
+            fieldBaseScale.Clear();
+            stirringField = -1;
+            stirAnnounced = false;
             roamers.Clear();
             npcs.Clear();
             nestStation = null;
@@ -397,6 +414,7 @@ namespace Eggverse
                 var sr = Spawn("ShellField", ProcArt.Blob("field", Color.white, i * 31 + 11), pos, radius * 2f, fieldColor, -30);
                 fields.Add(sr.transform);
                 fieldRadii.Add(radius * 0.8f);
+                fieldBaseScale.Add(sr.transform.localScale.x);
 
                 // Speckles of shell fragments so the patch reads as "eggs hide here".
                 for (int j = 0; j < 5; j++)
@@ -983,28 +1001,73 @@ namespace Eggverse
             }
         }
 
+        /// <summary>
+        /// Makes the field under you stir as it gets close to turning something up. Restores the
+        /// previous field when you step out of it, because a field left mid-stir stays lifted
+        /// and bright for the rest of the visit.
+        /// </summary>
+        void SetStir(int index, float amount)
+        {
+            amount = Mathf.Clamp01(amount);
+
+            if (stirringField != index && stirringField >= 0 && stirringField < fields.Count)
+            {
+                var old = fields[stirringField];
+                if (old != null) old.localScale = Vector3.one * fieldBaseScale[stirringField];
+                stirAnnounced = false;
+            }
+
+            stirringField = index;
+            stirAmount = amount;
+            if (index < 0 || index >= fields.Count) return;
+
+            var t = fields[index];
+            if (t == null) return;
+
+            // Breathes faster as it rises: 3.2 Hz at the start of the stir, 7 at the end.
+            float beat = Mathf.Sin(Time.time * Mathf.Lerp(3.2f, 7f, amount));
+            float lift = 1f + amount * (0.045f + 0.02f * beat);
+            t.localScale = Vector3.one * (fieldBaseScale[index] * lift);
+
+            if (amount > 0.02f && !stirAnnounced)
+            {
+                stirAnnounced = true;
+                dir.Audio.Play(Sfx.Rustle);
+            }
+        }
+
         void TickFieldEncounters(float dt)
         {
             if (encounterCooldown > 0f) return;
 
             Vector2 teo = dir.Teo.transform.position;
             bool inside = false;
+            int insideIndex = -1;
             for (int i = 0; i < fields.Count; i++)
             {
-                if (Vector2.Distance(teo, fields[i].position) <= fieldRadii[i]) { inside = true; break; }
+                if (Vector2.Distance(teo, fields[i].position) <= fieldRadii[i])
+                { inside = true; insideIndex = i; break; }
             }
 
             if (!inside)
             {
                 fieldDistance = Mathf.Max(0f, fieldDistance - dt * 0.5f);
+                SetStir(-1, 0f);
                 return;
             }
 
             fieldDistance += dir.Teo.DistanceMovedThisFrame;
+
+            // The last third of the walk shows on the field itself: it lifts, brightens and
+            // breathes a little faster the closer it gets. A player who is paying attention has
+            // a second to stop, and one who is not loses nothing.
+            float tension = nextEncounterDistance > 0.01f ? fieldDistance / nextEncounterDistance : 0f;
+            SetStir(insideIndex, Mathf.InverseLerp(StirBegins, 1f, tension));
+
             if (fieldDistance < nextEncounterDistance) return;
 
             fieldDistance = 0f;
-            nextEncounterDistance = Random.Range(7f, 15f);
+            nextEncounterDistance = Random.Range(EncounterWalkMin, EncounterWalkMax);
             engagedRoamer = -1;
 
             string speciesId = current.RollSpecies();
