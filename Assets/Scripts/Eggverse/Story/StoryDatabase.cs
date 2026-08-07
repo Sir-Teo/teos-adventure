@@ -96,6 +96,30 @@ namespace Eggverse
         public const int RecordNoticeFirst = 10;
         public const int RecordNoticeSecond = 18;
 
+        /// <summary>
+        /// What each gate flag means, in words, for the "Still needed" line. A beat that wants
+        /// two people found reads the same whether you have found neither or one of them, which
+        /// is the moment a player most wants to be told which one is left.
+        /// </summary>
+        static readonly Dictionary<string, string> FlagLabels = new Dictionary<string, string>
+        {
+            { "met_ori",      "Ori at the Yolkhaven Nest Station" },
+            { "ori_briefed",  "your three eggs, back to Ori" },
+            { "keeper_marn",  "Marn on Voltacrest" },
+            { "keeper_sable", "Sable on Glacierim" },
+            { "learned_truth","Pim on Aetherwake" },
+            { "beat_vess_1",  "Vess on Cobblestead" },
+            { "beat_vess_2",  "Vess on Vesper" },
+            { "beat_amy",     "Amy on Amaranth Prime" },
+        };
+
+        /// <summary>A short phrase for a gate flag, or null if it has none.</summary>
+        public static string LabelForFlag(string flag)
+        {
+            string label;
+            return FlagLabels.TryGetValue(flag, out label) ? label : null;
+        }
+
         public const int FirstCatchEggs = 3;
         public const int GateEggs = 6;
         public const int GateTypes = 4;

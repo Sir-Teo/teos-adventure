@@ -251,6 +251,27 @@ class Sim {
                 Console.WriteLine($"  {gates} story gates, all reachable from {granted.Count} grantable flags");
             }
 
+            // ---- what the objective panel says as a beat is half-done ----
+            {
+                var stX = new GameState();
+                var drift = new StoryState();
+                int driftIdx = 0;
+                for (int i = 0; i < StoryDatabase.Beats.Length; i++)
+                    if (StoryDatabase.Beats[i].Id == "drift_keepers") driftIdx = i;
+
+                drift.RestoreFrom(new[] { "met_ori", "ori_briefed" }, driftIdx);
+                string both = drift.CurrentBlockerText(stX);
+
+                var half = new StoryState();
+                half.RestoreFrom(new[] { "met_ori", "ori_briefed", "keeper_marn" }, driftIdx);
+                string one = half.CurrentBlockerText(stX);
+
+                Console.WriteLine($"  neither keeper found: \"{both}\"");
+                Console.WriteLine($"  Marn found:           \"{one}\"");
+                Check(both != one, "the objective panel notices half-finished progress");
+                Check(one != null && !one.Contains("Marn"), "and stops asking for the one already found");
+            }
+
             // ---- the ending has to reach the people who set it up ----
             // Every named character with hand-written dialogue must say something different
             // once Amy is beaten. Marn, Sable, Pim and Vess all still spoke their mid-game

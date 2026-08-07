@@ -680,6 +680,38 @@ namespace Eggverse
                       "counts pluralise");
             }
 
+            // ---- the "Still needed" line ----
+            // Every gate flag has to have a phrase, or a beat waiting on it says nothing at all
+            // about what is left - which is precisely when a player is looking.
+            {
+                foreach (var beat in StoryDatabase.Beats)
+                {
+                    if (beat.RequiredFlags == null) continue;
+                    foreach (var flag in beat.RequiredFlags)
+                        check(StoryDatabase.LabelForFlag(flag) != null,
+                              "beat '" + beat.Id + "' waits on '" + flag + "', which has no phrase " +
+                              "for the Still needed line");
+                }
+
+                // It sits under the objective in a 524x150 box at font 20, and the worst case is
+                // a beat waiting on two people at once.
+                var probe = new StoryState();
+                var st10 = new GameState();
+                for (int i = 0; i < StoryDatabase.Beats.Length; i++)
+                {
+                    var walk = new StoryState();
+                    walk.RestoreFrom(new string[0], i);
+                    string blocker = walk.CurrentBlockerText(st10);
+                    if (blocker == null) continue;
+                    string full = StoryDatabase.Beats[i].Chapter + "\n" +
+                                  StoryDatabase.Beats[i].Objective + "\nStill needed: " + blocker;
+                    check(lines(full, 524f, 20) <= capacity(150f, 20),
+                          "beat '" + StoryDatabase.Beats[i].Id + "' objective and blocker fit the panel (" +
+                          lines(full, 524f, 20) + " of " + capacity(150f, 20) + " lines)");
+                }
+                _ = probe;
+            }
+
             // ---- record milestones ----
             // Ori has a reward at each threshold but only hands it over face to face, so the
             // moment of crossing gets its own line. Both places now read the same constants.

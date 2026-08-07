@@ -84,12 +84,23 @@ namespace Eggverse
             var beat = Current;
             var parts = new List<string>();
 
+            // Whoever is still to be found. A beat asking for two people said the same thing
+            // whether you had found neither or one of them.
+            if (beat.RequiredFlags != null)
+                for (int i = 0; i < beat.RequiredFlags.Length; i++)
+                {
+                    if (HasFlag(beat.RequiredFlags[i])) continue;
+                    string label = StoryDatabase.LabelForFlag(beat.RequiredFlags[i]);
+                    if (label != null) parts.Add(label);
+                }
+
             if (beat.RequiredEggs > 0 && state.TotalCollected < beat.RequiredEggs)
-                parts.Add((beat.RequiredEggs - state.TotalCollected) + " more egg" + (beat.RequiredEggs - state.TotalCollected == 1 ? "" : "s"));
+                parts.Add(Words.Count(beat.RequiredEggs - state.TotalCollected, "more egg"));
             if (beat.RequiredTypes > 0 && state.DistinctTypesHeld < beat.RequiredTypes)
-                parts.Add((beat.RequiredTypes - state.DistinctTypesHeld) + " more type" + (beat.RequiredTypes - state.DistinctTypesHeld == 1 ? "" : "s"));
+                parts.Add(Words.Count(beat.RequiredTypes - state.DistinctTypesHeld, "more type"));
             if (beat.RequiredLevel > 0 && state.HighestPartyLevel < beat.RequiredLevel)
-                parts.Add("an egg at level " + beat.RequiredLevel);
+                parts.Add("an egg at level " + beat.RequiredLevel +
+                          " (best is " + state.HighestPartyLevel + ")");
 
             return parts.Count == 0 ? null : string.Join(", ", parts.ToArray());
         }
