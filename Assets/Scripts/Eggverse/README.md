@@ -119,6 +119,12 @@ still paying for three turns later:
 | **Chilled** | Frost — *Frost Crack* | moves at half speed |
 | **Dazed** | Volt — *Volt Crack* | loses the turn outright one time in four |
 
+The move button says so on its own line — *LEAVES SCORCHED* in the condition's colour — rather
+than leaving the player to infer it from flavour text. It sits under the stat line because
+beside the name it made "Frost Crack  95%  CHILL" 287px wide in a 286px button, and on the end
+of the stat line it made 34 characters where 32 fit. Abbreviating it to BURN would have fitted
+and would have contradicted the SCORCHED shown on the card.
+
 One at a time, three rounds each, and **an egg cannot catch the condition its own element deals
 out** — Molten never burns, Frost never chills, Volt is never dazed. They clear when the fight
 ends, so nothing goes home with one and nothing touches the save file.

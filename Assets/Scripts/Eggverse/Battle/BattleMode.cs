@@ -1144,11 +1144,25 @@ namespace Eggverse
                 string accuracy = slot.Move.Accuracy >= 100 ? ""
                     : "  <color=#E5A055>" + slot.Move.Accuracy + "%</color>";
 
+                // A move that leaves something behind says so on the button. Reading it off the
+                // flavour text only works if the player already knows to look for it.
+                // Its own line. Beside the name it made "Frost Crack  95%  CHILL" 287px in a
+                // 286px button; on the end of the stat line it made 34 characters where 32 fit.
+                // Abbreviating it to BURN would have fitted and would have contradicted the
+                // SCORCHED shown on the card, which is worse than a third line.
+                string rider = "";
+                switch (BattleCalc.RiderOf(slot.Move.Effect))
+                {
+                    case EggStatus.Scorched: rider = "\n<color=#E5734A>LEAVES SCORCHED</color>"; break;
+                    case EggStatus.Chilled:  rider = "\n<color=#8FE3F2>LEAVES CHILLED</color>"; break;
+                    case EggStatus.Dazed:    rider = "\n<color=#FFC24D>LEAVES DAZED</color>"; break;
+                }
+
                 UIKit.CaptionOf(moveButtons[i]).text =
                     "<color=#" + hex + ">" + slot.Move.Name + "</color>" + accuracy + "\n" +
                     "<size=17><color=#A8B2C4>" + TypeChart.Name(slot.Move.Type) +
                     (slot.Move.IsStatus ? " · STATUS" : " · PWR " + slot.Move.Power) +
-                    " · PP " + slot.PP + "/" + slot.Move.MaxPP + "</color></size>";
+                    " · PP " + slot.PP + "/" + slot.Move.MaxPP + "</color>" + rider + "</size>";
                 moveButtons[i].interactable = slot.Usable;
             }
         }

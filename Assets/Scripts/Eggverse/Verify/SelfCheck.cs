@@ -447,6 +447,30 @@ namespace Eggverse
             check(lines("Cartons 12/12 · Salves 4/4", 524f, 19) == 1, "the HUD supply line wraps");
             check(lines("Nest 240 · Types 8/8 · Record 24/24", 524f, 19) == 1, "the HUD collection line wraps");
 
+            // ---- move buttons ----
+            // Name, accuracy and rider share one 330px line; the sub-line carries the rest.
+            foreach (var mv in MoveDatabase.All)
+            {
+                string acc = mv.Accuracy >= 100 ? "" : "  " + mv.Accuracy + "%";
+                var rid = BattleCalc.RiderOf(mv.Effect);
+                string rider = rid == EggStatus.Scorched ? "LEAVES SCORCHED"
+                             : rid == EggStatus.Chilled ? "LEAVES CHILLED"
+                             : rid == EggStatus.Dazed ? "LEAVES DAZED" : "";
+                check(lines(mv.Name + acc, 330f - 44f, 24) == 1,
+                      "move button top line fits: \"" + mv.Name + acc + "\"");
+
+                string sub = TypeChart.Name(mv.Type) + (mv.IsStatus ? " · STATUS" : " · PWR " + mv.Power) +
+                             " · PP " + mv.MaxPP + "/" + mv.MaxPP;
+                check(lines(sub, 330f - 44f, 17) == 1, "move button sub-line fits: \"" + sub + "\"");
+                if (rider.Length > 0)
+                    check(lines(rider, 330f - 44f, 17) == 1, "move button rider line fits: \"" + rider + "\"");
+
+                // Name at 24 plus one or two lines at 17, inside a 74px button.
+                float used = 24f * 1.16f + 17f * 1.16f * (rider.Length > 0 ? 2 : 1);
+                check(used <= 74f,
+                      mv.Name + "'s button is tall enough (" + used.ToString("0") + " of 74px)");
+            }
+
             // ---- lingering conditions ----
             {
                 // Each condition is dealt out by one element and shrugged off by that element.

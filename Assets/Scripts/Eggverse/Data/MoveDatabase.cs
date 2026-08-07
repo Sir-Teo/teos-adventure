@@ -42,8 +42,25 @@ namespace Eggverse
         /// One line for the battle menu. Uses the authored blurb where there is one, and
         /// otherwise says something true about what the move actually does.
         /// </summary>
+        /// <summary>The lingering condition this move leaves, in plain words, or null.</summary>
+        public string RiderNote()
+        {
+            switch (Effect)
+            {
+                case MoveEffect.Scorch: return "Scorches the target: it burns for three rounds.";
+                case MoveEffect.Chill:  return "Chills the target: half speed for three rounds.";
+                case MoveEffect.Daze:   return "Dazes the target: it may skip a turn for three rounds.";
+            }
+            return null;
+        }
+
         public string Describe()
         {
+            // The message box holds 60 characters, which is not enough for flavour and
+            // mechanics both. The rider is the part the player has to act on, so it wins.
+            string rider = RiderNote();
+            if (rider != null) return rider;
+
             if (!string.IsNullOrEmpty(Blurb)) return Blurb;
 
             switch (Effect)
