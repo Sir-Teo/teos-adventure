@@ -1138,8 +1138,29 @@ namespace Eggverse
         /// arrows whose count is the magnitude, which the render had been leaving off entirely -
         /// so a plate reading "Warm Yolk  ATK +1" was drawn where the game shows "ATK +1▲".
         /// </summary>
-        public static string PlateMeta(EggInstance egg) =>
-            TypeChart.TraitName(egg.Trait) + StatusTag(egg) + Stages(egg);
+        public static string PlateMeta(EggInstance egg) => PlateMeta(egg, null);
+
+        /// <summary>
+        /// The line under the name: trait, any status, any stat stages, and - on your own plate -
+        /// whether you are going to move before the thing in front of you.
+        ///
+        /// Turn order is decided by speed and nothing said what it was. You picked a move without
+        /// knowing whether you would live to use it, which matters most in exactly the moment it
+        /// is hardest to work out: after a Chill has halved your speed mid-fight.
+        /// </summary>
+        public static string PlateMeta(EggInstance egg, EggInstance against)
+        {
+            string order = "";
+            if (against != null && !egg.IsFainted && !against.IsFainted)
+            {
+                order = egg.Spd == against.Spd
+                    ? "   <size=18><color=#A8B2C4>coin flip</color></size>"
+                    : egg.Spd > against.Spd
+                        ? "   <size=18><color=#5FD068>moves first</color></size>"
+                        : "   <size=18><color=#E5A055>moves second</color></size>";
+            }
+            return TypeChart.TraitName(egg.Trait) + StatusTag(egg) + Stages(egg) + order;
+        }
 
         /// <summary>Whether this foe is worth a carton, in the words the plate uses.</summary>
         public static string PlateRecord(EggInstance foe, GameState state, bool isTrainer) =>
@@ -1161,7 +1182,7 @@ namespace Eggverse
 
             var mine = Mine;
             myNameText.text = PlateName(mine);
-            myMetaText.text = PlateMeta(mine);
+            myMetaText.text = PlateMeta(mine, foe);
             myTypeText.text = TypeChart.Name(mine.Type);
             myTypeChip.color = TypeChart.ColorOf(mine.Type);
             myHpBar.SetFraction(mine.HPFraction);

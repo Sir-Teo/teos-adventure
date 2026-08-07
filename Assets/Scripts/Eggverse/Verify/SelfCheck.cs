@@ -1915,8 +1915,14 @@ namespace Eggverse
 
                     check(lines(BattleMode.PlateName(egg), 640f, 30) == 1,
                           sp.Name + "'s plate name fits: " + BattleMode.PlateName(egg));
+                    // With the turn-order tag on it, which only the player's plate carries and
+                    // which is the widest the line ever gets.
+                    var rival = EggInstance.WildElder(sp.Id, 30);
+                    check(lines(BattleMode.PlateMeta(egg, rival), 640f, 20) == 1,
+                          sp.Name + "'s plate meta fits with the turn-order tag: " +
+                          BattleMode.PlateMeta(egg, rival));
                     check(lines(BattleMode.PlateMeta(egg), 640f, 20) == 1,
-                          sp.Name + "'s plate meta fits: " + BattleMode.PlateMeta(egg));
+                          sp.Name + "'s plate meta fits without it: " + BattleMode.PlateMeta(egg));
 
                     check(BattleMode.PlateRecord(egg, fresh, false).Contains("New species"),
                           sp.Name + " is flagged as new before you have caught one");
@@ -1925,6 +1931,41 @@ namespace Eggverse
                     check(BattleMode.PlateRecord(egg, fresh, true) == "",
                           sp.Name + " carries no carton note when it belongs to a trainer");
                 }
+            }
+
+            // ---- who moves first ----
+            {
+                // Turn order is decided by speed and the game said nothing about it. A player
+                // chose a move without knowing whether they would live to use it - hardest to
+                // work out in exactly the moment it matters most, after a Chill has halved
+                // their speed mid-fight.
+                var quick = EggInstance.Wild("frizzlebolt", 20);   // fastest tier
+                var slow = EggInstance.Wild("cobblet", 20);        // slowest tier
+                check(quick.Spd > slow.Spd, "the two probe eggs really do differ in speed");
+
+                check(BattleMode.PlateMeta(quick, slow).Contains("moves first"),
+                      "a faster egg is told it moves first");
+                check(BattleMode.PlateMeta(slow, quick).Contains("moves second"),
+                      "a slower egg is told it moves second");
+
+                var twin = EggInstance.Wild("cobblet", 20);
+                check(BattleMode.PlateMeta(slow, twin).Contains("coin flip"),
+                      "an exact tie is called what it is");
+
+                // It agrees with the rule that actually orders the turn.
+                check(BattleCalc.MoverGoesFirst(quick, slow) &&
+                      BattleMode.PlateMeta(quick, slow).Contains("moves first"),
+                      "the tag agrees with the turn the game takes");
+
+                // Only your plate carries it - the foe's says nothing about order.
+                check(!BattleMode.PlateMeta(quick).Contains("moves"),
+                      "the foe's plate does not carry a turn-order tag");
+
+                // And a chilled egg is compared on its chilled speed, which is the whole point.
+                var chilled = EggInstance.Wild("frizzlebolt", 20);
+                chilled.SpdStage = -2;
+                check(chilled.Spd < quick.Spd,
+                      "a chilled egg really is slower (" + chilled.Spd + " against " + quick.Spd + ")");
             }
 
             // ---- your own egg's panel ----

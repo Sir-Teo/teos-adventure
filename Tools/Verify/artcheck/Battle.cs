@@ -265,7 +265,7 @@ static class Battle
         // My card: x 1150..1850, y 325..535
         Card(c, 1150, 325, 1850, 535, Strip(Eggverse.BattleMode.PlateName(mine)),
              Eggverse.TypeChart.Name(mine.Type).ToUpperInvariant(), Col.Hex(TypeHex(mine.Type)),
-             Strip(Eggverse.BattleMode.PlateMeta(mine)).ToUpperInvariant(), 0.34f,
+             Strip(Eggverse.BattleMode.PlateMeta(mine, foe)).ToUpperInvariant(), 0.34f,
              mine.CurrentHP + "/" + mine.MaxHP + " HP", true);
 
         // Message box: x 40..1120, y 40..250
