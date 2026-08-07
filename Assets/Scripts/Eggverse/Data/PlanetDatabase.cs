@@ -108,6 +108,20 @@ namespace Eggverse
         }
 
         /// <summary>Roughly where a sector sits, for drawing its label on the chart.</summary>
+        /// <summary>
+        /// Every world this species can be found on. The collection screen needs the reverse of
+        /// the star map's "what lives here" — a collector hunting the last few eggs otherwise has
+        /// to fly to all seventeen worlds and read each one.
+        /// </summary>
+        public static List<PlanetDef> WorldsWith(string speciesId)
+        {
+            var found = new List<PlanetDef>();
+            for (int i = 0; i < ordered.Count; i++)
+                for (int j = 0; j < ordered[i].Spawns.Length; j++)
+                    if (ordered[i].Spawns[j].SpeciesId == speciesId) { found.Add(ordered[i]); break; }
+            return found;
+        }
+
         public static Vector2 SectorCentre(Sector s)
         {
             Vector2 sum = Vector2.zero;

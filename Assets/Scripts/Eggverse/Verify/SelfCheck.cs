@@ -447,6 +447,26 @@ namespace Eggverse
             check(lines("Cartons 12/12 · Salves 4/4", 524f, 19) == 1, "the HUD supply line wraps");
             check(lines("Nest 240 · Types 8/8 · Record 24/24", 524f, 19) == 1, "the HUD collection line wraps");
 
+            // ---- every catchable egg must actually live somewhere ----
+            // A species with a catchable rate and no spawn entry makes the record impossible to
+            // finish, and nothing else in the game would ever say so.
+            foreach (var sp in SpeciesDatabase.All)
+            {
+                var homes = PlanetDatabase.WorldsWith(sp.Id);
+                if (sp.CatchRate >= 20)
+                    check(homes.Count > 0, sp.Name + " is catchable but spawns on no world");
+
+                // The dex lists their names in a 450px box; the longest roster must still fit.
+                if (homes.Count > 0)
+                {
+                    var names = new List<string>();
+                    foreach (var h in homes) names.Add(h.Name);
+                    check(lines("FOUND ON\n" + string.Join(" · ", names.ToArray()), 450f, 19) <= 4,
+                          sp.Name + "'s found-on list fits the dex box (" +
+                          lines(string.Join(" · ", names.ToArray()), 450f, 19) + " lines)");
+                }
+            }
+
             // ---- the collection screen's three columns ----
             // Each column has a fixed height and content that grows with the game. The dex
             // lists every species with no window at all, so it is the one that breaks first.

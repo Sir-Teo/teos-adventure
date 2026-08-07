@@ -495,6 +495,30 @@ namespace Eggverse
             else lore.Append("<color=#5A6072>Seen, but not yet collected. Catch one to record its notes.</color>");
 
             dexLore.text = lore.ToString();
+
+            // Where to find it. Only worlds you have actually charted are listed — the record is
+            // a reward for exploring, not a shopping list handed over at the start.
+            var homes = PlanetDatabase.WorldsWith(species.Id);
+            var known = new System.Collections.Generic.List<string>();
+            int uncharted = 0;
+            for (int i = 0; i < homes.Count; i++)
+            {
+                if (state.Visited.Contains(homes[i].Id)) known.Add(homes[i].Name);
+                else uncharted++;
+            }
+
+            if (known.Count > 0)
+            {
+                dexLore.text += "\n\n<color=#FFC24D>FOUND ON</color>\n<color=#A8B2C4>" +
+                                string.Join(" · ", known.ToArray()) + "</color>";
+                if (uncharted > 0)
+                    dexLore.text += "\n<color=#5A6072>and " + uncharted +
+                                    (uncharted == 1 ? " world" : " worlds") + " you have not charted</color>";
+            }
+            else if (homes.Count > 0)
+            {
+                dexLore.text += "\n\n<color=#5A6072>Not seen on any world you have charted.</color>";
+            }
         }
 
         static string StatRow(string label, int value, int max)

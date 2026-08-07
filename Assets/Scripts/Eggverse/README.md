@@ -177,6 +177,16 @@ Ori notices as your record grows: at **10** species, at **18**, and when you clo
 he hands over the egg he has kept in the straw since the day he took the station — a **Bloomolk
 at level 20**. He is the one who taught you to read a nest, so he is the one who reacts to it.
 
+The star map tells you what lives on a world. The dex now tells you the other direction — pick
+any species in the field record and its entry lists **which worlds it is found on**. Three
+catchable eggs (Mossmallow, Wavelet, Bloomolk) live on exactly one world each, so without the
+reverse lookup finishing the record meant flying to all seventeen and reading each in turn.
+
+Only worlds you have already charted are named, so the record stays a reward for exploring
+rather than a shopping list handed over at the start; anything left is counted as "and N worlds
+you have not charted". The self-check requires every catchable species to spawn somewhere at
+all — one that does not would make the record impossible to finish, and nothing else would say so.
+
 ## The collection screen
 
 `Tab` opens three columns: your party and nest on the left, the 28-entry field record in the
