@@ -563,6 +563,7 @@ namespace Eggverse
             if (state.Nest.Count > 0) parts.Add("left/right pick a column");
             parts.Add("up/down move");
             if (state.Nest.Count > 0) parts.Add("Enter swaps a nest egg in");
+            if (state.Party.Count + state.Nest.Count > 0) parts.Add("N names");
             if (state.Party.Count > 1) parts.Add("1-" + state.Party.Count + " leads");
             parts.Add("Tab closes");
             return string.Join("  ·  ", parts.ToArray());
@@ -1051,6 +1052,25 @@ namespace Eggverse
                 // 1-6, which promotes any party egg to the front, that reaches every
                 // arrangement without a second cursor or a mode to get stuck in.
                 if (EggInput.ConfirmPressed && nestFocus) TakeCursorEgg();
+
+                // Naming was a 2.6 second window after a catch and nothing else. Miss it -
+                // reach for a drink, read the toast, look away - and that egg was unnamed for
+                // the rest of the run, in a game that otherwise works hard at making them
+                // yours. Any egg you can see, you can name.
+                if (EggInput.NKeyPressed && nestFocus)
+                {
+                    var subject = EggUnderCursor(dir.State);
+                    if (subject != null && dir.NameEntry != null)
+                    {
+                        dir.Audio.Play(Sfx.UiConfirm);
+                        dir.NameEntry.Open(subject, chosen =>
+                        {
+                            if (!string.IsNullOrEmpty(chosen)) subject.Nickname = chosen;
+                            dir.State.RaiseChanged();
+                            RefreshCollection();
+                        });
+                    }
+                }
             }
 
             // Fade the autosave mark rather than snapping it away.

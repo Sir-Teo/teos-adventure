@@ -1940,6 +1940,32 @@ namespace Eggverse
                 }
             }
 
+            // ---- naming is not a 2.6 second window ----
+            {
+                // Naming used to be a prompt that ran for 2.6 seconds after a catch, and
+                // nothing else. Miss it - reach for a drink, read the toast, look away - and
+                // that egg was unnamed for the rest of the run, in a game that otherwise works
+                // hard at making them yours.
+                var st = new GameState(false);
+                st.Party.Add(EggInstance.Wild("sprouteg", 10));
+                st.Nest.Add(EggInstance.Wild("cobblet", 10));
+
+                string hint = HudView.HintFor(st);
+                check(hint.Contains("N names"), "the collection says naming is available: " + hint);
+                check(lines(hint, 1200f, 20) == 1, "and the footer still fits: " + hint);
+
+                // A player with nothing at all is not told about a key that would do nothing.
+                check(!HudView.HintFor(new GameState(false)).Contains("N names"),
+                      "an empty collection does not offer to name anything");
+
+                // A name is capped where the entry screen caps it, and both the party strip
+                // and the egg panel were measured against that cap - so renaming later cannot
+                // produce a row the catch-time prompt could not have.
+                check(NameEntryView.MaxLength > 0 && NameEntryView.MaxLength <= 16,
+                      "a nickname stays inside what the rows were measured for (" +
+                      NameEntryView.MaxLength + ")");
+            }
+
             // ---- the line a returning player reads first ----
             {
                 // It said "6 in nest" when it meant the party, on a run with fifty-nine
