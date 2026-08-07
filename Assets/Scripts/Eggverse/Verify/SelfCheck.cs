@@ -983,6 +983,36 @@ namespace Eggverse
                     }
             }
 
+            // ---- the chart never asks for what you already have ----
+            {
+                // The sealed-route panel used to print the whole objective and then the
+                // outstanding list under it, so a player who had found one of two keepers read
+                // "Find Marn on Voltacrest and Sable on Glacierim" directly above "Still
+                // needed: Sable on Glacierim".
+                for (int i = 0; i < StoryDatabase.Beats.Length; i++)
+                {
+                    var walk = new StoryState();
+                    walk.RestoreFrom(new string[0], i);
+
+                    foreach (Sector sec in new[] { Sector.LongDrift, Sector.ShatteredBelt, Sector.Amaranth })
+                    {
+                        var partial = new GameState();
+                        string text = walk.SectorBlockerText(sec, partial);
+                        if (text == null || !text.Contains("Still needed:")) continue;
+
+                        string asked = text.Substring(text.IndexOf("Still needed:"));
+                        string before = text.Substring(0, text.IndexOf("Still needed:"));
+
+                        // Nothing named in the remainder may also be named above it.
+                        foreach (var npc in StoryDatabase.Npcs)
+                            if (asked.Contains(npc.Name))
+                                check(!before.Contains(npc.Name),
+                                      "the chart does not ask twice for " + npc.Name +
+                                      " at beat '" + StoryDatabase.Beats[i].Id + "'");
+                    }
+                }
+            }
+
             // ---- what the boss world tells you before you go down ----
             {
                 // Amy fields the highest levels in the game, and the pacing run says a player

@@ -54,11 +54,17 @@ namespace Eggverse
         {
             if (CanEnter(sector)) return null;
 
-            string text = "The route to " + PlanetDatabase.SectorName(sector) + " opens later. " +
-                          Current.Objective;
+            string head = "The route to " + PlanetDatabase.SectorName(sector) + " opens later.";
             string outstanding = state != null ? CurrentBlockerText(state) : null;
-            if (outstanding != null) text += "\n\nStill needed: " + outstanding;
-            return text;
+
+            // When we know what is actually left, say only that. Printing the whole objective
+            // above it produced "Find Marn on Voltacrest and Sable on Glacierim." sitting
+            // directly over "Still needed: Sable on Glacierim" - the chart telling a player to
+            // go and find somebody they had already found. The objective is on the HUD panel
+            // the whole time anyway; the chart's job here is what is outstanding.
+            return outstanding != null
+                ? head + "\n\nStill needed: " + outstanding
+                : head + " " + Current.Objective;
         }
 
         // ------------------------------------------------------------------
