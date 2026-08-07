@@ -1171,6 +1171,71 @@ namespace Eggverse
             }
         }
 
+        /// <summary>
+        /// The text on a move button. Extracted so the checks can measure what is drawn in a
+        /// 286px button and the renderer can draw what the game draws - it had been showing
+        /// cards with no effectiveness arrow on them at all, which is the one mark on the card
+        /// that changes which move you pick.
+        /// </summary>
+        public static string MoveCardText(MoveSlot slot, EggType foeType)
+        {
+            string hex = ColorUtility.ToHtmlStringRGB(TypeChart.ColorOf(slot.Move.Type));
+            // Accuracy only shown when it is worth worrying about - a 100% move needs no note.
+            string accuracy = slot.Move.Accuracy >= 100 ? ""
+                : "  <color=#E5A055>" + slot.Move.Accuracy + "%</color>";
+
+            // A move that leaves something behind says so on the button. Reading it off the
+            // flavour text only works if the player already knows to look for it.
+            // Its own line. Beside the name it made "Frost Crack  95%  CHILL" 287px in a
+            // 286px button; on the end of the stat line it made 34 characters where 32 fit.
+            // Abbreviating it to BURN would have fitted and would have contradicted the
+            // SCORCHED shown on the card, which is worse than a third line.
+            string rider = "";
+            switch (BattleCalc.RiderOf(slot.Move.Effect))
+            {
+                case EggStatus.Scorched: rider = "\n<color=#E5734A>LEAVES SCORCHED</color>"; break;
+                case EggStatus.Chilled:  rider = "\n<color=#8FE3F2>LEAVES CHILLED</color>"; break;
+                case EggStatus.Dazed:    rider = "\n<color=#FFC24D>LEAVES DAZED</color>"; break;
+            }
+
+            // Effectiveness against the egg actually standing there, on every button at once.
+            // It was only ever shown for the highlighted move, so comparing four meant arrowing
+            // through them one at a time and remembering. An arrow rather than colour alone,
+            // because the palette work assumes nothing is carried by hue.
+            string edge = "";
+            if (!slot.Move.IsStatus)
+            {
+                float mult = TypeChart.Multiplier(slot.Move.Type, foeType);
+                if (mult > 1.2f) edge = " <color=#FF8A3D>\u25b2</color>";
+                else if (mult < 0.8f) edge = " <color=#9AA4B6>\u25bc</color>";
+            }
+
+            return "<color=#" + hex + ">" + slot.Move.Name + "</color>" + accuracy + edge + "\n" +
+                   "<size=17><color=#A8B2C4>" + TypeChart.Name(slot.Move.Type) +
+                   (slot.Move.IsStatus ? " · STATUS" : " · PWR " + slot.Move.Power) +
+                   " · PP " + slot.PP + "/" + slot.Move.MaxPP + "</color>" + rider + "</size>";
+        }
+
+        /// <summary>
+        /// What the message box says about the move under the cursor. The card carries the
+        /// numbers; this carries the sentence - the arrow becomes a word, and the rider becomes
+        /// the thing you have to act on.
+        /// </summary>
+        public static string MoveMessageText(MoveSlot slot, EggType foeType)
+        {
+            string hex = ColorUtility.ToHtmlStringRGB(TypeChart.ColorOf(slot.Move.Type));
+            float mult = TypeChart.Multiplier(slot.Move.Type, foeType);
+            string effect = slot.Move.IsStatus ? ""
+                // The full name, not the abbreviation. The card abbreviates because it has a
+                // 286px button; this box is 1040px and was using half of it to say "TDL" to a
+                // player who has no reason yet to know what that stands for.
+                : mult > 1.2f ? "   <color=#FF8A3D>strong against " + TypeChart.Name(foeType) + "</color>"
+                : mult < 0.8f ? "   <color=#9AA4B6>weak against " + TypeChart.Name(foeType) + "</color>"
+                : "";
+            return "<color=#" + hex + "><b>" + slot.Move.Name + "</b></color>" + effect +
+                   "\n<size=24><color=#A8B2C4>" + slot.Move.Describe() + "</color></size>";
+        }
+
         void RefreshMoveButtons()
         {
             var mine = Mine;
@@ -1181,42 +1246,7 @@ namespace Eggverse
                 if (!has) continue;
 
                 var slot = mine.Moves[i];
-                string hex = ColorUtility.ToHtmlStringRGB(TypeChart.ColorOf(slot.Move.Type));
-                // Accuracy only shown when it is worth worrying about — a 100% move needs no note.
-                string accuracy = slot.Move.Accuracy >= 100 ? ""
-                    : "  <color=#E5A055>" + slot.Move.Accuracy + "%</color>";
-
-                // A move that leaves something behind says so on the button. Reading it off the
-                // flavour text only works if the player already knows to look for it.
-                // Its own line. Beside the name it made "Frost Crack  95%  CHILL" 287px in a
-                // 286px button; on the end of the stat line it made 34 characters where 32 fit.
-                // Abbreviating it to BURN would have fitted and would have contradicted the
-                // SCORCHED shown on the card, which is worse than a third line.
-                string rider = "";
-                switch (BattleCalc.RiderOf(slot.Move.Effect))
-                {
-                    case EggStatus.Scorched: rider = "\n<color=#E5734A>LEAVES SCORCHED</color>"; break;
-                    case EggStatus.Chilled:  rider = "\n<color=#8FE3F2>LEAVES CHILLED</color>"; break;
-                    case EggStatus.Dazed:    rider = "\n<color=#FFC24D>LEAVES DAZED</color>"; break;
-                }
-
-                // Effectiveness against the egg actually standing there, on every button at once.
-                // It was only ever shown for the highlighted move, so comparing four meant
-                // arrowing through them one at a time and remembering. An arrow rather than
-                // colour alone, because the palette work assumes nothing is carried by hue.
-                string edge = "";
-                if (!slot.Move.IsStatus)
-                {
-                    float mult = TypeChart.Multiplier(slot.Move.Type, Foe.Type);
-                    if (mult > 1.2f) edge = " <color=#FF8A3D>\u25b2</color>";
-                    else if (mult < 0.8f) edge = " <color=#9AA4B6>\u25bc</color>";
-                }
-
-                UIKit.CaptionOf(moveButtons[i]).text =
-                    "<color=#" + hex + ">" + slot.Move.Name + "</color>" + accuracy + edge + "\n" +
-                    "<size=17><color=#A8B2C4>" + TypeChart.Name(slot.Move.Type) +
-                    (slot.Move.IsStatus ? " · STATUS" : " · PWR " + slot.Move.Power) +
-                    " · PP " + slot.PP + "/" + slot.Move.MaxPP + "</color>" + rider + "</size>";
+                UIKit.CaptionOf(moveButtons[i]).text = MoveCardText(slot, Foe.Type);
                 moveButtons[i].interactable = slot.Usable;
             }
         }
@@ -1345,15 +1375,7 @@ namespace Eggverse
             // While browsing moves, the message box explains whichever one is highlighted.
             if (activeMenu == moveButtons && cursor < Mine.Moves.Count)
             {
-                var slot = Mine.Moves[cursor];
-                string hex = ColorUtility.ToHtmlStringRGB(TypeChart.ColorOf(slot.Move.Type));
-                float mult = TypeChart.Multiplier(slot.Move.Type, Foe.Type);
-                string effect = slot.Move.IsStatus ? ""
-                    : mult > 1.2f ? "   <color=#FF8A3D>strong against " + TypeChart.Abbrev(Foe.Type) + "</color>"
-                    : mult < 0.8f ? "   <color=#9AA4B6>weak against " + TypeChart.Abbrev(Foe.Type) + "</color>"
-                    : "";
-                messageText.text = "<color=#" + hex + "><b>" + slot.Move.Name + "</b></color>" + effect +
-                                   "\n<size=24><color=#A8B2C4>" + slot.Move.Describe() + "</color></size>";
+                messageText.text = MoveMessageText(Mine.Moves[cursor], Foe.Type);
             }
 
             for (int i = 0; i < activeMenu.Count; i++)

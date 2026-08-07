@@ -15,6 +15,11 @@ static class Battle
     {
         var f = new Dictionary<char, string[]>();
         void G(char c, string rows) => f[c] = rows.Split('|');
+        // The two effectiveness arrows the move cards carry. Substituting a caret for them
+        // printed "?" - the font simply had no glyph - and a missing arrow is precisely the
+        // thing this render exists to show.
+        G('\u25b2', "..#..|..#..|.###.|.###.|#####|#####|.....");
+        G('\u25bc', ".....|#####|#####|.###.|.###.|..#..|..#..");
         G('A', ".###.|#...#|#...#|#####|#...#|#...#|#...#");
         G('B', "####.|#...#|#...#|####.|#...#|#...#|####.");
         G('C', ".###.|#...#|#....|#....|#....|#...#|.###.");
@@ -225,7 +230,17 @@ static class Battle
         // Message box: x 40..1120, y 40..250
         Rect(c, 40, 40, 1120, 250, PanelDark);
         Rect(c, 40, 246, 1120, 250, PanelLight);
-        Text(c, "WHAT WILL PEBBLES DO?", 72, 196, 30, Ink);
+        // While the move menu is open the game explains the highlighted move here. The render
+        // showed the root prompt instead, so the panel looked emptier than it ever is.
+        if (menu == "move")
+        {
+            var mv0 = Eggverse.MoveDatabase.Get("voltcrack");
+            var msg = Eggverse.BattleMode.MoveMessageText(new Eggverse.MoveSlot(mv0), Eggverse.EggType.Tidal)
+                                         .Split('\n');
+            Text(c, (Strip(msg[0])), 72, 196, 28, Ink);
+            if (msg.Length > 1) Text(c, Strip(msg[1]), 72, 196 - 28f * 1.16f, 24, InkDim);
+        }
+        else Text(c, "WHAT WILL PEBBLES DO?", 72, 196, 30, Ink);
         Text(c, "ARROWS/WASD MOVE · ENTER OR SPACE SELECT · ESC BACK", 72, 84, 19, InkDim);
 
         if (menu == "action")
@@ -249,28 +264,36 @@ static class Battle
             // Move menu: same anchor, 210 tall, four buttons
             Rect(c, 1140, 40, 1880, 250, PanelDark);
             Rect(c, 1140, 246, 1880, 250, PanelLight);
-            string[] names = { "FROST CRACK  95%", "SEED SPRAY", "LAVA YOLK  95%", "TACKLE" };
-            string[] subs = { "FROST · PWR 75 · PP 15/15", "VERDANT · PWR 35 · PP 10/10",
-                              "MOLTEN · PWR 75 · PP 15/15", "PLAIN · PWR 40 · PP 25/25" };
-            string[] riders = { "LEAVES CHILLED", "", "LEAVES SCORCHED", "" };
-            var riderCols = new[] { Col.Hex(0x8FE3F2), InkDim, Col.Hex(0xE5734A), InkDim };
-            for (int i = 0; i < 4; i++)
+            // The game's own card text, not a transcription of it. The transcription had no
+            // effectiveness arrows on it at all - the one mark on a card that changes which
+            // move you pick - and I had been looking at this render for weeks.
+            var slots = new System.Collections.Generic.List<Eggverse.MoveSlot>();
+            // Real ids. Guessed ones silently became Shell Bash - MoveDatabase.Get falls back to
+            // tackle rather than throwing, which is right for a save file and invisible here.
+            // Chosen to show all three states at once: resisted, super-effective, and neither.
+            foreach (var id in new[] { "frostcrack", "voltcrack", "lavayolk", "harden" })
+            {
+                var mv = Eggverse.MoveDatabase.Get(id);
+                if (mv != null) slots.Add(new Eggverse.MoveSlot(mv));
+            }
+
+            for (int i = 0; i < slots.Count && i < 4; i++)
             {
                 float bx = 1140 + 20 + (i % 2) * 350;
                 float byTop = 250 - 20 - (i / 2) * 90;
                 bool selected = i == 0;
                 Rect(c, bx, byTop - 74, bx + 330, byTop, selected ? Col.Hex(0x46507E) : PanelLight);
                 if (selected) Rect(c, bx, byTop - 74, bx + 5, byTop, Accent);
-                // uGUI centres the whole caption in the button, so the block is laid out from
-                // its own height rather than fixed offsets. Drawing at fixed offsets made the
-                // three-line buttons look like they overhang, which the game does not do.
-                bool hasRider = riders[i].Length > 0;
-                float blockH = 24f * 1.16f + 17f * 1.16f * (hasRider ? 2 : 1);
+
+                var rows = Eggverse.BattleMode.MoveCardText(slots[i], Eggverse.EggType.Tidal).Split('\n');
+                float blockH = 24f * 1.16f + 17f * 1.16f * (rows.Length - 1);
                 float top = byTop - (74f - blockH) * 0.5f;
-                Text(c, names[i], bx + 22, top, 24, Col.Hex(0x6FA858));
-                Text(c, subs[i], bx + 22, top - 24f * 1.16f, 17, InkDim);
-                if (hasRider)
-                    Text(c, riders[i], bx + 22, top - 24f * 1.16f - 17f * 1.16f, 17, riderCols[i]);
+                for (int r = 0; r < rows.Length; r++)
+                {
+                    int size = r == 0 ? 24 : 17;
+                    float y = top - (r == 0 ? 0f : 24f * 1.16f + (r - 1) * 17f * 1.16f);
+                    Text(c, (Strip(rows[r])), bx + 22, y, size, FirstColour(rows[r], InkDim));
+                }
             }
         }
         return c.Px;
@@ -282,5 +305,16 @@ static class Battle
         Console.WriteLine("  action grid: 5 buttons, rows at y 216-280 / 138-202 / 60-124, panel floor y 40");
         Console.WriteLine($"  longest action label \"CARTON (12)\" = {TextWidth("CARTON (12)", 26):0}px in a 330px button");
         Console.WriteLine($"  message box text at 30px = {TextWidth("WHAT WILL PEBBLES DO?", 30):0}px in 1016px");
+    }
+
+    static string Strip(string t) =>
+        System.Text.RegularExpressions.Regex.Replace(t, "<[^>]+>", "");
+
+
+
+    static Col FirstColour(string richText, Col fallback)
+    {
+        var m = System.Text.RegularExpressions.Regex.Match(richText, "<color=#([0-9A-Fa-f]{6})>");
+        return m.Success ? Col.Hex(Convert.ToInt32(m.Groups[1].Value, 16)) : fallback;
     }
 }

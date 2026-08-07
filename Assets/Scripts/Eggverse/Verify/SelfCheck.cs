@@ -983,6 +983,53 @@ namespace Eggverse
                     }
             }
 
+            // ---- move cards and the message under them ----
+            {
+                // 286px buttons, three lines at 20/17/17. Every move is measured against every
+                // element it can face, because the effectiveness arrow and the word for it only
+                // appear for some pairings - checking one matchup checks the easy case.
+                foreach (var mv in MoveDatabase.All)
+                {
+                    var slot = new MoveSlot(mv);
+                    foreach (EggType foe in System.Enum.GetValues(typeof(EggType)))
+                    {
+                        string card = BattleMode.MoveCardText(slot, foe);
+                        var rows = card.Split('\n');
+                        check(rows.Length <= 3,
+                              mv.Name + "'s card is at most three lines vs " + TypeChart.Name(foe));
+                        check(lines(rows[0], 286f, 20) == 1,
+                              mv.Name + "'s name row fits its button vs " + TypeChart.Name(foe) + ": " + rows[0]);
+                        for (int row = 1; row < rows.Length; row++)
+                            check(lines(rows[row], 286f, 17) == 1,
+                                  mv.Name + "'s row " + row + " fits its button: " + rows[row]);
+
+                        string msg = BattleMode.MoveMessageText(slot, foe);
+                        var mrows = msg.Split('\n');
+                        check(lines(mrows[0], 1040f, 28) == 1,
+                              mv.Name + "'s message headline fits vs " + TypeChart.Name(foe) + ": " + mrows[0]);
+                        check(lines(mrows[1], 1040f, 24) <= 2,
+                              mv.Name + "'s message body fits: " + mrows[1]);
+                    }
+                }
+
+                // The arrow on the card and the word in the message must never disagree - they
+                // are the same fact told twice, and the whole reason the card carries an arrow
+                // is so four of them can be compared without reading four sentences.
+                foreach (var mv in MoveDatabase.All)
+                {
+                    var slot = new MoveSlot(mv);
+                    foreach (EggType foe in System.Enum.GetValues(typeof(EggType)))
+                    {
+                        string card = BattleMode.MoveCardText(slot, foe);
+                        string msg = BattleMode.MoveMessageText(slot, foe);
+                        check(card.Contains("\u25b2") == msg.Contains("strong against"),
+                              mv.Name + "'s up arrow agrees with its message vs " + TypeChart.Name(foe));
+                        check(card.Contains("\u25bc") == msg.Contains("weak against"),
+                              mv.Name + "'s down arrow agrees with its message vs " + TypeChart.Name(foe));
+                    }
+                }
+            }
+
             // ---- the chart's tally ----
             {
                 var fresh = new GameState();
