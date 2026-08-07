@@ -405,9 +405,13 @@ namespace Eggverse
             go.transform.localPosition = cachePos;
             cache = go.transform;
 
-            var ground = Color.Lerp(planet.Land, Color.black, 0.30f);
+            // Darkening the ground by a fixed amount works on a bright world and vanishes on a
+            // dark one: Nullreach's ground sits at 0.23 luminance, so a 30% darker mound left a
+            // gap of 0.07 - the same way shell fields once disappeared into ice. Separate from
+            // the ground rather than a fixed step off it.
+            var mound = AgainstGround(new Color(0.32f, 0.24f, 0.15f), planet.Land, 0.55f, 0.46f);
             Spawn("mound", ProcArt.Blob("cachemound", Color.white, 21), Vector2.zero, 2.4f,
-                  new Color(ground.r, ground.g, ground.b, 0.85f), -28, go.transform);
+                  new Color(mound.r, mound.g, mound.b, 0.88f), -28, go.transform);
             Spawn("glint", ProcArt.Disc("cacheglint", new Color(1f, 0.92f, 0.68f, 1f),
                                         new Color(1f, 0.8f, 0.3f, 0f), 1.5f, 64, 64f),
                   new Vector2(0f, 0.2f), 1.5f, new Color(1f, 1f, 1f, 0.40f), -27, go.transform);

@@ -332,11 +332,59 @@ static class Program
             WriteBmpRect(frame, 1920, 1080, "battle-" + menu + ".bmp");
             Console.WriteLine("wrote battle-" + menu + ".bmp");
         }
+        // ---- cache worlds: is the buried cache findable on foot, and clear of everything? ----
+        Console.WriteLine("buried caches:");
+        foreach (var kv in Eggverse.PlanetDatabase.CacheWorlds)
+        {
+            var def = Eggverse.PlanetDatabase.Get(kv.Key);
+            float R = def.SurfaceRadius;
+
+            // Exactly the game's placement: same seed, same two draws, same order.
+            var crng = new Random(def.Seed ^ 0x5EED);
+            float ang = (float)crng.NextDouble() * (float)Math.PI * 2f;
+            float dist = R * (0.68f + 0.22f * (float)crng.NextDouble());
+            float cx = (float)Math.Cos(ang) * dist, cy = (float)Math.Sin(ang) * dist;
+
+            float walkSeconds = dist / 13f;             // WalkSpeed
+            Console.WriteLine($"  {def.Name,-12} ({cx,6:0.0},{cy,6:0.0})  {dist,5:0.0} of {R:0} units out"
+                              + $"  ~{walkSeconds:0.0}s walk from the pad");
+
+            var px = Surface.Render(560, ToHex(def.Ocean), ToHex(def.Land), ToHex(def.Atmosphere),
+                                    def.Theme.ToString(), def.Seed, "Scattered");
+            // Mark where the cache sits, at the same scale Surface.Render uses.
+            float scale = 560 / (R * 2.25f);
+            // Draw it the way the game now does, through the contrast rule rather than a fixed
+            // darkening, so the render reflects what the player would actually see.
+            var mound = Eggverse.SurfaceMode.AgainstGround(
+                new UnityEngine.Color(0.32f, 0.24f, 0.15f), def.Land, 0.55f, 0.46f);
+            MarkCache(px, 560, 560 * 0.5f + cx * scale, 560 * 0.5f + cy * scale, 2.4f * 0.5f * scale,
+                      new Col(mound.r, mound.g, mound.b, 1f));
+            WriteBmp(px, 560, "cache-" + kv.Key + ".bmp");
+        }
+
         WriteBmpRect(Map.Render(), 1920, 1080, "map.bmp");
         Console.WriteLine("wrote map.bmp");
         WriteBmpRect(Collection.Render(9, 19), 1920, 1080, "collection.bmp");
         Console.WriteLine("wrote collection.bmp");
         Battle.Report();
+    }
+
+
+    static int ToHex(UnityEngine.Color c) =>
+        ((int)(c.r * 255) << 16) | ((int)(c.g * 255) << 8) | (int)(c.b * 255);
+
+    /// Draws the cache the way SurfaceMode does: a darkened mound with a faint warm glint.
+    static void MarkCache(Col[] px, int size, float cx, float cy, float rad, Col mound)
+    {
+        for (int y = Math.Max(0, (int)(cy - rad * 3)); y < Math.Min(size, (int)(cy + rad * 3)); y++)
+            for (int x = Math.Max(0, (int)(cx - rad * 3)); x < Math.Min(size, (int)(cx + rad * 3)); x++)
+            {
+                float d = (float)Math.Sqrt((x - cx) * (x - cx) + (y - cy) * (y - cy));
+                if (d <= rad) Over(px, y * size + x, mound, 0.88f);
+                else if (d <= rad * 2.4f)
+                    Over(px, y * size + x, new Col(1f, 0.92f, 0.68f, 1f),
+                         0.40f * (1f - (d - rad) / (rad * 1.4f)));
+            }
     }
 
     static void BlitRect(Col[] dst, int dstW, Col[] src, int srcSize, int ox, int oy)

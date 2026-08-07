@@ -472,6 +472,18 @@ namespace Eggverse
                 check(lines("Cartons " + full + "/" + full + " · Salves 4/4", 524f, 19) == 1,
                       "the supply line still fits at full capacity");
 
+                // A cache the player cannot pick out of the ground is not hidden, it is absent.
+                // The same failure that once buried the shell fields in ice: a fixed darkening
+                // reads on a bright world and disappears on a dark one.
+                foreach (var kv in PlanetDatabase.CacheWorlds)
+                {
+                    var w = PlanetDatabase.Get(kv.Key);
+                    var mound = SurfaceMode.AgainstGround(new Color(0.32f, 0.24f, 0.15f), w.Land, 0.55f, 0.46f);
+                    float gap = Mathf.Abs(SurfaceMode.Luminance(w.Land) - SurfaceMode.Luminance(mound));
+                    check(gap >= 0.12f,
+                          w.Name + "'s cache stands out from its ground (gap " + gap.ToString("0.000") + ")");
+                }
+
                 // Spread: a cache on every world would make them scenery.
                 check(PlanetDatabase.CacheWorlds.Count * 4 <= PlanetDatabase.All.Count,
                       "caches stay rare relative to the number of worlds (" +
