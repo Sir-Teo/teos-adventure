@@ -1626,6 +1626,36 @@ namespace Eggverse
                 check(elder.Elder && !ordinary.Elder, "and knows it");
             }
 
+            // ---- eggs gather where the pad is alive ----
+            {
+                // Ori's rule is that a Nest Station runs warm off the eggs around it. The game
+                // states it, draws the cold pads grey, lets it explain why resting still works
+                // on them, and shows your own nest doing the warming - and the wild eggs, the
+                // ones the rule is actually about, took no notice of a station at all.
+                check(SurfaceMode.StationPull > 0f,
+                      "a living station draws the eggs around it (" + SurfaceMode.StationPull + ")");
+
+                // Weak enough to be a tendency over a minute rather than a pull. At this rate
+                // a roamer needs several seconds to turn even halfway toward the pad, which is
+                // what keeps it from overriding bolting and coming-to-look.
+                check(SurfaceMode.StationPull < 0.5f,
+                      "and does it gently (" + SurfaceMode.StationPull + " per second)");
+
+                // The four cold worlds are the ones where it must not happen, and they are the
+                // same four the pads are drawn grey on - one fact, not two.
+                int coldCount = 0;
+                foreach (var w in PlanetDatabase.All)
+                    if (PlanetDatabase.StationCold(w.Id)) coldCount++;
+                check(coldCount > 0 && coldCount < PlanetDatabase.All.Count,
+                      "some worlds gather and some do not (" + coldCount + " cold of " +
+                      PlanetDatabase.All.Count + ")");
+
+                // Including the one a new player starts on, so the difference is visible from
+                // the first world rather than only after the Belt.
+                check(PlanetDatabase.StationCold(PlanetDatabase.Home.Id),
+                      PlanetDatabase.Home.Name + " is cold, so a new player sees the empty version first");
+            }
+
             // ---- the battle's own lines ----
             {
                 // They were written inline in BattleMode, so they were outside the prose pass

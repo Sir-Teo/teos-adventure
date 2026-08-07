@@ -107,6 +107,12 @@ namespace Eggverse
 
         /// <summary>How close you get before a roamer takes an interest in you.</summary>
         const float RoamerNoticeRange = 6.5f;
+
+        /// <summary>How strongly a living Nest Station draws the eggs around it, per second.</summary>
+        public const float StationPull = 0.22f;
+
+        /// <summary>True while this world's pad is alive, which is what the eggs answer to.</summary>
+        bool stationWarm;
         const float RoamerTouchRange = 1.15f;
 
         public PlanetDef Current => current;
@@ -455,6 +461,7 @@ namespace Eggverse
             // Vesper was worse: its own landmark is two dark pads with the straw still in them,
             // twenty paces from a third one blazing away.
             bool cold = PlanetDatabase.StationCold(planet.Id) && !dir.Story.HasFlag("beat_amy");
+            stationWarm = !cold;
 
             float halo = cold ? 0.13f : 0.45f;
             var ringCol = cold ? new Color(0.42f, 0.46f, 0.58f, 0.75f)
@@ -1085,6 +1092,20 @@ namespace Eggverse
                 // fast egg bolts; a slow one comes to have a look. Which is which falls out of
                 // base speed, so it is the same egg being brave or nervy in the field as it is
                 // in a fight.
+                // Ori's rule, kept by the eggs themselves: a Nest Station runs warm off the
+                // eggs around it. On a world whose pad is alive they drift gently toward it and
+                // you find them gathered there; on a cold one there is nothing holding them and
+                // the ground around the station is as empty as anywhere else.
+                //
+                // Weak, and only while the player is far enough away that it never fights the
+                // bolting or the coming-to-look. It is a tendency over a minute, not a pull.
+                if (stationWarm && nestStation != null)
+                {
+                    Vector2 toPad = (Vector2)nestStation.position - pos;
+                    if (toPad.magnitude > 3f && Vector2.Distance(pos, dir.Teo.transform.position) > RoamerNoticeRange)
+                        r.Heading = Vector2.Lerp(r.Heading, toPad.normalized, StationPull * dt).normalized;
+                }
+
                 Vector2 gap = pos - (Vector2)dir.Teo.transform.position;
                 float near = gap.magnitude;
                 float pace = RoamerSpeed;
