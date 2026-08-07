@@ -1573,6 +1573,29 @@ namespace Eggverse
                       whole.ToString("0.0") + "s)");
             }
 
+            // ---- the game explains salves before Shimmerfen ----
+            {
+                // Lune explains them properly, on Shimmerfen, in the second sector. A player
+                // carries four from the first minute, and the balance run puts them at
+                // seventeen points on the Amy fight - so waiting until the second sector to
+                // mention them at all is a long time to leave that on the table.
+                check(GameState.MaxSalves > 0, "a new player is carrying salves from the start");
+                check(new GameState().Salves == GameState.MaxSalves,
+                      "and has a full stack of them before anybody has said what they are");
+
+                // The hint fires while there is still a fight left to use it in - not at a
+                // sliver of health, when the answer is to swap or run.
+                check(BattleMode.SalveHintFraction > 0.25f && BattleMode.SalveHintFraction < 0.6f,
+                      "the salve hint lands while a salve is still the right move (" +
+                      (BattleMode.SalveHintFraction * 100f).ToString("0") + "% health)");
+
+                // Lune still says the full version - the hint is a prompt, not a replacement.
+                var lune = StoryDatabase.GetDialogue("lune", new StoryState(), new GameState());
+                bool explains = false;
+                foreach (var line in lune.Lines) if (line.Text.Contains("salve")) explains = true;
+                check(explains, "Lune still explains salves in full");
+            }
+
             // ---- an Elder announces itself ----
             {
                 // The stir is rolled when it starts rather than when it finishes, so it can be

@@ -115,6 +115,7 @@ namespace Eggverse
             // outstanding - but it is still a flag, and leaving it out of this map would
             // make it the only one nobody can look up.
             { "ori_saw_starter", null },
+            { "learned_salve", null },
         };
 
         /// <summary>A short phrase for a gate flag, or null if it has none.</summary>

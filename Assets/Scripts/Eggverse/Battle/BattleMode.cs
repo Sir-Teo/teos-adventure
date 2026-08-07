@@ -51,6 +51,9 @@ namespace Eggverse
         /// battle screen did not already say.</summary>
         public string LastCatchName { get; private set; }
         public bool LastCatchJoinedParty { get; private set; }
+        /// <summary>How hurt a lead has to be before the game mentions salves, once.</summary>
+        public const float SalveHintFraction = 0.45f;
+
         public bool LastCatchWasNewSpecies { get; private set; }
         public bool LastCatchWasElder { get; private set; }
         PlayerAction chosenAction;
@@ -292,6 +295,18 @@ namespace Eggverse
                     }
                     yield return ForcedSwap();
                     if (battleOver) break;
+                }
+
+                // Lune explains salves properly, on Shimmerfen, in the second sector. A player
+                // carries four of them from the first minute and nobody says a word about them
+                // until then - and the balance run puts them at seventeen points on the Amy
+                // fight. So the game says it once, the first time an egg is actually hurt
+                // enough for it to matter, which is the same way the Elder line works.
+                if (!dir.Story.HasFlag("learned_salve") && dir.State.Salves > 0 &&
+                    Mine.HPFraction < SalveHintFraction)
+                {
+                    dir.Story.SetFlag("learned_salve");
+                    yield return Say(Mine.Name + " is hurt. A <b>salve</b> mends it - it costs you the turn.");
                 }
 
                 yield return ChooseTurn();
