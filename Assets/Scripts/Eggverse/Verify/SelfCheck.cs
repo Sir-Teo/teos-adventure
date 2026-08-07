@@ -1029,6 +1029,33 @@ namespace Eggverse
                     }
             }
 
+            // ---- every egg in the nest can be reached ----
+            {
+                // The nest list showed the first twenty and the cursor could not leave them,
+                // so on a run that ends with fifty-nine eggs back home, thirty-nine of them
+                // could never be looked at, let alone swapped back into the party. They were
+                // not hidden - they were unreachable, and nothing said so.
+                var big = new GameState(false);
+                for (int i = 0; i < GameState.PartySize; i++) big.Party.Add(EggInstance.Wild("sprouteg", 10));
+                for (int i = 0; i < 59; i++) big.Nest.Add(EggInstance.Wild("cobblet", 10));
+
+                check(HudView.CollectionRows(big) == big.Party.Count + big.Nest.Count,
+                      "the cursor can reach every egg you own (" + HudView.CollectionRows(big) +
+                      " of " + (big.Party.Count + big.Nest.Count) + ")");
+                check(HudView.CollectionRows(big) > big.Party.Count + HudView.NestWindowSize,
+                      "and is not capped at the window (" + HudView.CollectionRows(big) +
+                      " against a window of " + HudView.NestWindowSize + ")");
+
+                // A nest smaller than the window still works.
+                var small = new GameState(false);
+                small.Party.Add(EggInstance.Wild("sprouteg", 5));
+                small.Nest.Add(EggInstance.Wild("cobblet", 5));
+                check(HudView.CollectionRows(small) == 2, "a two-egg collection has two rows");
+
+                var empty = new GameState(false);
+                check(HudView.CollectionRows(empty) == 0, "an empty collection has none");
+            }
+
             // ---- the chart marks worlds you have not finished ----
             {
                 // Choosing where to fly meant selecting each of seventeen worlds in turn to
@@ -2618,10 +2645,15 @@ namespace Eggverse
             // lists every species with no window at all, so it is the one that breaks first.
             {
                 const float ColH = 780f;
-                int nestLines = 1 + GameState.PartySize + 1 + 1 + 20 + 1;   // party, headers, nest window
+
+                // Worst case: a full party, both headers, a blank, the whole nest window, and
+                // both scroll markers at once - which happens whenever the cursor is somewhere
+                // in the middle of a long nest. The window scrolls now, so both markers can be
+                // on screen together and the old count of one was short by a line.
+                int nestLines = 1 + GameState.PartySize + 1 + 1 + HudView.NestWindowSize + 2;
                 check(nestLines <= capacity(ColH, 20),
-                      "collection: the party and nest column fits (" + nestLines + " of " +
-                      capacity(ColH, 20) + " lines)");
+                      "collection: the party and nest column fits with both scroll markers (" +
+                      nestLines + " of " + capacity(ColH, 20) + " lines)");
 
                 int dexLines = 2 + SpeciesDatabase.Count;
                 check(dexLines <= capacity(ColH, 19),

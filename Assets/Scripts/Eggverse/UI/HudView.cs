@@ -32,7 +32,18 @@ namespace Eggverse
         // own eggs. Left/Right chooses which, Up/Down moves inside it.
         bool nestFocus;
         int nestCursor;
-        const int NestWindow = 20;
+        public const int NestWindowSize = 20;
+        const int NestWindow = NestWindowSize;
+
+        /// <summary>
+        /// How many rows the party-and-nest cursor can reach. Every egg you own, not just the
+        /// ones that happen to be on screen - the window used to be the limit, which left an
+        /// end-game nest mostly unreachable.
+        /// </summary>
+        public static int CollectionRows(GameState state) => state.Party.Count + state.Nest.Count;
+
+        /// <summary>First nest egg on screen. The window follows the cursor.</summary>
+        int nestScroll;
 
         readonly Queue<string> toastQueue = new Queue<string>();
         float toastTimer;
@@ -595,7 +606,7 @@ namespace Eggverse
             var state = dir.State;
             var sb = new System.Text.StringBuilder();
 
-            int rows = state.Party.Count + Mathf.Min(NestWindow, state.Nest.Count);
+            int rows = CollectionRows(state);
             if (rows > 0) nestCursor = Mathf.Clamp(nestCursor, 0, rows - 1);
 
             // Offer 1-6 only once there is more than one egg to choose between. Telling a
@@ -630,15 +641,28 @@ namespace Eggverse
                 // The nest is unbounded, so show a window of it. The column is 780px at font 20,
                 // which is 33 lines; the party costs at most 8 of those and the headers 2, so 20
                 // is what is left. It used to show 8 and leave over half the column empty.
-                const int shown = NestWindow;
-                for (int i = 0; i < Mathf.Min(shown, state.Nest.Count); i++)
+                // The window scrolls with the cursor. It used to be the first twenty and
+                // nothing else, and the cursor could not leave them - so on a run that ends with
+                // fifty-nine eggs back home, thirty-nine of them could never be looked at, let
+                // alone swapped back in. They were not hidden; they were unreachable.
+                int nestIndex = Mathf.Max(0, nestCursor - state.Party.Count);
+                nestScroll = Mathf.Clamp(nestScroll, 0, Mathf.Max(0, state.Nest.Count - NestWindow));
+                if (nestIndex < nestScroll) nestScroll = nestIndex;
+                else if (nestIndex >= nestScroll + NestWindow) nestScroll = nestIndex - NestWindow + 1;
+
+                int last = Mathf.Min(nestScroll + NestWindow, state.Nest.Count);
+                if (nestScroll > 0)
+                    sb.Append("<color=#7A8090>      ").Append(nestScroll).Append(" more above</color>\n");
+
+                for (int i = nestScroll; i < last; i++)
                 {
                     bool here = nestFocus && nestCursor == state.Party.Count + i;
                     sb.Append(here ? "<color=#FFC24D>\u25b8</color> " : "  ");
                     sb.Append(DescribeEgg(state.Nest[i])).Append('\n');
                 }
-                if (state.Nest.Count > shown)
-                    sb.Append("<color=#7A8090>      ...and ").Append(state.Nest.Count - shown).Append(" more</color>\n");
+
+                if (last < state.Nest.Count)
+                    sb.Append("<color=#7A8090>      ").Append(state.Nest.Count - last).Append(" more below</color>\n");
             }
 
             collectionBody.text = sb.ToString();
@@ -906,7 +930,7 @@ namespace Eggverse
                 {
                     if (nestFocus)
                     {
-                        int rows2 = dir.State.Party.Count + Mathf.Min(NestWindow, dir.State.Nest.Count);
+                        int rows2 = CollectionRows(dir.State);
                         int next = Mathf.Clamp(nestCursor + move, 0, Mathf.Max(0, rows2 - 1));
                         if (next != nestCursor)
                         {
