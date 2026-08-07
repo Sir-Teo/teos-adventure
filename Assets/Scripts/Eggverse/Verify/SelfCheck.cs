@@ -883,6 +883,39 @@ namespace Eggverse
                 }
             }
 
+            // ---- every background an egg is drawn on ----
+            // Six contrast defects came from asking, one screen at a time, what a sprite is
+            // actually drawn over. Rather than keep discovering the next one, this enumerates
+            // every background the game composes an egg sprite onto. Adding a screen that draws
+            // an egg means adding it here, and the list is short enough to be honest about.
+            {
+                var wheres = new[]
+                {
+                    new object[] { "the chart's planet panel", new Color32(0x0B, 0x0D, 0x1C, 0xFF) },
+                    new object[] { "the collection panel",     new Color32(0x0B, 0x0D, 0x18, 0xFF) },
+                    new object[] { "the dialogue box",         new Color32(0x12, 0x14, 0x22, 0xFF) },
+                    new object[] { "the name entry box",       new Color32(0x12, 0x14, 0x22, 0xFF) },
+                    new object[] { "the star map",             new Color32(0x05, 0x06, 0x0E, 0xFF) },
+                };
+
+                foreach (var where in wheres)
+                {
+                    string label = (string)where[0];
+                    float bg = SurfaceMode.Luminance((Color)(Color32)where[1]);
+
+                    foreach (var sp in SpeciesDatabase.All)
+                    {
+                        float body = SurfaceMode.Luminance(sp.Body);
+                        float rim = SurfaceMode.Luminance(
+                            SurfaceMode.Luminance(sp.Body) < 0.30f
+                                ? Color.Lerp(sp.Accent, Color.white, 0.45f)
+                                : sp.Accent * 0.55f);
+                        check(Mathf.Max(Mathf.Abs(body - bg), Mathf.Abs(rim - bg)) >= 0.15f,
+                              sp.Name + " reads on " + label);
+                    }
+                }
+            }
+
             // ---- eggs against the battle backdrop ----
             // The battle draws each egg over a near-black backdrop with a soft glow behind it.
             // The glow is the catch: it lifts the local background toward the middle, which
