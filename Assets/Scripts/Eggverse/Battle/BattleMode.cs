@@ -584,6 +584,7 @@ namespace Eggverse
                 {
                     int jolt = Mathf.Max(1, dealt / 8);
                     user.TakeDamage(jolt);
+                    SpawnDamageNumber(userIsPlayer ? myEggImage : foeEggImage, jolt, 1f, false);
                     RefreshCards(false);
                     yield return Say(user.Name + " was jolted for " + jolt + ".");
                 }
@@ -600,6 +601,7 @@ namespace Eggverse
                     {
                         int healed = Mathf.Max(1, totalDealt / 2);
                         user.Heal(healed);
+                        SpawnHealNumber(userIsPlayer ? myEggImage : foeEggImage, healed);
                         RefreshCards(false);
                         yield return Say(user.Name + " drained " + healed + " HP.");
                         break;
@@ -608,6 +610,7 @@ namespace Eggverse
                     {
                         int recoil = Mathf.Max(1, totalDealt / 4);
                         user.TakeDamage(recoil);
+                        SpawnDamageNumber(userIsPlayer ? myEggImage : foeEggImage, recoil, 1f, false);
                         RefreshCards(false);
                         yield return Say(user.Name + " took " + recoil + " in recoil.");
                         break;
@@ -636,6 +639,7 @@ namespace Eggverse
                     {
                         int before = user.CurrentHP;
                         user.Heal(user.MaxHP / 2);
+                        SpawnHealNumber(ReferenceEquals(user, Mine) ? myEggImage : foeEggImage, user.CurrentHP - before);
                         yield return Say(user.Name + " mended " + (user.CurrentHP - before) + " HP.");
                         break;
                     }
@@ -734,6 +738,7 @@ namespace Eggverse
                 int tick = burning.StatusTickDamage();
                 if (tick <= 0 || burning.IsFainted) continue;
                 burning.TakeDamage(tick);
+                SpawnDamageNumber(burning == Mine ? myEggImage : foeEggImage, tick, 1f, false);
                 yield return AnimateHit(burning == Mine ? myEggImage : foeEggImage,
                                         burning == Mine ? myHpBar : foeHpBar, burning);
                 yield return Say(burning.Name + " burned for " + tick + ".");
@@ -762,6 +767,7 @@ namespace Eggverse
             int healed = egg.CurrentHP - before;
             dir.Audio.Play(Sfx.Heal);
             yield return Say("You rubbed on a yolk salve.  (" + State.Salves + " left)");
+            SpawnHealNumber(myEggImage, healed);
             yield return AnimateHeal(myHpBar, myEggImage, egg);
             yield return Say(egg.Name + " recovered " + healed + " HP.");
             State.RaiseChanged();
@@ -1185,7 +1191,28 @@ namespace Eggverse
                         : Color.white;
 
             int size = critical ? 62 : typeMultiplier > 1.2f ? 54 : 44;
-            var label = UIKit.Label(shakeRoot, "Damage", (critical ? "!" : "") + amount.ToString(), size, color,
+            SpawnNumber(target, (critical ? "!" : "") + amount, color, size);
+        }
+
+        /// <summary>
+        /// A number for health going the other way.
+        ///
+        /// Damage has floated one since the fight screen was written. Every other change to an
+        /// egg's health did not: a salve, a drain, the recoil off your own move, the tick off a
+        /// burn, the Static trait jolting whoever threw the punch. Six ways to move a health bar
+        /// and one of them said by how much. The bar and the line of text both moved, so nothing
+        /// was hidden - it just made the one that mattered least the only one that felt like it
+        /// landed.
+        /// </summary>
+        void SpawnHealNumber(Image target, int amount)
+        {
+            if (amount <= 0) return;
+            SpawnNumber(target, "+" + amount, new Color32(0x5F, 0xD0, 0x68, 0xFF), 44);
+        }
+
+        void SpawnNumber(Image target, string text, Color color, int size)
+        {
+            var label = UIKit.Label(shakeRoot, "Number", text, size, color,
                                     TextAnchor.MiddleCenter, FontStyle.Bold);
             UIKit.Place(label.rectTransform, target.rectTransform.anchorMin, new Vector2(0.5f, 0.5f),
                         target.rectTransform.anchoredPosition + new Vector2(Random.Range(-40f, 40f), 40f),

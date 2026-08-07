@@ -252,6 +252,25 @@ than the rest. Planting the old `LevelUp` back in scores 0.113 — which passes 
 fails the adjacency one. A flat threshold cannot tell `Liftoff` against `Inscription`, heard on
 opposite sides of the game, from two sounds that land in the same second.
 
+## The mechanism that exists on one surface
+
+The most reliable thing to look for in this codebase has turned out to be a mechanism that was
+built once, works well, and was never applied to its neighbour. Five findings so far:
+
+| mechanism | had it | did not |
+|---|---|---|
+| describing the highlighted option | the move menu | the action menu above it |
+| a cursor marked in amber with a caret | every list in the game | the navigation chart |
+| a shape derived from a name | the eggs, the landmarks | the seventeen portraits |
+| a bar that eases | the HP bar | the XP bar directly under it |
+| an idle bob | the surface's wildlife | both eggs in every fight |
+| a floating number | damage | salves, drains, recoil, burn ticks, Static jolts |
+
+The last one has a check that generalises: **`Feedback`** scans `BattleMode.cs` for every
+`.TakeDamage(` and `.Heal(` and asks whether a number is spawned within four lines of it. Six
+health changes, six numbers. Deleting any one of them fails by file and line, so the next effect
+somebody adds gets asked the same question without anybody remembering to ask it.
+
 ## Which assertions never ran
 
 "Did anything fail" and "did everything get asked" are different questions, and a suite this size

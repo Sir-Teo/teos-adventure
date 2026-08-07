@@ -338,6 +338,9 @@ class Sim {
         // answering "did everything get asked".
         {
             var selfReport = SelfCheck.Run();
+            Feedback.Run(System.IO.Path.Combine(
+                System.IO.Path.GetDirectoryName(System.Reflection.Assembly.GetExecutingAssembly().Location) ?? ".",
+                "..", "..", "..", "..", "..", "..", "Assets", "Scripts", "Eggverse", "Battle", "BattleMode.cs"), Check);
             Coverage.Run(System.IO.Path.Combine(
                 System.IO.Path.GetDirectoryName(System.Reflection.Assembly.GetExecutingAssembly().Location) ?? ".",
                 "..", "..", "..", "..", "..", "..", "Assets", "Scripts", "Eggverse", "Verify", "SelfCheck.cs"),
