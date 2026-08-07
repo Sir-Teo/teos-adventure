@@ -166,7 +166,12 @@ namespace Eggverse
             // Sits below the objective panel, not level with it. At the top of the screen this
             // 1000px bar ran 128px into that panel and one opaque box drew over the other.
             // Narrowing instead would clip the longest toast, which is 58 characters.
-            UIKit.Place(toastPanel, new Vector2(0.5f, 1f), new Vector2(0.5f, 1f), new Vector2(0f, -308f), new Vector2(1000f, 56f));
+            // 76 rather than 56: a first arrival reads "Charted Tidewrack. A cold, quiet
+            // waystation. Vess grew up here, and does not like to say so." - 94 characters, or
+            // about 1170px in a 960px bar, so it wraps to two lines - 55.7px of a 56px box.
+            // It fitted, with no margin at all and nothing measuring it, which is a bad way to
+            // fit. Kept at 1000 wide because 1200 would reach the party strip.
+            UIKit.Place(toastPanel, new Vector2(0.5f, 1f), new Vector2(0.5f, 1f), new Vector2(0f, -308f), new Vector2(1000f, 76f));
             var bg = UIKit.Panel(toastPanel, "Bg", new Color32(0x1E, 0x22, 0x38, 0xF0));
             UIKit.Stretch(bg.rectTransform, 0, 0, 0, 0);
             toastText = UIKit.Label(toastPanel, "Text", "", 24, UIKit.Accent, TextAnchor.MiddleCenter, FontStyle.Bold);

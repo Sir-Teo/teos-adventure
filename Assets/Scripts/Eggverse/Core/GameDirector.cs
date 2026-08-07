@@ -320,10 +320,28 @@ namespace Eggverse
             Cam.transform.position = new Vector3(Teo.transform.position.x, Teo.transform.position.y, -10f);
 
             Hud.Refresh();
-            Hud.Toast((firstVisit ? "Charted " : "Landed on ") + planet.Name + ". " + planet.Tagline);
+            // A tagline is what a place is; it belongs to arriving somewhere for the first time.
+            // On the twentieth return it is noise, and what a returning collector actually wants
+            // to know is whether this world still owes them anything.
+            Hud.Toast(firstVisit
+                ? "Charted " + planet.Name + ". " + planet.Tagline
+                : planet.Name + ". " + StillOwed(planet));
             Audio.Play(Sfx.Land);
             Transition.Flash(planet.Atmosphere * 0.5f, 0.55f);
             SaveNow();
+        }
+
+        /// <summary>What this world still has that the player has not recorded.</summary>
+        string StillOwed(PlanetDef planet)
+        {
+            int missing = 0;
+            for (int i = 0; i < planet.Spawns.Length; i++)
+            {
+                var sp = SpeciesDatabase.Get(planet.Spawns[i].SpeciesId);
+                if (sp.CatchRate >= 20 && !State.Caught.Contains(sp.Id)) missing++;
+            }
+            if (missing == 0) return "Every egg here is already in your record.";
+            return Words.Count(missing, "egg") + " here you have not recorded yet.";
         }
 
         public void LiftOff()

@@ -68,7 +68,7 @@ static class Layout
         {
             Place("PartyStrip",   0f,   1f, 0f,   1f,   28f, -28f,  360f, 380f),
             Place("Objective",    1f,   1f, 1f,   1f,  -28f, -28f,  560f, 268f),
-            Place("Toast",        0.5f, 1f, 0.5f, 1f,    0f, -308f, 1000f, 56f),
+            Place("Toast",        0.5f, 1f, 0.5f, 1f,    0f, -308f, 1000f, 76f),
             Place("Prompt",       0.5f, 0f, 0.5f, 0f,    0f,  40f, 1200f,  60f),
             Place("Autosave",     1f,   0f, 1f,   0f,  -28f,  30f,  240f,  26f),
             Place("Collection",   0.5f, 0.5f, 0.5f, 0.5f, 0f,  0f, 1760f, 940f, modal: true),

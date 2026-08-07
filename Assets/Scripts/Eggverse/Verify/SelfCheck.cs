@@ -535,6 +535,25 @@ namespace Eggverse
                       sp.Name + " reports gains on every level (" + gainLines + " of " + levelUps + ")");
             }
 
+            // ---- toasts, at the longest thing each can say ----
+            // The bar is 1000x76: 960 usable at font 24, which is two lines. A first arrival is
+            // the longest toast in the game and nothing was measuring it.
+            {
+                const float W = 1000f - 40f, H = 76f;
+                foreach (var w in PlanetDatabase.All)
+                {
+                    string arrival = "Charted " + w.Name + ". " + w.Tagline;
+                    check(lines(arrival, W, 24) <= capacity(H, 24),
+                          "arrival toast fits for " + w.Name + " (" + lines(arrival, W, 24) +
+                          " of " + capacity(H, 24) + " lines)");
+
+                    string ret = w.Name + ". " + Words.Count(9, "egg") + " here you have not recorded yet.";
+                    check(lines(ret, W, 24) <= capacity(H, 24), "return toast fits for " + w.Name);
+                    string done = w.Name + ". Every egg here is already in your record.";
+                    check(lines(done, W, 24) <= capacity(H, 24), "completed-world toast fits for " + w.Name);
+                }
+            }
+
             // ---- what the game says after a wild win ----
             // The single most repeated line in the game. Every variant is a message-box line, so
             // every variant has to fit at the longest name a player can be carrying.
