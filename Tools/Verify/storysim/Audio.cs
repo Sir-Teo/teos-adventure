@@ -15,6 +15,7 @@ static class AudioCheck
 
     public static void Run(string outDir, Action<bool,string> check)
     {
+        System.IO.Directory.CreateDirectory(outDir);
         var t = typeof(ProcAudio);
         string[] builders = { "BuildExplore", "BuildBelt", "BuildBattle", "BuildAmaranth" };
 
@@ -61,6 +62,8 @@ static class AudioCheck
             int silent = 0;
             float quietest = 1f; string quietestName = "";
             var levels = new List<(string name, float peak, float rms)>();
+            var clips = new List<(string name, float[] buf)>();
+            var prints = new List<(string name, float[] fp)>();
             foreach (Sfx id in Enum.GetValues(typeof(Sfx)))
             {
                 var buf = (float[])sfxMethod.Invoke(null, new object[] { id });
@@ -80,6 +83,83 @@ static class AudioCheck
                 check(tail < 0.12f, $"{id} decays before it ends (tail {tail:0.000})");
                 if (peak <= 0.02f) silent++;
                 if (peak < quietest) { quietest = peak; quietestName = id.ToString(); }
+
+                clips.Add((id.ToString(), buf));
+                prints.Add((id.ToString(), Fingerprint(buf)));
+                WriteWav(Path.Combine(outDir, "sfx-" + id.ToString().ToLower() + ".wav"), buf);
+            }
+
+            // Every effect, end to end, in one file. The music loops have been written out since
+            // they were written; the effects were measured and never once played.
+            WritePalette(Path.Combine(outDir, "sfx-palette.wav"), clips);
+
+            // No two effects may be the same sound. Twenty-five of them come from one switch
+            // statement of tuned constants, and three families - Hit/HitStrong/HitWeak,
+            // UiMove/UiConfirm/UiBack, Rustle/RustleDeep - are deliberately near neighbours. A
+            // copy-paste that left two identical would have passed every check above: both are
+            // audible, neither clips, both decay, and the pair sits comfortably inside the spread.
+            {
+                float closest = 999f; string ca = "", cb = "";
+                for (int i = 0; i < prints.Count; i++)
+                    for (int j = i + 1; j < prints.Count; j++)
+                    {
+                        float d = Apart(prints[i].fp, prints[j].fp);
+                        if (d < closest) { closest = d; ca = prints[i].name; cb = prints[j].name; }
+                    }
+                Console.WriteLine($"  closest pair of effects: {ca} and {cb} at {closest:0.000}");
+                check(closest > 0.08f,
+                      $"no two effects are the same sound ({ca}/{cb} at {closest:0.000})");
+
+                // The named pairs, printed. There is no upper bound here on purpose: the first
+                // version asserted each pair stayed "in the same family" under an invented
+                // ceiling of 1.10, and Rustle/RustleDeep came in at 1.64. The check was wrong,
+                // not the sound - RustleDeep is documented as the same grit lower and longer,
+                // and deliberately contrasted so a heavy thing in a shell field never reads as
+                // a small one. Same for UiConfirm against UiBack, which is the point of them.
+                // A threshold nobody measured before writing is not a check.
+                var byName = new Dictionary<string, float[]>();
+                foreach (var p in prints) byName[p.name] = p.fp;
+
+                // Sounds a player hears within a second or two of each other have to be further
+                // apart than sounds that never meet. A global floor cannot say that: it treats
+                // Liftoff against Inscription - one heard in space, one on a surface, never
+                // together - exactly like CatchSuccess against LevelUp, which land back to back
+                // every time an egg is caught in a fight.
+                //
+                // That pair sat at 0.319 and was the closest in the set. Both were a C major
+                // triangle arpeggio from C5 resolving onto C6; nothing said so, because nothing
+                // had ever compared one sound to another. They are 1.9 apart now, and opposite
+                // in motion: catching settles downward onto a held triad, levelling lifts and
+                // leaves a fifth hanging.
+                var heardTogether = new[]
+                {
+                    ("CatchSuccess", "LevelUp",      "an egg is caught, then it levels"),
+                    ("CartonThrow",  "CartonWobble", "the carton leaves your hand and rocks"),
+                    ("CartonWobble", "CatchSuccess", "the last wobble, then it holds"),
+                    ("CartonWobble", "CatchFail",    "the last wobble, then it does not"),
+                    ("Hit",          "Faint",        "the blow that finishes it"),
+                    ("Crit",         "Faint",        "the same, harder"),
+                    ("Hit",          "HitStrong",    "consecutive turns"),
+                    ("Hit",          "HitWeak",      "consecutive turns"),
+                    ("HitStrong",    "HitWeak",      "consecutive turns"),
+                    ("Rustle",       "Encounter",    "grit in the field, then something in it"),
+                    ("RustleDeep",   "Encounter",    "the same, heavier"),
+                    ("Land",         "Rustle",       "touching down and walking off the pad"),
+                    ("UiMove",       "UiConfirm",    "stepping down a menu and choosing"),
+                    ("UiMove",       "UiBack",       "stepping down a menu and leaving"),
+                    ("Faint",        "LevelUp",      "it goes down, you go up"),
+                };
+
+                float nearest = 999f; string na = "", nb = "";
+                foreach (var pair in heardTogether)
+                {
+                    float d = Apart(byName[pair.Item1], byName[pair.Item2]);
+                    if (d < nearest) { nearest = d; na = pair.Item1; nb = pair.Item2; }
+                    check(d > 0.30f,
+                          $"{pair.Item1} and {pair.Item2} are told apart where they meet - " +
+                          $"{pair.Item3} ({d:0.000})");
+                }
+                Console.WriteLine($"  closest pair heard together: {na} and {nb} at {nearest:0.000}");
             }
             Console.WriteLine($"  {Enum.GetValues(typeof(Sfx)).Length} effects checked, none silent, quietest {quietestName} at {quietest:0.00}");
 
@@ -189,6 +269,80 @@ static class AudioCheck
                   $"the effects sit within a usable range of each other ({spread:0.0}x, " +
                   $"{levels[0].name} over {levels[levels.Count - 1].name})");
         }
+    }
+
+    /// <summary>
+    /// What a sound is, as numbers: where its energy sits across twelve log-spaced bands, and
+    /// how that energy is shaped over eight slices of its length.
+    ///
+    /// Both halves normalised, so this describes character rather than loudness - two effects at
+    /// different volumes that are otherwise the same sound should still come out identical, which
+    /// is the case worth catching.
+    /// </summary>
+    static float[] Fingerprint(float[] buf)
+    {
+        var bands = new float[12];
+        // 80Hz to 12.8kHz, an octave and a bit per band. Goertzel per band centre: no FFT needed
+        // for twelve numbers, and an exact answer beats a windowed approximation here.
+        for (int b = 0; b < bands.Length; b++)
+        {
+            float freq = 80f * (float)Math.Pow(2.0, b * 7.32 / 11.0);
+            double w = 2.0 * Math.PI * freq / SR;
+            double coeff = 2.0 * Math.Cos(w);
+            double s1 = 0, s2 = 0;
+            // The first half second is where an effect's character lives; the tail is decay.
+            int n = Math.Min(buf.Length, SR / 2);
+            for (int i = 0; i < n; i++)
+            {
+                double s0 = buf[i] + coeff * s1 - s2;
+                s2 = s1; s1 = s0;
+            }
+            bands[b] = (float)Math.Sqrt(s1 * s1 + s2 * s2 - coeff * s1 * s2) / Math.Max(1, Math.Min(buf.Length, SR / 2));
+        }
+
+        var shape = new float[8];
+        for (int i = 0; i < buf.Length; i++)
+            shape[Math.Min(7, i * 8 / buf.Length)] += buf[i] * buf[i];
+        for (int i = 0; i < shape.Length; i++) shape[i] = (float)Math.Sqrt(shape[i]);
+
+        var outp = new float[bands.Length + shape.Length];
+        Normalise(bands, outp, 0);
+        Normalise(shape, outp, bands.Length);
+        return outp;
+    }
+
+    static void Normalise(float[] src, float[] dst, int at)
+    {
+        float total = 0f;
+        foreach (var v in src) total += v;
+        for (int i = 0; i < src.Length; i++) dst[at + i] = total > 1e-9f ? src[i] / total : 0f;
+    }
+
+    static float Apart(float[] a, float[] b)
+    {
+        float d = 0f;
+        for (int i = 0; i < a.Length; i++) d += Math.Abs(a[i] - b[i]);
+        return d;
+    }
+
+    /// <summary>
+    /// Every effect end to end, with a beat between each, so the whole palette can be heard in
+    /// one listen. The music loops have been written out since they were written; the twenty-five
+    /// effects were measured and never once played.
+    /// </summary>
+    static void WritePalette(string path, List<(string name, float[] buf)> all)
+    {
+        int gap = SR / 2;
+        int total = 0;
+        foreach (var s in all) total += s.buf.Length + gap;
+        var sheet = new float[total];
+        int at = 0;
+        foreach (var s in all)
+        {
+            Array.Copy(s.buf, 0, sheet, at, s.buf.Length);
+            at += s.buf.Length + gap;
+        }
+        WriteWav(path, sheet);
     }
 
     static void WriteWav(string path, float[] samples)

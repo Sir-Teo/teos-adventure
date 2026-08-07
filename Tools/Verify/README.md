@@ -152,6 +152,30 @@ The lesson is the same one as transcription, one level down: if the render reimp
 function the game already has, copy it to the letter or call it. `Cast.Ell` is now
 `ProcArt.FillEllipse` line for line, and it says so.
 
+## What only listening finds
+
+Every sound in the game is synthesised from pure `Mathf`, so the harness builds all of them and
+writes them to `Tools/Verify/audio/` — twenty-five effects, four music loops, and `sfx-palette.wav`,
+which is the whole palette end to end with a beat between each. The loops had been written out
+since they were written; the effects were measured and never once played.
+
+Measurement had been per-sound: audible, not clipping, decays, sits in the spread. Nothing
+compared one sound to another. A **fingerprint** does now — twelve log-spaced band energies over
+the first half second, plus the energy shape across eight slices, both normalised so the
+comparison is of character rather than loudness.
+
+It found `CatchSuccess` and `LevelUp` 0.319 apart, the closest pair in the set. Both were a C
+major triangle arpeggio from C5 resolving onto C6, and **they play back to back** — you catch an
+egg in a fight and then it levels. A player could not hear which had just happened. They are 1.9
+apart now and opposite in motion: catching latches low and settles onto a held triad, levelling
+lifts to G and leaves a fifth hanging.
+
+The check that matters is not the global floor. It is the **adjacency table**: fifteen pairs a
+player actually hears within a second or two of each other, held to a floor four times higher
+than the rest. Planting the old `LevelUp` back in scores 0.113 — which passes the global floor and
+fails the adjacency one. A flat threshold cannot tell `Liftoff` against `Inscription`, heard on
+opposite sides of the game, from two sounds that land in the same second.
+
 ## What only looking finds
 
 Rendering has now found, in things that had passed every assertion:

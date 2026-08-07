@@ -332,7 +332,11 @@ class Sim {
         Console.WriteLine("== balance (simulated battles) ==");
         Balance.Run(Check);
         Console.WriteLine("== audio ==");
-        AudioCheck.Run(@"/private/tmp/claude-501/-Users-teo-Developer-My-project/9ef4dcd4-46b0-4dbb-9302-16bb65accfa6/scratchpad/audio", Check);
+        // Beside the renders, not in a scratch directory belonging to one session. The music
+        // loops have been written since they were written and nobody could find them.
+        AudioCheck.Run(System.IO.Path.Combine(
+            System.IO.Path.GetDirectoryName(System.Reflection.Assembly.GetExecutingAssembly().Location) ?? ".",
+            "..", "..", "..", "..", "audio"), Check);
         Console.WriteLine(failures == 0 ? "\nALL CHECKS PASSED" : $"\n{failures} CHECK(S) FAILED");
     }
 

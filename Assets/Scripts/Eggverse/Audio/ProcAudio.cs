@@ -177,9 +177,18 @@ namespace Eggverse
                     break;
 
                 case Sfx.LevelUp:
-                    buf = Buffer(0.75f);
-                    AddArpeggio(buf, new[] { 523.25f, 659.25f, 783.99f, 1046.5f, 1318.5f }, 0.085f, 0.22f, 1);
-                    AddNote(buf, 0.34f, 0.40f, 1046.5f, 1046.5f, 0.16f, 0, 2.2f);
+                    // Up and open. This and CatchSuccess were both a C major triangle arpeggio
+                    // from C5 resolving onto C6 - close enough that nothing told them apart, and
+                    // they play back to back: you catch an egg and then it levels. A player
+                    // could not hear which had happened.
+                    //
+                    // So this one goes to G and stays high, with nothing under it, and ends on a
+                    // fifth left hanging rather than a resolved octave. Levelling up is not an
+                    // arrival; there is always another one.
+                    buf = Buffer(0.72f);
+                    AddArpeggio(buf, new[] { 783.99f, 987.77f, 1174.66f, 1567.98f }, 0.075f, 0.20f, 1);
+                    AddNote(buf, 0.30f, 0.40f, 1567.98f, 1567.98f, 0.14f, 0, 2.2f);
+                    AddNote(buf, 0.30f, 0.40f, 2349.32f, 2349.32f, 0.06f, 0, 2.4f);
                     break;
 
                 case Sfx.Evolve:
@@ -213,10 +222,17 @@ namespace Eggverse
                     break;
 
                 case Sfx.CatchSuccess:
+                    // Down and closed - the opposite motion to LevelUp, which is what tells them
+                    // apart when they land within a second of each other. The carton latches
+                    // first, low and short, and then the whole triad settles together and holds.
+                    // Catching something is an arrival.
                     buf = Buffer(1.0f);
-                    AddArpeggio(buf, new[] { 523.25f, 659.25f, 783.99f, 1046.5f }, 0.11f, 0.24f, 1);
-                    AddNote(buf, 0.44f, 0.52f, 1046.5f, 1046.5f, 0.18f, 0, 1.8f);
-                    AddNote(buf, 0.44f, 0.52f, 1567.98f, 1567.98f, 0.10f, 0, 1.8f);
+                    AddNote(buf, 0f, 0.09f, 150f, 96f, 0.22f, 0, 3.4f);
+                    AddNoise(buf, 0f, 0.05f, 0.09f, 0.42f, 4f);
+                    AddArpeggio(buf, new[] { 523.25f, 659.25f, 783.99f }, 0.12f, 0.20f, 1);
+                    AddNote(buf, 0.42f, 0.54f, 261.63f, 261.63f, 0.16f, 0, 1.5f);
+                    AddNote(buf, 0.42f, 0.54f, 329.63f, 329.63f, 0.12f, 0, 1.5f);
+                    AddNote(buf, 0.42f, 0.54f, 392.00f, 392.00f, 0.11f, 0, 1.5f);
                     break;
 
                 // A condition landing: two notes sagging apart, so it reads as something
