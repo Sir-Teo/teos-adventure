@@ -883,6 +883,60 @@ namespace Eggverse
                 }
             }
 
+            // ---- data that is wrong without ever complaining ----
+            {
+                // A move nobody learns is data, not content - it costs authoring and appears in
+                // no game. The same goes for a spawn nobody can roll.
+                var taughtIds = new HashSet<string>();
+                foreach (var sp in SpeciesDatabase.All)
+                    foreach (var e in sp.Learnset) taughtIds.Add(e.MoveId);
+                foreach (var mv in MoveDatabase.All)
+                    check(taughtIds.Contains(mv.Id),
+                          mv.Name + " is learned by at least one species (otherwise it is unreachable)");
+
+                foreach (var w in PlanetDatabase.All)
+                {
+                    int total = 0;
+                    foreach (var sp2 in w.Spawns)
+                    {
+                        check(sp2.Weight > 0,
+                              w.Name + " has no zero-weight spawn (" + sp2.SpeciesId + " could never appear)");
+                        total += sp2.Weight;
+                        check(SpeciesDatabase.Exists(sp2.SpeciesId),
+                              w.Name + " spawns a real species (" + sp2.SpeciesId + ")");
+                    }
+                    check(total > 0, w.Name + " has something to spawn");
+                    check(w.MinLevel <= w.MaxLevel,
+                          w.Name + "'s level range runs the right way (" + w.MinLevel + "-" + w.MaxLevel + ")");
+                }
+
+                // An evolution that points at itself, or loops, would spin TryEvolve.
+                foreach (var sp in SpeciesDatabase.All)
+                {
+                    if (!sp.CanEvolve) continue;
+                    check(sp.EvolvesIntoId != sp.Id, sp.Name + " does not evolve into itself");
+                    var walk = sp; int steps = 0;
+                    while (walk != null && walk.CanEvolve && steps++ < 10)
+                        walk = SpeciesDatabase.Get(walk.EvolvesIntoId);
+                    check(steps < 10, sp.Name + "'s evolution chain terminates");
+                    check(sp.EvolveLevel > 1 && sp.EvolveLevel <= EggInstance.MaxLevel,
+                          sp.Name + " evolves at a reachable level (" + sp.EvolveLevel + ")");
+                }
+
+                // Learnset entries are read in order; one out of sequence means an egg can be
+                // handed a move before the level it was meant to arrive at.
+                foreach (var sp in SpeciesDatabase.All)
+                {
+                    int last = 0;
+                    foreach (var e in sp.Learnset)
+                    {
+                        check(e.Level >= last,
+                              sp.Name + "'s learnset is in level order (" + e.Level + " after " + last + ")");
+                        last = e.Level;
+                    }
+                }
+            }
+
             // ---- learnsets ----
             // A learnset entry for a move the egg already knows is skipped, so the level-up it
             // sits on teaches nothing at all. Three of the four stage-three species had their
