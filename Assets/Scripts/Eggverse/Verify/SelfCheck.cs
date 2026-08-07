@@ -1671,6 +1671,95 @@ namespace Eggverse
                 check(elder.Elder && !ordinary.Elder, "and knows it");
             }
 
+            // ---- a nickname cannot break the panel it is drawn in ----
+            {
+                // Everything typed at the naming prompt is interpolated straight into rich
+                // text - the party strip, the battle log, every toast, the ending card - and
+                // into the save file. A nickname of "<b>" bolds the rest of the line it lands
+                // in. One containing "</color>" ends the colour it was wrapped in and repaints
+                // whatever follows. "<3" is a name somebody types on their first run.
+                var nasty = new[]
+                {
+                    "<b>", "</color>", "<color=#FF0000>", "<3", "a<b>b", "<size=99>",
+                    "</b></b></b>", "<", ">", "<<<<<<<<<<<<<<<<",
+                };
+                foreach (var raw in nasty)
+                {
+                    string clean = NameEntryView.Clean(raw);
+                    check(clean == null || clean.IndexOf('<') < 0,
+                          "a nickname never carries a '<' out of the prompt: \"" + raw + "\" -> " +
+                          (clean ?? "(nothing)"));
+                    check(clean == null || clean.IndexOf('>') < 0,
+                          "nor a '>': \"" + raw + "\"");
+                }
+
+                // Ordinary names survive intact. A filter that eats real names is worse than
+                // the problem it solves.
+                foreach (var good in new[] { "Pebbles", "Sir Yolk", "O'Neil", "Half-Shell", "R2", "a" })
+                    check(NameEntryView.Clean(good) == good,
+                          "\"" + good + "\" is left alone (got \"" + (NameEntryView.Clean(good) ?? "null") + "\")");
+
+                // Nothing usable in means nothing out, and the egg keeps its species name.
+                foreach (var empty in new[] { "", "   ", "<>", "\t\t", (string)null })
+                    check(NameEntryView.Clean(empty) == null,
+                          "a name with nothing in it stays unnamed");
+
+                // The cap holds however it is reached.
+                check(NameEntryView.Clean(new string('x', 40)).Length == NameEntryView.MaxLength,
+                      "a long name is cut to " + NameEntryView.MaxLength);
+                check(NameEntryView.Clean("a          b") == "a b",
+                      "runs of spaces collapse (got \"" + NameEntryView.Clean("a          b") + "\")");
+                check(NameEntryView.Clean("  Pebbles  ") == "Pebbles",
+                      "a name does not keep the space you leaned on");
+
+                // Whatever comes out has to survive being drawn where names are drawn. The
+                // party row is the tightest of them.
+                foreach (var raw in nasty)
+                {
+                    string clean = NameEntryView.Clean(raw);
+                    if (clean == null) continue;
+                    var egg = EggInstance.Wild(SpeciesDatabase.All[0].Id, 30);
+                    egg.Nickname = clean;
+                    string row = HudView.PartyRow(egg, true);
+                    int opens = 0, closes = 0;
+                    foreach (var ch in row) { if (ch == '<') opens++; if (ch == '>') closes++; }
+                    check(opens == closes,
+                          "a nicknamed party row has balanced markup (\"" + clean + "\")");
+                    check(lines(row, 524f, 20) == 1,
+                          "and still fits the strip (\"" + clean + "\")");
+                }
+
+                // Loading is the other door into this field, and a save file is a text file.
+                // One edited by hand, or written by a build from before names were filtered,
+                // can carry markup straight back into every panel the name appears in.
+                foreach (var raw in nasty)
+                {
+                    var loaded = EggInstance.Restore(SpeciesDatabase.All[0].Id, raw, 12, 0, 30,
+                                                     null, null);
+                    check(loaded.Name.IndexOf('<') < 0 && loaded.Name.IndexOf('>') < 0,
+                          "a loaded save cannot smuggle markup into a name: \"" + raw +
+                          "\" -> \"" + loaded.Name + "\"");
+                }
+
+                // The hint under the field carries the count. A limit a player only discovers
+                // by hitting it reads as the game having stopped working.
+                // Only states the prompt can be in. A keystroke can only be refused when the
+                // field is already full, so "refused with two characters typed" is a case the
+                // game cannot reach and a case the check has no business failing on.
+                for (int used = 0; used <= NameEntryView.MaxLength; used++)
+                    foreach (bool refused in used >= NameEntryView.MaxLength
+                                                 ? new[] { false, true } : new[] { false })
+                    {
+                        string hint = NameEntryView.Hint(used, refused);
+                        check(hint.Contains(used + "/" + NameEntryView.MaxLength),
+                              "the naming hint shows " + used + " of " + NameEntryView.MaxLength);
+                        check(lines(hint, 840f, 20) == 1, "the naming hint fits its line: " + hint);
+                    }
+                check(NameEntryView.Hint(NameEntryView.MaxLength, true) !=
+                      NameEntryView.Hint(NameEntryView.MaxLength, false),
+                      "a refused keystroke says so rather than doing nothing");
+            }
+
             // ---- the chart knows which pads are dead ----
             {
                 // Four stations have gone cold and the chart never said so - on the screen

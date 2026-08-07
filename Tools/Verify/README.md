@@ -265,6 +265,27 @@ Related: test data invented out of the air fails the same way a threshold invent
 does. The first version of this block fed in `maxHp 1` with a target of half a bar and duly
 failed — on a state no egg in the game can be in. Fractions are built from whole hit points now.
 
+## The naming prompt
+
+The last screen nobody had drawn, and a text field — which is where the small failures live.
+Three, none visible from reading the source:
+
+- **The cap swallowed keystrokes in silence.** A player typing a thirteenth letter saw the field
+  simply stop taking them, with nothing on screen having ever mentioned twelve. The hint carries
+  the count now, and says so when a keystroke is refused.
+- **The caret swapped a bar for a space when it blinked**, and a bar and a space are not the same
+  width. The whole name shifted sideways twice a second, for as long as the player was reading
+  what they had typed. It keeps its slot and changes colour instead.
+- **Everything typed went into rich text unfiltered.** A nickname is interpolated into the party
+  strip, the battle log, every toast and the ending card. `<b>` bolds the rest of the line it
+  lands in; `</color>` ends the colour it was wrapped in and repaints whatever follows. `<3` is a
+  name somebody types on their first run.
+
+The filter is at entry rather than at display, so the stored string is clean — escaping at each of
+the dozen places a name is drawn is a rule that gets forgotten at the thirteenth. **Loading is the
+other door**, and it was standing open: a save file is a text file, and one written before this
+change carries markup straight back in. `EggInstance.Restore` goes through the same filter.
+
 ## What only looking finds
 
 Rendering has now found, in things that had passed every assertion:

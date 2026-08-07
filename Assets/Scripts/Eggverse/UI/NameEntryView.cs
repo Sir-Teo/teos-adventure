@@ -14,6 +14,40 @@ namespace Eggverse
     {
         public const int MaxLength = 12;
 
+        /// <summary>
+        /// What a nickname may be made of.
+        ///
+        /// Everything a player types here is interpolated straight into rich text — the party
+        /// strip, the battle log, every toast, the ending card. A nickname of "&lt;b&gt;" bolds the
+        /// rest of the line it lands in; one containing "&lt;/color&gt;" ends the colour it was
+        /// wrapped in and repaints whatever follows. It goes into the save file that way too.
+        /// "&lt;3" is a name somebody will type on their first run.
+        ///
+        /// Letters, digits, space, apostrophe and hyphen is what a name is. This is a filter
+        /// rather than an escape because the stored string should be clean: escaping at every
+        /// one of the dozen places a name is drawn is a rule that gets forgotten at the
+        /// thirteenth.
+        /// </summary>
+        public static bool Allowed(char c) =>
+            char.IsLetterOrDigit(c) || c == ' ' || c == '\'' || c == '-';
+
+        /// <summary>The name a raw string is allowed to become, or null if nothing is left.</summary>
+        public static string Clean(string raw)
+        {
+            if (string.IsNullOrEmpty(raw)) return null;
+            var sb = new System.Text.StringBuilder();
+            foreach (var c in raw)
+            {
+                if (!Allowed(c)) continue;
+                // No runs of spaces, and none at the front - a name is not a layout tool.
+                if (c == ' ' && (sb.Length == 0 || sb[sb.Length - 1] == ' ')) continue;
+                if (sb.Length >= MaxLength) break;
+                sb.Append(c);
+            }
+            string outp = sb.ToString().TrimEnd();
+            return outp.Length == 0 ? null : outp;
+        }
+
         Canvas canvas;
         Text titleText, entryText, hintText;
         Image portrait;
@@ -21,6 +55,11 @@ namespace Eggverse
         Action<string> onDone;
         bool subscribed;
         float caretTimer;
+
+        // How long the counter stays lit after a keystroke was refused. The cap used to swallow
+        // characters in silence: a player typing a thirteenth letter saw the field simply stop
+        // taking them, with nothing on screen having ever mentioned twelve.
+        float full;
 
         public bool IsOpen { get { return canvas != null && canvas.gameObject.activeSelf; } }
 
@@ -50,11 +89,28 @@ namespace Eggverse
             entryText = UIKit.Label(field.transform, "Text", "", 38, UIKit.Accent, TextAnchor.MiddleCenter, FontStyle.Bold);
             UIKit.Stretch(entryText.rectTransform, 12, 6, 12, 6);
 
-            hintText = UIKit.Label(box, "Hint", "type a name  ·  Enter to confirm  ·  Esc to keep the species name",
+            hintText = UIKit.Label(box, "Hint", Hint(0, false),
                                    20, UIKit.InkDim, TextAnchor.MiddleCenter);
             UIKit.Place(hintText.rectTransform, new Vector2(0.5f, 0f), new Vector2(0.5f, 0f), new Vector2(0f, 34f), new Vector2(840f, 28f));
 
             canvas.gameObject.SetActive(false);
+        }
+
+        /// <summary>
+        /// The line under the field. It carries the count, because a limit a player only
+        /// discovers by hitting it is a limit that reads as the game having stopped working.
+        /// </summary>
+        public static string Hint(int used, bool refused)
+        {
+            // Short, because the rest of the line is the two keys and it all has to fit 840px at
+            // font 20. The first wording ran to "that is as long as it goes" and overran by a
+            // comfortable margin, which the fit check said immediately.
+            string count = refused
+                ? "<color=#FFC24D>" + used + "/" + MaxLength + " — that is all</color>"
+                : used >= MaxLength
+                    ? "<color=#FFC24D>" + used + "/" + MaxLength + "</color>"
+                    : used + "/" + MaxLength;
+            return count + "  ·  Enter to confirm  ·  Esc to keep the species name";
         }
 
         public void Open(EggInstance egg, Action<string> done)
@@ -81,8 +137,8 @@ namespace Eggverse
         {
             if (!IsOpen) return;
             // Printable characters only; Enter and Backspace are handled as keys.
-            if (c < ' ' || c == 127) return;
-            if (buffer.Length >= MaxLength) return;
+            if (!Allowed(c)) return;
+            if (buffer.Length >= MaxLength) { full = 0.5f; return; }
             buffer += c;
         }
 
@@ -100,15 +156,22 @@ namespace Eggverse
 
                 if (keyboard.enterKey.wasPressedThisFrame || keyboard.numpadEnterKey.wasPressedThisFrame)
                 {
-                    string trimmed = buffer.Trim();
-                    Close(string.IsNullOrEmpty(trimmed) ? null : trimmed);
+                    Close(Clean(buffer));
                     return;
                 }
             }
 
             caretTimer += Time.deltaTime;
+            full = Mathf.Max(0f, full - Time.deltaTime);
+
+            // The caret keeps its slot whether it is lit or not. It used to swap the bar for a
+            // space, and a bar and a space are not the same width - so the whole name shifted
+            // sideways twice a second, for the entire time a player was reading what they had
+            // typed.
             bool caretOn = (caretTimer % 1f) < 0.55f;
-            entryText.text = buffer + (caretOn ? "<color=#FFC24D>|</color>" : " ");
+            entryText.text = buffer + "<color=" + (caretOn ? "#FFC24D" : "#00000000") + ">|</color>";
+
+            hintText.text = Hint(buffer.Length, full > 0f);
         }
 
         void Close(string result)

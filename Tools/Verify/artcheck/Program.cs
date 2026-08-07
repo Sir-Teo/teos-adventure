@@ -365,6 +365,14 @@ static class Program
         }
 
         {
+            // The naming prompt, mid-type and at the cap. It had never been drawn.
+            WriteBmpRect(Naming.Render("Pebbles", true, false), Battle.W, Battle.H, "naming.bmp");
+            WriteBmpRect(Naming.Render(new string('W', Eggverse.NameEntryView.MaxLength), true, true),
+                         Battle.W, Battle.H, "naming-full.bmp");
+            Console.WriteLine(Naming.Report());
+        }
+
+        {
             // The dialogue box, at the longest line anybody says and at the moment it is still
             // typing itself out.
             var (dsp, dtx) = Dialogue.Longest();

@@ -420,7 +420,11 @@ namespace Eggverse
         {
             var egg = new EggInstance(SpeciesDatabase.Get(speciesId), level);
             egg.Elder = elder;
-            egg.Nickname = string.IsNullOrEmpty(nickname) ? null : nickname;
+            // Through the same filter the prompt uses. A save file is a text file: one edited
+            // by hand, or written by a build from before nicknames were filtered, can carry a
+            // "<b>" straight back into every panel it appears in. Loading is the other door
+            // into this field and it was standing open.
+            egg.Nickname = NameEntryView.Clean(nickname);
             egg.Xp = Mathf.Max(0, xp);
 
             if (moveIds != null && moveIds.Length > 0)
