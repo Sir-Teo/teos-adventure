@@ -363,6 +363,13 @@ system can produce.
 
 ## Colour and readability
 
+Every character's portrait tint comes from the cast list itself, not from a second table beside
+it. It used to be a hand-written map of the same fourteen names, and it drifted the moment three
+residents were added — **Lune, Tilda and Garrow spoke in generic grey for several revisions**, and
+the check meant to catch that asked whether the tint was `!= default`. The fallback returns a real
+grey, so it passed. It now asks whether the speaker has a tint *of their own*.
+
+
 The nine type colours carry real information, so they are measured rather than eyeballed. The
 harness converts each to CIE Lab and computes pairwise ΔE under normal vision plus approximated
 protanopia and deuteranopia. That found **Verdant and Stone colliding under deuteranopia** (ΔE

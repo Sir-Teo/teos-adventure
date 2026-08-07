@@ -165,7 +165,11 @@ class Sim {
                     {
                         Check(!string.IsNullOrWhiteSpace(line.Text), $"{npc.Name} has no empty lines");
                         Check(!string.IsNullOrWhiteSpace(line.Speaker), $"{npc.Name} lines all name a speaker");
-                        Check(DialogueView.TintFor(line.Speaker) != default, $"speaker '{line.Speaker}' has a portrait tint");
+                        // Not "is not default" - the fallback returns a real grey, so that
+                        // passed for three residents who had no tint at all for several
+                        // revisions. Ask whether the speaker has one of their own.
+                        Check(DialogueView.HasTintFor(line.Speaker),
+                              $"speaker '{line.Speaker}' has a portrait tint of their own");
                     }
                     totalLines += script.Lines.Length;
                 }

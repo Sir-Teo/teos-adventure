@@ -19,29 +19,42 @@ namespace Eggverse
 
         const float CharsPerSecond = 55f;
 
-        static readonly Dictionary<string, Color> SpeakerTints = new Dictionary<string, Color>
+        /// <summary>
+        /// Portrait tints, built from the cast rather than kept beside it.
+        ///
+        /// This was a second hand-written table listing the same people as StoryDatabase.Npcs,
+        /// and it drifted the moment three residents were added: Lune, Tilda and Garrow spoke in
+        /// generic grey for several revisions. Nothing caught it, because the fallback returns a
+        /// real colour and the cast check only asked that the tint was not default.
+        /// </summary>
+        static Dictionary<string, Color> tints;
+
+        static Dictionary<string, Color> Tints
         {
-            { "Teo",   new Color32(0xEC, 0xF1, 0xF7, 0xFF) },
-            { "Ori",   new Color32(0x9F, 0xD6, 0xA0, 0xFF) },
-            { "Marn",  new Color32(0xFF, 0xD8, 0x4A, 0xFF) },
-            { "Sable", new Color32(0xBE, 0xE8, 0xF4, 0xFF) },
-            { "Vess",  new Color32(0x9A, 0x8C, 0xD6, 0xFF) },
-            { "Pim",   new Color32(0xD6, 0xB8, 0xFF, 0xFF) },
-            { "Amy",   new Color32(0xFF, 0xC2, 0x4D, 0xFF) },
-            { "Hob",   new Color32(0xE0, 0x88, 0x5A, 0xFF) },
-            { "Nell",  new Color32(0x7F, 0xC6, 0xE8, 0xFF) },
-            { "Bram",  new Color32(0x9C, 0xCB, 0x7E, 0xFF) },
-            { "Sax",   new Color32(0x6F, 0xA8, 0xC4, 0xFF) },
-            { "Quill", new Color32(0xF2, 0xA8, 0x6B, 0xFF) },
-            { "Moth",  new Color32(0x9B, 0x8B, 0xD6, 0xFF) },
-            { "Wren",  new Color32(0x8C, 0x82, 0xC0, 0xFF) },
-        };
+            get
+            {
+                if (tints != null) return tints;
+                tints = new Dictionary<string, Color>
+                {
+                    // Not residents, so not in the cast list: the player, and the woman at the end.
+                    { "Teo", new Color32(0xEC, 0xF1, 0xF7, 0xFF) },
+                    { "Amy", new Color32(0xFF, 0xC2, 0x4D, 0xFF) },
+                };
+                var cast = StoryDatabase.Npcs;
+                for (int i = 0; i < cast.Length; i++) tints[cast[i].Name] = cast[i].Tint;
+                return tints;
+            }
+        }
+
+        /// <summary>Whether this speaker has a tint of their own, rather than the fallback.</summary>
+        public static bool HasTintFor(string speaker) => Tints.ContainsKey(speaker);
 
         public static Color TintFor(string speaker)
         {
             Color c;
-            return SpeakerTints.TryGetValue(speaker, out c) ? c : new Color32(0xA8, 0xB2, 0xC4, 0xFF);
+            return Tints.TryGetValue(speaker, out c) ? c : new Color32(0xA8, 0xB2, 0xC4, 0xFF);
         }
+
 
         public void Build(GameDirector director)
         {
