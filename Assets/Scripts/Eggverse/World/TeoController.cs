@@ -42,6 +42,7 @@ namespace Eggverse
 
         readonly List<SpriteRenderer> puffPool = new List<SpriteRenderer>();
         readonly List<float> puffLife = new List<float>();
+        readonly List<Color> puffTint = new List<Color>();
         float puffTimer;
         Sprite puffSprite;
 
@@ -98,10 +99,19 @@ namespace Eggverse
                 if (puffTimer <= 0f)
                 {
                     puffTimer = 0.045f;
-                    SpawnPuff(-input.normalized);
+                    SpawnPuff(-input.normalized, Color.white);
                 }
             }
         }
+
+        /// <summary>
+        /// The ground this world is made of, so walking kicks up something that belongs to it -
+        /// ash on Cinderoost, snow on Glacierim, leaf litter on Mosswell. Set on landing.
+        /// </summary>
+        public Color GroundTint = Color.grey;
+
+        /// <summary>How often a walking step throws something up. Flight is 0.045.</summary>
+        public const float StepPuffInterval = 0.15f;
 
         void TickWalking(float dt)
         {
@@ -113,6 +123,19 @@ namespace Eggverse
             // it. Scaling the whole velocity killed any sideways movement too, so walking into
             // the edge at an angle stalled - and the edge is a circle, so half of walking near
             // it is at an angle. Keep the component along the rim, drop the one into it.
+            // Walking threw up nothing at all. Minutes of it, on ground the game has gone to
+            // some trouble to make specific, with no sign the ground was there. The motes come
+            // off the world's own colour, so each one throws up something of its own.
+            if (EggInput.Move.sqrMagnitude > 0.04f)
+            {
+                puffTimer -= dt;
+                if (puffTimer <= 0f)
+                {
+                    puffTimer = StepPuffInterval;
+                    SpawnPuff(-EggInput.Move.normalized, StepMoteTint(GroundTint));
+                }
+            }
+
             Vector2 flat = new Vector2(next.x, next.y);
             if (flat.magnitude > SurfaceRadius)
             {
@@ -142,9 +165,22 @@ namespace Eggverse
             }
         }
 
+        /// <summary>
+        /// A mote of the ground, pushed away from the ground's own colour so it reads against
+        /// it. The same rule the shell fields, the caches and the landmarks use: dark on a
+        /// bright world, pale on a dark one.
+        /// </summary>
+        public static Color StepMoteTint(Color ground)
+        {
+            float lum = 0.2126f * ground.r + 0.7152f * ground.g + 0.0722f * ground.b;
+            Color toward = lum > 0.5f ? Color.black : Color.white;
+            Color c = Color.Lerp(ground, toward, 0.45f);
+            return new Color(c.r, c.g, c.b, 0.55f);
+        }
+
         // ---------- thruster puffs ----------
 
-        void SpawnPuff(Vector2 direction)
+        void SpawnPuff(Vector2 direction, Color tint)
         {
             int index = -1;
             for (int i = 0; i < puffPool.Count; i++)
@@ -162,11 +198,13 @@ namespace Eggverse
                 sr.sortingOrder = 15;
                 puffPool.Add(sr);
                 puffLife.Add(0f);
+                puffTint.Add(Color.white);
                 index = puffPool.Count - 1;
             }
 
             SpriteRenderer puff = puffPool[index];
             puffLife[index] = 0.45f;
+            puffTint[index] = tint;
             puff.transform.position = transform.position + (Vector3)(direction * 0.55f);
             puff.transform.localScale = Vector3.one * Random.Range(0.35f, 0.55f);
             puff.enabled = true;
@@ -180,7 +218,8 @@ namespace Eggverse
                 puffLife[i] -= dt;
                 float t = Mathf.Clamp01(puffLife[i] / 0.45f);
                 var sr = puffPool[i];
-                sr.color = new Color(1f, 1f, 1f, t * 0.75f);
+                var c = puffTint[i];
+                sr.color = new Color(c.r, c.g, c.b, t * 0.75f * c.a);
                 sr.transform.localScale = Vector3.one * Mathf.Lerp(0.15f, 0.6f, t);
                 if (puffLife[i] <= 0f) sr.enabled = false;
             }

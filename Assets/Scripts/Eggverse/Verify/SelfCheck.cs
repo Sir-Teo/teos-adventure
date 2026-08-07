@@ -1029,6 +1029,35 @@ namespace Eggverse
                     }
             }
 
+            // ---- walking kicks up the ground ----
+            {
+                // Minutes of walking on ground the game has gone to some trouble to make
+                // specific, and nothing came off it. The motes take the world's own colour,
+                // so they have to clear that colour the way everything else on a surface does.
+                foreach (var w in PlanetDatabase.All)
+                {
+                    var mote = TeoController.StepMoteTint(w.Land);
+                    float gapMote = Mathf.Abs(SurfaceMode.Luminance(mote) - SurfaceMode.Luminance(w.Land));
+                    check(gapMote > 0.10f,
+                          "a step throws up something you can see on " + w.Name +
+                          " (luminance gap " + gapMote.ToString("0.00") + ")");
+                    check(mote.a > 0.2f && mote.a < 0.85f,
+                          w.Name + "'s motes are ground, not smoke (alpha " + mote.a.ToString("0.00") + ")");
+                }
+
+                // Slower than the thruster: walking is not flying, and a mote every frame
+                // would read as a dust storm.
+                check(TeoController.StepPuffInterval > 0.09f,
+                      "walking throws up less than flying does (" +
+                      TeoController.StepPuffInterval.ToString("0.00") + "s between motes)");
+
+                // At walking speed that is a mote roughly every two units, which is a trail
+                // rather than a smear.
+                float spacing = TeoController.WalkSpeed * TeoController.StepPuffInterval;
+                check(spacing > 1f && spacing < 3f,
+                      "the motes space out into a trail (" + spacing.ToString("0.0") + " units apart)");
+            }
+
             // ---- what the nest header says ----
             {
                 // The reason a player opens the nest is to ask whether it holds anything worth

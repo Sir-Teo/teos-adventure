@@ -359,6 +359,7 @@ namespace Eggverse
             Surface.Enter(planet);
 
             Teo.SurfaceRadius = planet.SurfaceRadius;
+            Teo.GroundTint = planet.Land;
             Teo.Warp(Surface.LandingPoint());
             Teo.Movement = TeoMovement.Walking;
             Teo.ClearPuffs();
