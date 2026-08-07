@@ -254,8 +254,13 @@ namespace Eggverse
             }
             else
             {
-                dir.Hud.SetPrompt("Press <b>E</b> to land on <b>" + best.Def.Name + "</b>  ·  wild eggs Lv " +
-                                  best.Def.MinLevel + "-" + best.Def.MaxLevel);
+                // What it still owes you, in the moment you decide whether to go down. The
+                // chart says this and so does the toast on landing; this is where the choice is
+                // actually made.
+                string owed = dir.State.Visited.Contains(best.Def.Id) ? dir.StillOwed(best.Def) : null;
+                dir.Hud.SetPrompt("Press <b>E</b> to land on <b>" + best.Def.Name + "</b>  ·  Lv " +
+                                  best.Def.MinLevel + "-" + best.Def.MaxLevel +
+                                  (owed != null ? "  ·  " + owed : ""));
             }
 
             if (EggInput.InteractPressed)

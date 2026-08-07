@@ -884,6 +884,43 @@ namespace Eggverse
                 }
             }
 
+            // ---- the approach prompt ----
+            // The bar is 1200px at font 22. Worst case is the longest world name with the
+            // longest owed phrase, which is the "picked clean" one rather than a count.
+            {
+                foreach (var w in PlanetDatabase.All)
+                {
+                    if (w.IsBossWorld) continue;
+                    int catchable = 0;
+                    foreach (var sp in w.Spawns)
+                        if (SpeciesDatabase.Get(sp.SpeciesId).CatchRate >= 20) catchable++;
+
+                    foreach (var owed in new[]
+                    {
+                        Words.Count(catchable, "egg") + " here you have not recorded yet.",
+                        "Every egg here is already in your record.",
+                    })
+                    {
+                        string prompt = "Press E to land on " + w.Name + "  ·  Lv " +
+                                        w.MinLevel + "-" + w.MaxLevel + "  ·  " + owed;
+                        check(lines(prompt, 1200f - 40f, 22) == 1,
+                              "approach prompt fits for " + w.Name + " (" + prompt.Length + " chars)");
+                    }
+                }
+
+                // And the sealed form, which carries the whole outstanding list instead.
+                for (int i = 0; i < StoryDatabase.Beats.Length; i++)
+                {
+                    var walk4 = new StoryState();
+                    walk4.RestoreFrom(new string[0], i);
+                    string missing = walk4.CurrentBlockerText(new GameState());
+                    if (missing == null) continue;
+                    string prompt = "Cobblestead is beyond your charted route.  Still needed: " + missing + ".";
+                    check(lines(prompt, 1200f - 40f, 22) <= 2,
+                          "sealed approach prompt stays short at beat '" + StoryDatabase.Beats[i].Id + "'");
+                }
+            }
+
             // ---- the chart's distance line ----
             // Drawn in an 848px body at font 22, from every world to every other. The longest
             // pairing is what has to fit, not a convenient one.

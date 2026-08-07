@@ -367,8 +367,11 @@ namespace Eggverse
             SaveNow();
         }
 
-        /// <summary>What this world still has that the player has not recorded.</summary>
-        string StillOwed(PlanetDef planet)
+        /// <summary>
+        /// What this world still has that the player has not recorded. Read in three places -
+        /// the chart, the approach prompt, and the toast on landing - so they cannot disagree.
+        /// </summary>
+        public string StillOwed(PlanetDef planet)
         {
             int missing = 0;
             for (int i = 0; i < planet.Spawns.Length; i++)
