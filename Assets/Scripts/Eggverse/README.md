@@ -35,6 +35,17 @@ Sectors unlock through story progress, not level checks. The final gate wants si
 distinct types, and one raised to level 22 — a threshold set by simulation, not by guessing
 (see *Balance* below).
 
+## The ending
+
+Beating Amy is not the last thing that happens. Ori feels the pad go warm; **Marn**'s eleven-year
+line finally turns and climbs; **Sable** refuses to let you mistake relief for a fix ("a thing that
+size is never fixed, it is *carried*"); **Pim** hears the Belt's one flat note come up by a hair;
+and **Vess** — who wanted to break the Prime rather than hold it — concedes she only ever counted
+to two, and asks whether Amy is all right.
+
+The self-check enforces this: every named character must say something different once `beat_amy`
+is set. All five of them spoke their mid-game lines over the credits until something checked.
+
 ## The loop
 
 Land → walk into a pale **shell field** or bump a roaming egg → battle → weaken it → throw an

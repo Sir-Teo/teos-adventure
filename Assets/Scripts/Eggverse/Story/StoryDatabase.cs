@@ -456,6 +456,18 @@ namespace Eggverse
 
         static DialogueScript MarnDialogue(StoryState story)
         {
+            if (story.HasFlag("beat_amy"))
+            {
+                return new DialogueScript(new[]
+                {
+                    new DialogueLine("Marn", "Point four a day. *Up.* I've started writing it down again."),
+                    new DialogueLine("Marn", "Eleven years I watched that line walk downhill. It's been climbing eight days and I still check it twice an hour in case it stops."),
+                    new DialogueLine("Marn", "I don't know what you did up there. I know what it looks like from a mast on Voltacrest."),
+                    new DialogueLine("Marn", "It looks like somebody finally answered."),
+                }, null, null, null, 5, true);
+            }
+
+
             if (story.HasFlag("keeper_marn"))
             {
                 return new DialogueScript(new[]
@@ -479,6 +491,20 @@ namespace Eggverse
 
         static DialogueScript SableDialogue(StoryState story)
         {
+            if (story.HasFlag("beat_amy"))
+            {
+                return new DialogueScript(new[]
+                {
+                    new DialogueLine("Sable", "Shut the — no. Leave it open. Let some of it out."),
+                    new DialogueLine("Sable", "You did not fix it. I want you clear on that. A thing that size is never fixed, it is *carried*."),
+                    new DialogueLine("Teo", "I know."),
+                    new DialogueLine("Sable", "Good. Then here is the part worth having: it was one pair of arms for eleven years, and now it is two."),
+                    new DialogueLine("Sable", "Two is not twice one. Two is the difference between holding, and holding on."),
+                    new DialogueLine("Sable", "Come back when you are tired of it. I will teach you the rest of what they stopped teaching."),
+                }, null, null, null, 5, true);
+            }
+
+
             if (story.HasFlag("keeper_sable"))
             {
                 return new DialogueScript(new[]
@@ -505,6 +531,17 @@ namespace Eggverse
 
         static DialogueScript VessOneDialogue(StoryState story)
         {
+            if (story.HasFlag("beat_amy"))
+            {
+                return new DialogueScript(new[]
+                {
+                    new DialogueLine("Vess", "Heard. The whole Belt heard."),
+                    new DialogueLine("Vess", "I am going back down to the Reach. Somebody has to tell them the nests are coming back."),
+                    new DialogueLine("Vess", "I am told I am loud. Might as well be loud about something true."),
+                }, null, null, null, 5, true);
+            }
+
+
             if (story.HasFlag("beat_vess_1"))
             {
                 return new DialogueScript(new[]
@@ -528,6 +565,19 @@ namespace Eggverse
 
         static DialogueScript PimDialogue(StoryState story)
         {
+            if (story.HasFlag("beat_amy"))
+            {
+                return new DialogueScript(new[]
+                {
+                    new DialogueLine("Pim", "Shh."),
+                    new DialogueLine("Pim", "...It moved."),
+                    new DialogueLine("Pim", "Eleven years flat. Came up this morning. Not much — a hair, you would not hear it."),
+                    new DialogueLine("Pim", "That is you, that is. That is the sound of somebody putting their shoulder in."),
+                    new DialogueLine("Pim", "Go on. I want to hear it on my own a while."),
+                }, null, null, null, 5, true);
+            }
+
+
             if (story.HasFlag("learned_truth"))
             {
                 return new DialogueScript(new[]
@@ -555,6 +605,21 @@ namespace Eggverse
 
         static DialogueScript VessTwoDialogue(StoryState story)
         {
+            if (story.HasFlag("beat_amy"))
+            {
+                return new DialogueScript(new[]
+                {
+                    new DialogueLine("Vess", "So you held it."),
+                    new DialogueLine("Vess", "I would have broken it. On the numbers I had I still think I would have been right to."),
+                    new DialogueLine("Vess", "But you had a third answer and I only ever counted to two."),
+                    new DialogueLine("Vess", "...Is she all right? Amy."),
+                    new DialogueLine("Teo", "She is now."),
+                    new DialogueLine("Vess", "Then that is the bit I got wrong. I had stopped thinking of her as a person somewhere around year nine."),
+                    new DialogueLine("Vess", "Go on. Someone ought to be up there, and it was never going to be me."),
+                }, null, null, null, 5, true);
+            }
+
+
             if (story.HasFlag("beat_vess_2"))
             {
                 return new DialogueScript(new[]
