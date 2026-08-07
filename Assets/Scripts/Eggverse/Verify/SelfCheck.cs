@@ -1626,6 +1626,28 @@ namespace Eggverse
                 check(elder.Elder && !ordinary.Elder, "and knows it");
             }
 
+            // ---- a shell field acknowledges you ----
+            {
+                // Encounters only happen inside these patches and nothing confirmed you were
+                // in one. The stir did not begin until fifty-five percent of the way to a
+                // fight, so most of the time spent in a shell field looked exactly like
+                // walking on bare ground - on the one mechanic the whole catching loop rests on.
+                check(SurfaceMode.InsideLift > 0f,
+                      "standing in a field shows on the field (" + SurfaceMode.InsideLift + ")");
+
+                // Well below the stir, or the warning and the acknowledgement read the same.
+                check(SurfaceMode.InsideLift < 0.4f,
+                      "and is far quieter than the stir that means something is coming (" +
+                      SurfaceMode.InsideLift + ")");
+
+                // The lift and the stir share a scale, so the stir has to have somewhere to go
+                // above the floor - otherwise a field that is about to give looks like one you
+                // have just walked into.
+                check(1f - SurfaceMode.InsideLift > 0.5f,
+                      "the stir has room to build above it (" +
+                      (1f - SurfaceMode.InsideLift).ToString("0.00") + " of range left)");
+            }
+
             // ---- the stir before an encounter ----
             {
                 // A field turning something up used to be a cut with no tell at all. The stir

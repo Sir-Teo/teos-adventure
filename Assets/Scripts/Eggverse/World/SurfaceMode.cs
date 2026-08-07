@@ -75,6 +75,9 @@ namespace Eggverse
         // so a stir starting at 0.68 gave between a third and three quarters of a second - not
         // long enough to read as a warning at the short end, which is where it matters most.
         public const float StirBegins = 0.55f;
+
+        /// <summary>How much a shell field lifts simply because you are standing in it.</summary>
+        public const float InsideLift = 0.18f;
         public const float EncounterWalkMin = 7f, EncounterWalkMax = 15f;
         readonly List<Roamer> roamers = new List<Roamer>();
         readonly List<WorldLabel> labels = new List<WorldLabel>();
@@ -1162,7 +1165,9 @@ namespace Eggverse
             float lift = 1f + amount * ((big ? 0.085f : 0.045f) + (big ? 0.03f : 0.02f) * beat);
             t.localScale = Vector3.one * (fieldBaseScale[index] * lift);
 
-            if (amount > 0.02f && !stirAnnounced)
+            // The rustle belongs to the stir, not to standing in a field - otherwise every
+            // patch you walked into announced itself and the sound stopped meaning anything.
+            if (amount > InsideLift + 0.02f && !stirAnnounced)
             {
                 stirAnnounced = true;
                 dir.Audio.Play(big ? Sfx.RustleDeep : Sfx.Rustle);
@@ -1216,7 +1221,12 @@ namespace Eggverse
             // above its neighbours and lit round the shell - and it used to arrive with no more
             // warning than a Sprouteg.
             if (tension >= StirBegins && pending == null) pending = RollFieldEncounter();
-            SetStir(insideIndex, Mathf.InverseLerp(StirBegins, 1f, tension));
+            // A floor while you are standing in it, so the field acknowledges you at all.
+            // Encounters only happen inside these patches and nothing confirmed you were in
+            // one - the stir did not start until fifty-five percent of the way to a fight, so
+            // most of the time in a shell field looked identical to walking on bare ground.
+            SetStir(insideIndex,
+                    Mathf.Max(InsideLift, Mathf.InverseLerp(StirBegins, 1f, tension)));
 
             if (fieldDistance < nextEncounterDistance) return;
 
