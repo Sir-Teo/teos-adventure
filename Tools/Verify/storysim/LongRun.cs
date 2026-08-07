@@ -31,21 +31,21 @@ static class LongRun
     }
 
     // Mirrors SaveSystem's pack/unpack without JsonUtility, which needs the engine.
+    /// The game's own save and restore, with the disk left out of it.
+    ///
+    /// This used to be a hand-written copy of the packing: party, nest, seen, caught, visited,
+    /// cartons, the Amy flag and the current planet. It had fallen five fields behind - caches,
+    /// salves, landmarks, landmark asides - and the eggs it cloned lost their elder and starter
+    /// marks. So a playthrough could "save and load" seventy-eight times and never once carry
+    /// any of them, and the test would have reported success either way.
     static (GameState, StoryState) RoundTrip(GameState st, StoryState story)
     {
-        var copy = new GameState(false);
-        foreach (var e in st.Party) copy.Party.Add(Clone(e));
-        foreach (var e in st.Nest) copy.Nest.Add(Clone(e));
-        foreach (var s in st.Seen) copy.Seen.Add(s);
-        foreach (var s in st.Caught) copy.Caught.Add(s);
-        foreach (var s in st.Visited) copy.Visited.Add(s);
-        copy.Cartons = st.Cartons;
-        copy.AmyDefeated = st.AmyDefeated;
-        copy.CurrentPlanetId = st.CurrentPlanetId;
-
-        var storyCopy = new StoryState();
-        storyCopy.RestoreFrom(story.FlagsSnapshot(), story.BeatIndex);
-        return (copy, storyCopy);
+        var packed = SaveSystem.Capture(st, story, st.CurrentPlanetId, 0f);
+        GameState loaded; StoryState loadedStory; string planet; float seconds;
+        if (!SaveSystem.Restore(packed, out loaded, out loadedStory, out planet, out seconds))
+            throw new Exception("the game could not restore its own save");
+        loaded.CurrentPlanetId = planet;
+        return (loaded, loadedStory);
     }
 
     static EggInstance Clone(EggInstance e)
@@ -65,11 +65,27 @@ static class LongRun
         check(sa.BeatIndex == sb.BeatIndex, $"[{where}] story position survives a save/load");
         check(a.HighestPartyLevel == b.HighestPartyLevel, $"[{where}] party levels survive a save/load");
         check(a.DistinctTypesHeld == b.DistinctTypesHeld, $"[{where}] type coverage survives a save/load");
+        // Everything else a save carries. The comparison used to stop at party, nest, caught,
+        // visited and the beat - so five fields could go missing from the packing without a
+        // single one of seventy-eight save/loads noticing.
+        check(a.Cartons == b.Cartons, $"[{where}] cartons survive a save/load");
+        check(a.Salves == b.Salves, $"[{where}] salves survive a save/load");
+        check(a.Caches.Count == b.Caches.Count, $"[{where}] dug caches survive a save/load");
+        check(a.Landmarks.Count == b.Landmarks.Count, $"[{where}] inscriptions read survive a save/load");
+        check(a.LandmarkAsides.Count == b.LandmarkAsides.Count, $"[{where}] residents' asides survive a save/load");
+        check(a.Seen.Count == b.Seen.Count, $"[{where}] the seen set survives a save/load");
+        check(a.AmyDefeated == b.AmyDefeated, $"[{where}] the Amy flag survives a save/load");
+        check(a.MaxCartons == b.MaxCartons, $"[{where}] carton capacity survives a save/load");
+        check((a.EggFromOri != null) == (b.EggFromOri != null),
+              $"[{where}] the egg Ori gave you survives a save/load");
+
         for (int i = 0; i < Math.Min(a.Party.Count, b.Party.Count); i++)
         {
             check(a.Party[i].Species.Id == b.Party[i].Species.Id, $"[{where}] party slot {i} species");
             check(a.Party[i].Name == b.Party[i].Name, $"[{where}] party slot {i} name");
             check(a.Party[i].CurrentHP == b.Party[i].CurrentHP, $"[{where}] party slot {i} hp");
+            check(a.Party[i].Elder == b.Party[i].Elder, $"[{where}] party slot {i} elder mark");
+            check(a.Party[i].FromOri == b.Party[i].FromOri, $"[{where}] party slot {i} starter mark");
         }
     }
 
@@ -97,6 +113,18 @@ static class LongRun
                 if (!story.CanEnter(planet.Sector) || planet.IsBossWorld) continue;
                 state.Visited.Add(planet.Id);
                 state.CurrentPlanetId = planet.Id;
+
+                // A player who walks out past the shell fields. Without this the run never read
+                // an inscription, so the sets that record them stayed empty on both sides of a
+                // save and comparing them proved nothing - dropping landmarks from the packing
+                // entirely still passed.
+                if (LandmarkDatabase.For(planet.Id) != null)
+                {
+                    state.Landmarks.Add(planet.Id);
+                    foreach (var npc in StoryDatabase.Npcs)
+                        if (npc.PlanetId == planet.Id) state.LandmarkAsides.Add(npc.Id);
+                }
+                if (PlanetDatabase.HasCache(planet.Id)) state.Caches.Add(planet.Id);
 
                 for (int enc = 0; enc < 3; enc++)
                 {

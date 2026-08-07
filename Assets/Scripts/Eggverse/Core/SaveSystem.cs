@@ -67,32 +67,45 @@ namespace Eggverse
         // writing
         // ------------------------------------------------------------------
 
+        /// <summary>
+        /// Everything a save holds, without touching the disk.
+        ///
+        /// Split out of Save so the round-trip test can use the game's own packing. It had a
+        /// hand-written copy of this instead, and that copy had fallen five fields behind -
+        /// caches, salves, landmarks, landmark asides - so a playthrough could "save and load"
+        /// seventy-eight times and never once carry any of them.
+        /// </summary>
+        public static SaveData Capture(GameState state, StoryState story, string planetId, float playSeconds)
+        {
+            return new SaveData
+            {
+                version = 1,
+                party = ToSaves(state.Party),
+                nest = ToSaves(state.Nest),
+                seen = ToArray(state.Seen),
+                caught = ToArray(state.Caught),
+                visited = ToArray(state.Visited),
+                flags = story.FlagsSnapshot(),
+                cartons = state.Cartons,
+                caches = ToArray(state.Caches),
+                landmarks = ToArray(state.Landmarks),
+                landmarkAsides = ToArray(state.LandmarkAsides),
+                screenMotion = state.ScreenMotion,
+                textSpeed = state.TextSpeed,
+                salves = state.Salves,
+                beatIndex = story.BeatIndex,
+                planet = planetId,
+                amyDefeated = state.AmyDefeated,
+                playSeconds = playSeconds,
+                savedAt = DateTime.Now.ToString("yyyy-MM-dd HH:mm"),
+            };
+        }
+
         public static bool Save(GameState state, StoryState story, string planetId, float playSeconds)
         {
             try
             {
-                var data = new SaveData
-                {
-                    version = 1,
-                    party = ToSaves(state.Party),
-                    nest = ToSaves(state.Nest),
-                    seen = ToArray(state.Seen),
-                    caught = ToArray(state.Caught),
-                    visited = ToArray(state.Visited),
-                    flags = story.FlagsSnapshot(),
-                    cartons = state.Cartons,
-                    caches = ToArray(state.Caches),
-                    landmarks = ToArray(state.Landmarks),
-                    landmarkAsides = ToArray(state.LandmarkAsides),
-                    screenMotion = state.ScreenMotion,
-                    textSpeed = state.TextSpeed,
-                    salves = state.Salves,
-                    beatIndex = story.BeatIndex,
-                    planet = planetId,
-                    amyDefeated = state.AmyDefeated,
-                    playSeconds = playSeconds,
-                    savedAt = DateTime.Now.ToString("yyyy-MM-dd HH:mm"),
-                };
+                var data = Capture(state, story, planetId, playSeconds);
 
                 File.WriteAllText(Path, JsonUtility.ToJson(data, true));
                 return true;
