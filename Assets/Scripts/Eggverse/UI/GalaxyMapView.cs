@@ -347,7 +347,12 @@ namespace Eggverse
         public static string MarkerSuffix(PlanetDef def, GameState state, StoryState story, Presence presence)
         {
             if (!story.CanEnter(def.Sector)) return "<color=#5A6072>· sealed</color>";
-            if (!state.Visited.Contains(def.Id)) return "<color=#8A90A2>· uncharted</color>";
+            // The level range, as the space view has always shown it. A world's size and
+            // distance are survey data; a player can read them from orbit and from a chart
+            // alike. What you only learn by going is what lives there - so the element stays
+            // behind, and the two screens stop disagreeing about what is known.
+            if (!state.Visited.Contains(def.Id))
+                return "<color=#8A90A2>· uncharted  ·  Lv " + def.MinLevel + "-" + def.MaxLevel + "</color>";
             if (presence == Presence.Landed) return "<color=#FFC24D>· you are here</color>";
             if (presence == Presence.InOrbit) return "<color=#FFC24D>· in orbit</color>";
 

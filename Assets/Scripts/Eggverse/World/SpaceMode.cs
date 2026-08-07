@@ -439,7 +439,16 @@ namespace Eggverse
             if (sealedWorld) sub = "<color=#E55555>SEALED ROUTE</color>";
             else if (v.Def.IsBossWorld) sub = "<color=#FFC24D>AMY</color>";
             else if (!charted) sub = "<color=#8A90A2>UNCHARTED · Lv " + v.Def.MinLevel + "-" + v.Def.MaxLevel + "</color>";
-            else sub = "<color=#A8B2C4>Lv " + v.Def.MinLevel + "-" + v.Def.MaxLevel + " · " + TypeChart.Name(v.Def.Theme) + "</color>";
+            else
+            {
+                // The same hollow ring the chart puts on a world you have walked and not
+                // finished. It meant something on one screen and nothing on the other, so a
+                // player flying past had to open the chart to learn what they were looking at.
+                int owed = dir.State.UnrecordedOn(v.Def);
+                sub = "<color=#A8B2C4>Lv " + v.Def.MinLevel + "-" + v.Def.MaxLevel + " · " +
+                      TypeChart.Name(v.Def.Theme) + "</color>" +
+                      (owed > 0 ? "  <color=#FFC24D>\u25cb</color>" : "");
+            }
 
             Color nameColor = here ? UIKit.Accent : sealedWorld ? UIKit.InkDim : UIKit.Ink;
             v.Label.text = "<color=#" + ColorUtility.ToHtmlStringRGB(nameColor) + "><b>" + v.Def.Name + "</b></color>\n<size=20>" + sub + "</size>";

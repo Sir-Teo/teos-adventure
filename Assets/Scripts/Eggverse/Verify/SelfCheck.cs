@@ -1626,6 +1626,50 @@ namespace Eggverse
                 check(elder.Elder && !ordinary.Elder, "and knows it");
             }
 
+            // ---- the chart and the sky agree ----
+            {
+                // Two screens describing the same seventeen worlds, disagreeing about what a
+                // player is allowed to know. The space label gave an uncharted world's level
+                // range and the chart withheld it; the chart marked a world you had walked and
+                // not finished and the space label did not.
+                var charted = new GameState(false);
+                var late = new StoryState();
+                late.RestoreFrom(new string[0], StoryDatabase.Beats.Length - 1);
+                foreach (var w in PlanetDatabase.All) charted.Visited.Add(w.Id);
+
+                var nothing = new GameState(false);
+
+                foreach (var w in PlanetDatabase.All)
+                {
+                    string uncharted = GalaxyMapView.MarkerSuffix(w, nothing, late,
+                                                                  GalaxyMapView.Presence.Elsewhere);
+                    if (nothing.Visited.Contains(w.Id)) continue;
+
+                    // Level yes, element no: survey data against what you learn by going.
+                    check(uncharted.Contains("Lv " + w.MinLevel + "-" + w.MaxLevel),
+                          w.Name + " shows its level range before you have been: " + uncharted);
+                    check(!uncharted.Contains(TypeChart.Abbrev(w.Theme)),
+                          w.Name + " still keeps its element back");
+
+                    // And it still fits the 240px label with the range on it.
+                    check(lines(uncharted, 240f, 15) == 1,
+                          w.Name + "'s uncharted label fits: " + uncharted);
+                }
+
+                // A charted world that still owes you something is marked on the chart; the
+                // space label now carries the same ring, keyed on the same count.
+                foreach (var w in PlanetDatabase.All)
+                {
+                    if (w.Spawns == null || w.Spawns.Length == 0) continue;
+                    string marked = GalaxyMapView.MarkerSuffix(w, charted, late,
+                                                               GalaxyMapView.Presence.Elsewhere);
+                    bool owes = charted.UnrecordedOn(w) > 0;
+                    check(marked.Contains("\u25cb") == owes,
+                          w.Name + "'s ring matches what it still owes (" +
+                          charted.UnrecordedOn(w) + " unrecorded)");
+                }
+            }
+
             // ---- nothing defined goes unused ----
             {
                 // Dead content is quiet: a sound nobody plays, an effect no move has, a shell
