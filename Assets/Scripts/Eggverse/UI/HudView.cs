@@ -1178,7 +1178,16 @@ namespace Eggverse
                         if (next != nestCursor)
                         {
                             nestCursor = next;
-                            if (dir.Audio != null) dir.Audio.Play(Sfx.UiMove);
+                            if (dir.Audio != null)
+                            {
+                                dir.Audio.Play(Sfx.UiMove);
+                                // Your own eggs speak too. The record column beside this one has
+                                // done since it was given voices, and these are the ones you
+                                // actually know - it would be an odd game where the strangers in
+                                // the book made a sound and the six in your nest did not.
+                                var here = EggUnderCursor(dir.State);
+                                if (here != null) dir.Audio.PlayCry(here.Species, AudioDirector.CryOwn);
+                            }
                             RefreshCollection();
                         }
                     }
@@ -1196,7 +1205,7 @@ namespace Eggverse
                                 // Nothing you have not, because the row is still "? ? ?" and a
                                 // voice would give away what is behind it.
                                 var sp = SpeciesDatabase.All[dexCursor];
-                                if (dir.State.Seen.Contains(sp.Id)) dir.Audio.PlayCry(sp, 0.55f);
+                                if (dir.State.Seen.Contains(sp.Id)) dir.Audio.PlayCry(sp, AudioDirector.CryRecord);
                             }
                             RefreshCollection();
                         }

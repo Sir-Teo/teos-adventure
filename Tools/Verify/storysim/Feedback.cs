@@ -21,6 +21,38 @@ static class Feedback
     /// How far from the health change the number is allowed to be.
     const int Window = 4;
 
+    /// Every moment an egg appears in front of the player, it says something.
+    ///
+    /// Five places play a cry, at five volumes that were five numbers typed at five call sites -
+    /// an ordering that existed in my head and nowhere a check could reach. Naming them made it
+    /// a rule; this is the rule.
+    public static void Cries(string[] sources, Action<bool, string> check)
+    {
+        int sites = 0;
+        var raw = new List<string>();
+        foreach (var path in sources)
+        {
+            if (!File.Exists(path)) { check(false, "the cry pass can find " + path); continue; }
+            foreach (var line in File.ReadAllLines(path))
+            {
+                if (line.TrimStart().StartsWith("//")) continue;
+                if (!line.Contains("PlayCry(")) continue;
+                if (line.Contains("public void PlayCry")) continue;
+                sites++;
+                // A literal volume at a call site is the thing that used to be everywhere.
+                var m = Regex.Match(line, @"PlayCry\([^,]+,\s*([0-9]*\.?[0-9]+f)\s*\)");
+                if (m.Success) raw.Add(m.Groups[1].Value);
+            }
+        }
+
+        Console.WriteLine($"  {sites} places play a cry, {raw.Count} with a volume typed in place");
+        check(sites >= 5, $"an egg appearing is heard in every place it appears ({sites})");
+        check(raw.Count == 0,
+              raw.Count == 0
+                  ? "every cry is played at a named volume"
+                  : $"{raw.Count} cry volume(s) are typed at the call site: {string.Join(", ", raw)}");
+    }
+
     public static void Run(string sourcePath, Action<bool, string> check)
     {
         if (!File.Exists(sourcePath))

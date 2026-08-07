@@ -338,6 +338,17 @@ class Sim {
         // answering "did everything get asked".
         {
             var selfReport = SelfCheck.Run();
+            {
+                string root = System.IO.Path.Combine(
+                    System.IO.Path.GetDirectoryName(System.Reflection.Assembly.GetExecutingAssembly().Location) ?? ".",
+                    "..", "..", "..", "..", "..", "..", "Assets", "Scripts", "Eggverse");
+                Feedback.Cries(new[]
+                {
+                    System.IO.Path.Combine(root, "Battle", "BattleMode.cs"),
+                    System.IO.Path.Combine(root, "UI", "HudView.cs"),
+                    System.IO.Path.Combine(root, "Core", "GameDirector.cs"),
+                }, Check);
+            }
             Feedback.Run(System.IO.Path.Combine(
                 System.IO.Path.GetDirectoryName(System.Reflection.Assembly.GetExecutingAssembly().Location) ?? ".",
                 "..", "..", "..", "..", "..", "..", "Assets", "Scripts", "Eggverse", "Battle", "BattleMode.cs"), Check);

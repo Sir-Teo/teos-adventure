@@ -438,6 +438,10 @@ namespace Eggverse
                         activeIndex = chosenParam;
                         foughtThisBattle.Add(activeIndex);
                         RefreshCards(true);
+                        // Whatever came out says so. The record page speaks when you highlight a
+                        // species and the wild one speaks when it arrives; the egg you send in
+                        // yourself was the one thing that came on in silence.
+                        dir.Audio.PlayCry(incoming.Species, AudioDirector.CrySentOut);
                         yield return Say("Go, " + incoming.Name + "!");
                         yield return FoeTurn();
                         yield break;
@@ -914,6 +918,7 @@ namespace Eggverse
             UIKit.SetActive(partyPanel, false);
             if (pendingChoice >= 0) { activeIndex = pendingChoice; foughtThisBattle.Add(activeIndex); }
             RefreshCards(true);
+            dir.Audio.PlayCry(Mine.Species, AudioDirector.CrySentOut);
             yield return Say("Go, " + Mine.Name + "!");
         }
 
@@ -1064,7 +1069,7 @@ namespace Eggverse
         IEnumerator CryAfter(SpeciesDef sp, float delay)
         {
             yield return new WaitForSeconds(delay);
-            dir.Audio.PlayCry(sp, 0.8f);
+            dir.Audio.PlayCry(sp, AudioDirector.CryCaught);
         }
 
         IEnumerator AnimateXp(List<XpFill.Step> path)

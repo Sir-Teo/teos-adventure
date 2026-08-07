@@ -76,6 +76,21 @@ namespace Eggverse
         // once - not loud, the sweep peaks at 0.39, but eight overlapping creatures is mud
         // whatever its level. Six still reads as a sweep and you can still hear each one.
         public const float CryGap = 0.16f;
+
+        /// <summary>
+        /// How loud a cry is, by what the moment is worth.
+        ///
+        /// Five places play one, and the volumes were five numbers typed at five call sites -
+        /// an ordering that existed in my head and nowhere a check could reach. Named, it is a
+        /// rule: something arriving to fight you is the loudest, something becoming yours is
+        /// next, one you sent in yourself is quieter because you knew it was coming, and
+        /// browsing a list is quietest of all because it happens dozens of times a minute.
+        /// </summary>
+        public const float CryEncounter = 0.85f;   // a wild egg arrives
+        public const float CryCaught    = 0.80f;   // it becomes yours
+        public const float CrySentOut   = 0.75f;   // you chose this one
+        public const float CryRecord    = 0.55f;   // reading the book
+        public const float CryOwn       = 0.50f;   // running the cursor down your own nest
         float lastCryTime = -99f;
 
         public void PlayCry(SpeciesDef sp, float volumeScale = 1f)

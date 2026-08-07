@@ -533,7 +533,7 @@ namespace Eggverse
         System.Collections.IEnumerator CryAfter(SpeciesDef sp, float delay)
         {
             yield return new WaitForSeconds(delay);
-            Audio.PlayCry(sp, 0.85f);
+            Audio.PlayCry(sp, AudioDirector.CryEncounter);
         }
 
         public void OnBattleFinished(BattleOutcome outcome)

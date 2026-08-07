@@ -1671,6 +1671,39 @@ namespace Eggverse
                 check(elder.Elder && !ordinary.Elder, "and knows it");
             }
 
+            // ---- a cry is as loud as the moment is worth ----
+            {
+                // Five places play one, and the ordering matters: something arriving to fight
+                // you is the loudest, something becoming yours is next, one you sent in
+                // yourself is quieter because you knew it was coming, and browsing a list is
+                // quietest of all because it happens dozens of times a minute.
+                check(AudioDirector.CryEncounter > AudioDirector.CryCaught,
+                      "a wild egg arriving is louder than one becoming yours");
+                check(AudioDirector.CryCaught > AudioDirector.CrySentOut,
+                      "and that is louder than one you chose to send in");
+                check(AudioDirector.CrySentOut > AudioDirector.CryRecord,
+                      "and that is louder than reading the book");
+                check(AudioDirector.CryRecord > AudioDirector.CryOwn,
+                      "and that is louder than running the cursor down your own nest");
+
+                // Nothing is so quiet it is not there, and nothing is at full - a cry lands
+                // over music and often over an effect.
+                foreach (var v in new[] { AudioDirector.CryEncounter, AudioDirector.CryCaught,
+                                          AudioDirector.CrySentOut, AudioDirector.CryRecord,
+                                          AudioDirector.CryOwn })
+                {
+                    check(v > 0.35f, "a cry is always audible (" + v + ")");
+                    check(v <= 0.9f, "and never at full (" + v + ")");
+                }
+
+                // The quietest is heard dozens of times a minute against the loudest, which is
+                // heard once a fight. Too wide a spread and the browsing one vanishes at a
+                // volume where the arrival is comfortable.
+                check(AudioDirector.CryEncounter / AudioDirector.CryOwn <= 2f,
+                      "the quietest cry is not lost against the loudest (" +
+                      (AudioDirector.CryEncounter / AudioDirector.CryOwn).ToString("0.00") + "x)");
+            }
+
             // ---- the eggs in a fight are alive between turns ----
             {
                 // The surface has bobbed its wildlife since it was written. The battle screen -
