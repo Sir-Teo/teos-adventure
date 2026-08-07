@@ -983,6 +983,45 @@ namespace Eggverse
                     }
             }
 
+            // ---- the party strip ----
+            {
+                // 300px at font 18. The row has to fit with the lead arrow on it and with OUT
+                // on it, and those two can never appear together - a fainted egg is never the
+                // leader - so the worst case is whichever of them is wider.
+                // The widest row is not a nicknamed egg - a nickname is capped at 12. It is an
+                // Elder with no nickname, whose name is "Elder " plus the species, which is
+                // what Shorten is there for. Measuring the nickname case first made the check
+                // untestable: widening Shorten to 24 changed nothing, because no nickname is
+                // ever that long.
+                foreach (var sp in SpeciesDatabase.All)
+                    foreach (bool nicknamed in new[] { false, true })
+                    {
+                        var egg = EggInstance.WildElder(sp.Id, 30);
+                        if (nicknamed) egg.Nickname = new string('W', NameEntryView.MaxLength);
+
+                        string leading = HudView.PartyRow(egg, true);
+                        check(lines(leading, 300f, 18) == 1,
+                              sp.Name + "'s row fits while leading: " + leading);
+
+                        egg.CurrentHP = 0;
+                        string down = HudView.PartyRow(egg, false);
+                        check(lines(down, 300f, 18) == 1,
+                              sp.Name + "'s row fits while out: " + down);
+                    }
+
+                // The leader is the first egg still standing, not simply the first egg.
+                var st = new GameState(false);
+                st.Party.Add(EggInstance.Wild("sprouteg", 10));
+                st.Party.Add(EggInstance.Wild("cobblet", 10));
+                st.Party[0].CurrentHP = 0;
+                check(ReferenceEquals(st.Leader, st.Party[1]),
+                      "a fainted egg does not lead");
+                check(HudView.PartyRow(st.Party[0], ReferenceEquals(st.Party[0], st.Leader)).Contains("OUT"),
+                      "the fainted one is marked OUT");
+                check(!HudView.PartyRow(st.Party[0], ReferenceEquals(st.Party[0], st.Leader)).Contains("\u25b8"),
+                      "and is not also marked as leading");
+            }
+
             // ---- your nest, warming the pad ----
             {
                 // Ori's rule is that a station runs warm off the eggs around it, which is why

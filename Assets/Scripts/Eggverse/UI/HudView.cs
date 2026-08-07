@@ -375,6 +375,22 @@ namespace Eggverse
         // refresh
         // ------------------------------------------------------------------
 
+        /// <summary>
+        /// One line of the party strip. The strip never said which egg was leading, and the
+        /// leader is the first one that is not fainted - so a player whose favourite was knocked
+        /// out had no way of knowing who the game would actually send out next.
+        ///
+        /// A fainted egg is never the leader, so the arrow and OUT can never appear together and
+        /// the row has room for whichever it needs.
+        /// </summary>
+        public static string PartyRow(EggInstance egg, bool leads)
+        {
+            return (leads ? "<color=#FFC24D>\u25b8</color> " : "") +
+                   Shorten(egg.Name, 14) + "  <color=#A8B2C4>Lv " + egg.Level +
+                   "  " + TypeChart.Abbrev(egg.Type) + "</color>" +
+                   (egg.IsFainted ? "  <color=#E55555>OUT</color>" : "");
+        }
+
         public void Refresh()
         {
             var state = dir.State;
@@ -388,9 +404,13 @@ namespace Eggverse
 
                 var egg = state.Party[i];
                 slot.Dot.color = TypeChart.ColorOf(egg.Type);
-                slot.Label.text = Shorten(egg.Name, 14) + "  <color=#A8B2C4>Lv " + egg.Level +
-                                  "  " + TypeChart.Abbrev(egg.Type) + "</color>" +
-                                  (egg.IsFainted ? "  <color=#E55555>OUT</color>" : "");
+                slot.Label.text = PartyRow(egg, ReferenceEquals(egg, state.Leader));
+
+                // The one going out first is marked by shape as well as by the arrow: its dot
+                // runs the full height of the row. Nothing in this game is carried by hue alone.
+                var dotRect = slot.Dot.rectTransform;
+                dotRect.sizeDelta = new Vector2(dotRect.sizeDelta.x,
+                                                ReferenceEquals(egg, state.Leader) ? 44f : 34f);
                 slot.Hp.SetFraction(egg.HPFraction);
                 slot.Hp.SetFillColor(UIKit.HealthColor(egg.HPFraction));
             }
