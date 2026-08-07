@@ -118,46 +118,60 @@ namespace Eggverse
             Add(new MoveDef("scramble", "Scramble", EggType.Plain, 85, 85, 10, MoveEffect.Recoil25, "Reckless full-force hit."));
 
             // ---- Molten ----
-            Add(new MoveDef("embercrack", "Ember Crack", EggType.Molten, 45, 100, 25));
+            Add(new MoveDef("embercrack", "Ember Crack", EggType.Molten, 45, 100, 25, MoveEffect.None,
+                            "A hairline split that glows before it opens."));
             Add(new MoveDef("lavayolk", "Lava Yolk", EggType.Molten, 75, 95, 15, MoveEffect.Scorch,
                             "Sticks and keeps burning."));
-            Add(new MoveDef("flareshell", "Flare Shell", EggType.Molten, 100, 80, 8));
+            Add(new MoveDef("flareshell", "Flare Shell", EggType.Molten, 100, 80, 8, MoveEffect.None,
+                            "The shell goes white-hot for exactly as long as it takes."));
 
             // ---- Tidal ----
-            Add(new MoveDef("bubblepop", "Bubble Pop", EggType.Tidal, 45, 100, 25));
-            Add(new MoveDef("tidalcrack", "Tidal Crack", EggType.Tidal, 75, 95, 15));
+            Add(new MoveDef("bubblepop", "Bubble Pop", EggType.Tidal, 45, 100, 25, MoveEffect.None,
+                            "Small, wet, and closer to the eye than anybody likes."));
+            Add(new MoveDef("tidalcrack", "Tidal Crack", EggType.Tidal, 75, 95, 15, MoveEffect.None,
+                            "Water finds the seam. Water always finds the seam."));
             Add(new MoveDef("drizzledrain", "Drizzle Drain", EggType.Tidal, 55, 100, 15, MoveEffect.Lifesteal50, "Siphons moisture back."));
 
             // ---- Verdant ----
-            Add(new MoveDef("vinewhisk", "Vine Whisk", EggType.Verdant, 45, 100, 25));
-            Add(new MoveDef("sproutslam", "Sprout Slam", EggType.Verdant, 75, 95, 15));
+            Add(new MoveDef("vinewhisk", "Vine Whisk", EggType.Verdant, 45, 100, 25, MoveEffect.None,
+                            "A shoot, whipped. It stings more than it has any right to."));
+            Add(new MoveDef("sproutslam", "Sprout Slam", EggType.Verdant, 75, 95, 15, MoveEffect.None,
+                            "All that stored growth, spent in one go."));
             Add(new MoveDef("photorest", "Photo Rest", EggType.Verdant, 0, 100, 10, MoveEffect.Heal50, "Basks to regrow shell."));
 
             // ---- Volt ----
-            Add(new MoveDef("staticsnap", "Static Snap", EggType.Volt, 45, 100, 25));
+            Add(new MoveDef("staticsnap", "Static Snap", EggType.Volt, 45, 100, 25, MoveEffect.None,
+                            "The air tightens, and then it lets go."));
             Add(new MoveDef("voltcrack", "Volt Crack", EggType.Volt, 75, 95, 15, MoveEffect.Daze,
                             "Rattles the yolk about."));
             Add(new MoveDef("chargeup", "Charge Up", EggType.Volt, 0, 100, 20, MoveEffect.SpdUp, "Builds a static charge."));
 
             // ---- Frost ----
-            Add(new MoveDef("chillshell", "Chill Shell", EggType.Frost, 45, 100, 25));
+            Add(new MoveDef("chillshell", "Chill Shell", EggType.Frost, 45, 100, 25, MoveEffect.None,
+                            "Frost across the surface, and everything under it slows."));
             Add(new MoveDef("frostcrack", "Frost Crack", EggType.Frost, 75, 95, 15, MoveEffect.Chill,
                             "Leaves a rime that will not shift."));
             Add(new MoveDef("coldsnap", "Cold Snap", EggType.Frost, 55, 95, 15, MoveEffect.SpdDownFoe, "Numbs the target."));
 
             // ---- Stone ----
-            Add(new MoveDef("pebbletoss", "Pebble Toss", EggType.Stone, 45, 100, 25));
-            Add(new MoveDef("bouldercrack", "Boulder Crack", EggType.Stone, 85, 85, 12));
+            Add(new MoveDef("pebbletoss", "Pebble Toss", EggType.Stone, 45, 100, 25, MoveEffect.None,
+                            "Unhurried, accurate, and somehow always the same pebble."));
+            Add(new MoveDef("bouldercrack", "Boulder Crack", EggType.Stone, 85, 85, 12, MoveEffect.None,
+                            "Weight, arriving. There is no trick to it at all."));
             Add(new MoveDef("fortify", "Fortify", EggType.Stone, 0, 100, 20, MoveEffect.DefUp, "Packs on mineral plating."));
 
             // ---- Aether ----
-            Add(new MoveDef("mindyolk", "Mind Yolk", EggType.Aether, 45, 100, 25));
-            Add(new MoveDef("astralcrack", "Astral Crack", EggType.Aether, 75, 95, 15));
+            Add(new MoveDef("mindyolk", "Mind Yolk", EggType.Aether, 45, 100, 25, MoveEffect.None,
+                            "Pressure behind the eyes that was not there a moment ago."));
+            Add(new MoveDef("astralcrack", "Astral Crack", EggType.Aether, 75, 95, 15, MoveEffect.None,
+                            "A line opens somewhere that is not quite here."));
             Add(new MoveDef("warpveil", "Warp Veil", EggType.Aether, 0, 100, 20, MoveEffect.SpdUp, "Bends space to move first."));
 
             // ---- Void ----
-            Add(new MoveDef("shadepeck", "Shade Peck", EggType.Void, 45, 100, 25));
-            Add(new MoveDef("voidcrack", "Void Crack", EggType.Void, 75, 95, 15));
+            Add(new MoveDef("shadepeck", "Shade Peck", EggType.Void, 45, 100, 25, MoveEffect.None,
+                            "Something takes a piece and does not show itself."));
+            Add(new MoveDef("voidcrack", "Void Crack", EggType.Void, 75, 95, 15, MoveEffect.None,
+                            "Nothing visible happens. The damage is done anyway."));
             Add(new MoveDef("draindark", "Drain Dark", EggType.Void, 55, 100, 15, MoveEffect.Lifesteal50, "Drinks the target's warmth."));
 
             // ---- Boss-tier ----

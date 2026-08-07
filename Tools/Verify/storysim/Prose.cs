@@ -113,6 +113,15 @@ static class Prose
                 Add("Amy rematch", l.Text);
         }
 
+        // Move names and the line each one shows in the battle message box. These were never
+        // in the pass at all - thirty-nine names and thirty-nine descriptions that had skipped
+        // the doubled-word, spacing and apostrophe checks every other string goes through.
+        foreach (var mv in MoveDatabase.All)
+        {
+            Add("move " + mv.Name, mv.Name);
+            Add("move " + mv.Name, mv.Describe());
+        }
+
         Add("woke warm", UiCopy.WokeWarm);
         Add("woke cold", UiCopy.WokeCold);
 
