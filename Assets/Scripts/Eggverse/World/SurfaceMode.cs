@@ -631,6 +631,15 @@ namespace Eggverse
             UIKit.Place(rect, new Vector2(0.5f, 0.5f), new Vector2(0.5f, 0.5f), Vector2.zero, new Vector2(420f, 90f));
             var t = UIKit.Label(rect, "Text", text, size, UIKit.Ink, TextAnchor.UpperCenter, FontStyle.Normal);
             UIKit.Stretch(t.rectTransform, 0f, 0f, 0f, 0f);
+
+            // World labels float on the planet itself with no panel behind them, so their only
+            // contrast is against whatever ground they happen to be over. Near-white ink on
+            // Glacierim's ice is a gap of 0.08 - and these are the NEST STATION and every NPC
+            // name, which is the game's wayfinding. An outline rather than a backing plate:
+            // the same answer as Teo's, and it keeps the label feeling part of the world.
+            var outline = t.gameObject.AddComponent<UnityEngine.UI.Outline>();
+            outline.effectColor = new Color32(0x0C, 0x0F, 0x18, 0xE6);
+            outline.effectDistance = new Vector2(2f, -2f);
             labels.Add(new WorldLabel { Anchor = anchor, Offset = offset, Rect = rect, Text = t });
         }
 

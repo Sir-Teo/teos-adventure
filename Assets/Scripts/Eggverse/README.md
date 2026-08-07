@@ -419,6 +419,8 @@ five separate things:
 | Tidal pools | Brineholt | 0.077 | 0.188 |
 | **Teo** | Glacierim's ice | **0.064** | 0.784 |
 | Wild eggs | Shadowhisk on Nullreach | 0.130 | 0.477 |
+| Wild eggs *on shell fields* | Yolkano on Cinderoost | 0.060 | 0.213 |
+| **World labels** | Glacierim's ice | **0.082** | 0.819 |
 
 Teo was the worst of them — a white suit on a white world — and the fix is a dark outline rather
 than a per-planet tint, so the protagonist stays one colour and the outline only does work where
@@ -426,8 +428,10 @@ it is needed. Wild eggs sit on a backing disc coloured against the ground, since
 comes from the element and ground colour from the planet: an egg living on a world of its own
 element collides by construction.
 
-The self-check measures every one of these against every world that has it, so the sixth instance
-fails a build instead of shipping.
+The self-check measures every one of these against every world that has it — and against the
+**shell fields** as well as the bare ground, which is where most of them are actually standing.
+Checking only against the ground was its own version of the mistake: correct about a background
+that is not the one the player is looking at.
 
 ## Self-check
 

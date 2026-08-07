@@ -883,6 +883,32 @@ namespace Eggverse
                 }
             }
 
+            // ---- world labels ----
+            // NEST STATION and every NPC name float on the planet with no panel behind them.
+            // Their ink is near-white, so on a bright world they had nothing to read against -
+            // 0.08 on Glacierim's ice. They carry a dark outline now, so either the ink or the
+            // outline has to separate, exactly as with Teo.
+            {
+                var labelOutline = new Color32(0x0C, 0x0F, 0x18, 0xE6);
+                foreach (var w in PlanetDatabase.All)
+                {
+                    float ground = SurfaceMode.Luminance(w.Land);
+                    float byInk = Mathf.Abs(SurfaceMode.Luminance(UIKit.Ink) - ground);
+                    float byLine = Mathf.Abs(SurfaceMode.Luminance(labelOutline) - ground);
+                    check(Mathf.Max(byInk, byLine) >= 0.25f,
+                          "world labels read on " + w.Name + " (ink " + byInk.ToString("0.00") +
+                          ", outline " + byLine.ToString("0.00") + ")");
+
+                    // And over a shell field, which is what they are usually near.
+                    var field = SurfaceMode.AgainstGround(TypeChart.ColorOf(w.Theme), w.Land, 0.55f, 0.30f);
+                    float fieldLum2 = SurfaceMode.Luminance(Color.Lerp(w.Land, field, 0.85f));
+                    float inkOnField = Mathf.Abs(SurfaceMode.Luminance(UIKit.Ink) - fieldLum2);
+                    float lineOnField = Mathf.Abs(SurfaceMode.Luminance(labelOutline) - fieldLum2);
+                    check(Mathf.Max(inkOnField, lineOnField) >= 0.25f,
+                          "world labels read on " + w.Name + "'s shell fields");
+                }
+            }
+
             // ---- and against the shell fields, not only the bare ground ----
             // Every visibility check so far measured against a world's ground colour. Eggs and
             // Teo spend much of their time standing on shell fields, which are a different
