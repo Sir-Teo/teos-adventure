@@ -27,10 +27,18 @@ namespace Eggverse
         }
 
         /// <summary>Snaps to full cover and fades back out over `seconds`.</summary>
+        /// <summary>
+        /// Set when the player has turned screen motion off. The flash still happens - it is
+        /// what hides the scene swapping underneath - but at a third the strength and half the
+        /// time, so it reads as a soft wipe rather than the screen going white.
+        /// </summary>
+        public bool Reduced;
+
         public void Flash(Color color, float seconds = 0.42f)
         {
+            if (Reduced) seconds *= 0.5f;
             tint = color;
-            alpha = 1f;
+            alpha = Reduced ? 0.34f : 1f;
             fadeSpeed = 1f / Mathf.Max(0.05f, seconds);
             canvas.gameObject.SetActive(true);
             sheet.color = new Color(tint.r, tint.g, tint.b, alpha);

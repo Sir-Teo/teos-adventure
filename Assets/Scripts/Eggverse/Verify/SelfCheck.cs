@@ -467,12 +467,13 @@ namespace Eggverse
                           (onTitle ? "yes" : "no") + ", pause " + (onPause ? "yes" : "no") + ")");
                 }
 
-                // And the box has to hold all of it: six rows, a rule, two control lines, a footer.
-                const float BoxH = 800f;
-                float rowsEnd = 118f + 5f * 62f + 52f;
-                float controlsEnd = 540f + 32f + 28f;
+                // And the box has to hold all of it: seven rows, a rule, two control lines, a footer.
+                const float BoxH = 862f;
+                const int PauseRows = 7;                    // resume, sound, music, effects, motion, save, quit
+                float rowsEnd = 118f + (PauseRows - 1) * 62f + 52f;
+                float controlsEnd = 602f + 32f + 28f;
                 float footerTop = BoxH - 42f - 60f;
-                check(rowsEnd < 506f, "the pause rule clears the menu rows");
+                check(rowsEnd < 568f, "the pause rule clears the menu rows");
                 check(controlsEnd < footerTop, "the pause controls clear the footer");
                 check(BoxH <= 1080f - 80f, "the pause box fits the screen with margin");
             }
@@ -663,6 +664,28 @@ namespace Eggverse
                       Words.Spell(EggInstance.StatusDuration) + "\")");
                 check(Words.Count(1, "world") == "1 world" && Words.Count(2, "world") == "2 worlds",
                       "counts pluralise");
+            }
+
+            // ---- screen motion can be turned off ----
+            // Hits shake the battle scene and landing flashes the display. Both are good feel and
+            // both are a problem for anyone sensitive to motion, so both answer to one setting -
+            // and it has to survive a save, or it is an option the player sets once per session.
+            {
+                var st5 = new GameState();
+                check(st5.ScreenMotion, "screen motion starts on");
+
+                st5.ScreenMotion = false;
+                var data = new SaveData { version = 1, screenMotion = false, cartons = 12, salves = 4 };
+                GameState back; StoryState st6; string pl; float secs;
+                check(SaveSystem.Restore(data, out back, out st6, out pl, out secs), "a save with motion off loads");
+                check(back != null && !back.ScreenMotion, "and motion is still off after loading");
+
+                // A file written before the option existed has no key for it and must default on,
+                // rather than silently turning the game's feedback off for a returning player.
+                var old7 = new SaveData { version = 1, cartons = 12, salves = 4 };
+                GameState back2; StoryState st7; string pl2; float secs2;
+                SaveSystem.Restore(old7, out back2, out st7, out pl2, out secs2);
+                check(back2 != null && back2.ScreenMotion, "an older save loads with motion on");
             }
 
             // ---- moving eggs between nest and party ----

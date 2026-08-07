@@ -29,6 +29,8 @@ namespace Eggverse
         public string[] visited;
         public string[] flags;
         public string[] caches;
+        // Defaulted true, so a save written before the option existed loads with motion on.
+        public bool screenMotion = true;
         public int cartons;
         // Defaulted, not zero: a save written before salves existed has no key for them, and
         // JsonUtility leaves the field initializer in place — so those runs load fully stocked.
@@ -75,6 +77,7 @@ namespace Eggverse
                     flags = story.FlagsSnapshot(),
                     cartons = state.Cartons,
                     caches = ToArray(state.Caches),
+                    screenMotion = state.ScreenMotion,
                     salves = state.Salves,
                     beatIndex = story.BeatIndex,
                     planet = planetId,
@@ -194,6 +197,7 @@ namespace Eggverse
                 state.Cartons = Mathf.Clamp(data.cartons, 0, state.MaxCartons);
                 state.Salves = Mathf.Clamp(data.salves, 0, GameState.MaxSalves);
                 state.AmyDefeated = data.amyDefeated;
+                state.ScreenMotion = data.screenMotion;
 
                 // A save with an empty party would be unplayable; hand back a starter.
                 if (state.Party.Count == 0) state.Party.Add(EggInstance.Wild("sprouteg", 5));

@@ -361,6 +361,17 @@ A *failed* autosave is the one case worth interrupting for. That now raises a fu
 player who keeps going believing their progress is being recorded is the worst outcome the save
 system can produce.
 
+## Accessibility
+
+The palette work below assumes nothing is carried by hue alone. Alongside it, the pause menu has
+**Screen motion**, which answers for everything that moves the display: the battle scene shaking
+on a hit, the per-egg shake on damage, and the full-screen flash on landing and mode changes.
+
+Turned off, the shakes do not happen at all and the flash still does — it is what hides the scene
+swapping underneath — but at a third the strength and half the duration, so it reads as a soft
+wipe rather than the screen going white. It is saved with the run, and a file written before the
+option existed loads with motion **on**, so nobody's feedback quietly disappears.
+
 ## Colour and readability
 
 Every character's portrait tint comes from the cast list itself, not from a second table beside

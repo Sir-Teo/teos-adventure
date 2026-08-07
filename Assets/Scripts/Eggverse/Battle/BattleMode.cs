@@ -958,7 +958,7 @@ namespace Eggverse
                 float k = Mathf.Clamp01(t / 0.34f);
                 bar.SetFraction(Mathf.Lerp(from, to, k));
                 bar.SetFillColor(UIKit.HealthColor(Mathf.Lerp(from, to, k)));
-                float shake = (1f - k) * 16f;
+                float shake = State.ScreenMotion ? (1f - k) * 16f : 0f;
                 victim.rectTransform.anchoredPosition = home + new Vector2(Mathf.Sin(t * 60f) * shake, 0f);
                 victim.color = Color.Lerp(new Color(1f, 0.55f, 0.55f, 1f), Color.white, k);
                 yield return null;
@@ -987,6 +987,7 @@ namespace Eggverse
 
         public void Shake(float strength)
         {
+            if (!State.ScreenMotion) return;
             shakeStrength = Mathf.Max(shakeStrength, strength);
         }
 

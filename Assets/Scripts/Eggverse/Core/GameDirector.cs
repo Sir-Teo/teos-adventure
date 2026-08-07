@@ -141,6 +141,15 @@ namespace Eggverse
         // saving
         // ==================================================================
 
+        /// <summary>
+        /// Pushes the screen-motion setting out to the things that move. Called when it changes
+        /// and when a run starts or loads, rather than before each of the five flash sites.
+        /// </summary>
+        public void ApplyMotionSetting()
+        {
+            if (Transition != null) Transition.Reduced = !State.ScreenMotion;
+        }
+
         public void SaveNow(bool announce = false)
         {
             if (Mode == GameMode.Title) return;

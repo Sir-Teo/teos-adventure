@@ -33,6 +33,13 @@ namespace Eggverse
 
         public int Cartons = BaseMaxCartons;
         public int Salves = MaxSalves;
+
+        /// <summary>
+        /// Whether the game is allowed to move the screen. Hits shake the battle scene and
+        /// landing flashes the whole display; both are good feel and both are a problem for
+        /// anyone sensitive to motion, with no way to turn either off.
+        /// </summary>
+        public bool ScreenMotion = true;
         public string CurrentPlanetId = PlanetDatabase.Home.Id;
         public bool AmyDefeated;
 
