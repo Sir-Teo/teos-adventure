@@ -562,6 +562,42 @@ namespace Eggverse
         }
 
         /// <summary>What Amy says when you walk up to her, ending in the fight.</summary>
+        /// <summary>
+        /// Every line anybody says, from every source, in every story state.
+        ///
+        /// The dialogue fit check walked StoryDatabase.Npcs, and Amy is not an NPC - she is
+        /// reached through AmyIntro from the surface. So the boss's dialogue, the climax of the
+        /// game, had never been measured against the box it is delivered in. It fits; that is
+        /// luck, not verification, and the next scene added outside the NPC list would have been
+        /// missed the same way.
+        ///
+        /// Anything that adds dialogue should be added here, and then it is measured for free.
+        /// </summary>
+        public static System.Collections.Generic.IEnumerable<DialogueLine> EveryLine()
+        {
+            var state = new GameState();
+
+            foreach (var npc in Npcs)
+                for (int b = 0; b < Beats.Length; b++)
+                {
+                    var probe = new StoryState();
+                    probe.RestoreFrom(new string[0], b);
+                    var script = GetDialogue(npc.Id, probe, state);
+                    if (script == null) continue;
+                    foreach (var line in script.Lines) yield return line;
+                }
+
+            // Both sides of Amy: the descent, and the rematch that only exists after she loses.
+            foreach (bool beaten in new[] { false, true })
+            {
+                var probe = new StoryState();
+                if (beaten) probe.SetFlag("beat_amy");
+                var script = AmyIntro(probe);
+                if (script == null) continue;
+                foreach (var line in script.Lines) yield return line;
+            }
+        }
+
         public static DialogueScript AmyIntro(StoryState story)
         {
             if (story.HasFlag("beat_amy"))

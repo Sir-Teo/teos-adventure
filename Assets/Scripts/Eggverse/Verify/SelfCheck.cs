@@ -414,21 +414,35 @@ namespace Eggverse
 
             var probeState = new GameState();
             int longest = 0;
-            foreach (var npc in StoryDatabase.Npcs)
-                for (int b = 0; b < StoryDatabase.Beats.Length; b++)
+            {
+                // EveryLine, not the NPC roster. This walked StoryDatabase.Npcs, and Amy is not
+                // an NPC - she is reached through AmyIntro from the surface - so the boss's
+                // dialogue, the climax of the game, had never been measured against the box it
+                // is delivered in.
+                bool sawAmy = false;
+                foreach (var line in StoryDatabase.EveryLine())
                 {
-                    var probe = new StoryState();
-                    probe.RestoreFrom(new string[0], b);
-                    var script = StoryDatabase.GetDialogue(npc.Id, probe, probeState);
-                    if (script == null) continue;
-                    foreach (var line in script.Lines)
-                    {
-                        int need = lines(line.Text, 1380f, 28);
-                        check(need <= capacity(190f, 28),
-                              "a " + line.Speaker + " line overflows the dialogue box");
-                        longest = Mathf.Max(longest, need);
-                    }
+                    if (line.Speaker == "Amy") sawAmy = true;
+
+                    // The view's own numbers. This read 1380 and 190 - transcribed, and the body
+                    // box had been cut to 180 to stop it overlapping the hint.
+                    int need = lines(line.Text, DialogueView.BodyWidth, DialogueView.BodyFont);
+                    check(need <= capacity(DialogueView.BodyHeight, DialogueView.BodyFont),
+                          "a " + line.Speaker + " line overflows the dialogue box");
+                    longest = Mathf.Max(longest, need);
                 }
+                check(sawAmy, "the dialogue walk reaches Amy, who is not in the NPC roster");
+
+                // The box is sized to what is said in it, in both directions. Too small and a
+                // line clips; too large and every line in the game floats above dead air, which
+                // is what five rows over a two-row worst case actually looked like once it was
+                // drawn. One row of headroom, no more than two.
+                int room = capacity(DialogueView.BodyHeight, DialogueView.BodyFont);
+                check(room >= longest + 1,
+                      "the dialogue box has a row of headroom (" + room + " for " + longest + ")");
+                check(room <= longest + 2,
+                      "the dialogue box is not mostly empty (" + room + " for " + longest + ")");
+            }
 
             foreach (var beat in StoryDatabase.Beats)
             {
@@ -1626,6 +1640,50 @@ namespace Eggverse
                 check(elder.Elder && !ordinary.Elder, "and knows it");
             }
 
+            // ---- the dialogue hint says what the key actually does ----
+            {
+                // It read "Space to continue" at every moment of every line - including while
+                // the line was still typing, where the key skips the reveal rather than
+                // continuing anything, and on the last line of a script, where it continues to
+                // nothing because the box closes. Two small lies on the prompt a player reads
+                // more often than any other text in the game.
+                check(DialogueView.HintText(false, false) != DialogueView.HintText(true, false),
+                      "a line still typing does not offer to continue");
+                check(DialogueView.HintText(false, true) == DialogueView.HintText(false, false),
+                      "while it is typing, the last line reads like any other");
+                check(DialogueView.HintText(true, true) != DialogueView.HintText(true, false),
+                      "the last line of a script does not promise another one");
+                foreach (bool rev in new[] { false, true })
+                    foreach (bool last in new[] { false, true })
+                    {
+                        string hint = DialogueView.HintText(rev, last);
+                        check(hint.StartsWith("Space"), "every hint names the key: " + hint);
+                        check(lines(hint, 500f, DialogueView.HintFont) == 1,
+                              "the hint fits its corner: " + hint);
+                    }
+
+                // The portrait, the speaker and the body all have to fit beside each other.
+                check(DialogueView.PortraitX + DialogueView.PortraitSize <= DialogueView.TextX,
+                      "the portrait stops before the text starts");
+                check(DialogueView.TextX + DialogueView.BodyWidth <= DialogueView.BoxWidth,
+                      "the body stays inside the box");
+                check(-DialogueView.PortraitY + DialogueView.PortraitSize <= DialogueView.BoxHeight,
+                      "the portrait stays inside the box");
+
+                // The body's floor against the hint's ceiling. These overlapped by six pixels
+                // once, which is why the body is 180 tall and not 190.
+                float bodyFloor = DialogueView.BoxHeight + DialogueView.BodyY - DialogueView.BodyHeight;
+                float hintCeiling = DialogueView.HintY + 26f;
+                check(bodyFloor >= hintCeiling,
+                      "the body clears the hint (" + Mathf.RoundToInt(bodyFloor) + " against " +
+                      Mathf.RoundToInt(hintCeiling) + ")");
+
+                // And the speaker's name above the body it introduces.
+                float speakerFloor = DialogueView.BoxHeight + DialogueView.SpeakerY - 38f;
+                float bodyTop = DialogueView.BoxHeight + DialogueView.BodyY;
+                check(speakerFloor >= bodyTop, "the speaker's name clears their line");
+            }
+
             // ---- every person in the game has their own face ----
             {
                 // ProcArt.Portrait took a name, used it to key the cache, and drew the same
@@ -1783,24 +1841,28 @@ namespace Eggverse
 
                 // The heading rule the title and ending cards follow, applied to the one other
                 // screen in the game with a heading over a block of text.
-                float headingFloor = -38f - 48f * 0.5f;
-                float firstRowTop = PauseView.FirstRowY + PauseView.RowHeight * 0.5f;
-                check(headingFloor - firstRowTop >= UiLayout.MinHeadingGap,
+                // Pivots, not centres. UIKit.Place's second argument is the pivot, and every box
+                // on this screen pivots from its top edge - so an offset of -38 is where the box
+                // starts, not where it is centred. The first version of these three checks did
+                // the centre arithmetic and measured a layout the game does not have. They still
+                // passed, by two pixels, which is the worst way for a wrong check to behave.
+                float headingFloor = -38f - 48f;
+                check(headingFloor - PauseView.FirstRowY >= UiLayout.MinHeadingGap,
                       "PAUSED has air under it before the first row (" +
-                      Mathf.RoundToInt(headingFloor - firstRowTop) + "px)");
+                      Mathf.RoundToInt(headingFloor - PauseView.FirstRowY) + "px)");
 
                 // Six settings rows, then the footer. The main page also has a rule and the
                 // controls block between them, and both pages share one box that must not move.
-                float lastSettingRow = PauseView.FirstRowY - 5 * PauseView.RowStep - PauseView.RowHeight * 0.5f;
-                float footerTop = -PauseView.BoxHeight + 42f + 30f;
+                float lastSettingRow = PauseView.FirstRowY - 5 * PauseView.RowStep - PauseView.RowHeight;
+                float footerTop = -PauseView.BoxHeight + 42f + 60f;
                 check(lastSettingRow > footerTop,
                       "the last setting clears the footer (" + Mathf.RoundToInt(lastSettingRow) +
                       " against " + Mathf.RoundToInt(footerTop) + ")");
 
-                float lastMainRow = PauseView.FirstRowY - 3 * PauseView.RowStep - PauseView.RowHeight * 0.5f;
+                float lastMainRow = PauseView.FirstRowY - 3 * PauseView.RowStep - PauseView.RowHeight;
                 check(lastMainRow > PauseView.RuleY, "the last main row clears the rule");
                 float lastControl = PauseView.ControlsY - (UiCopy.PauseControls.Length - 1) *
-                                    PauseView.ControlsStep - 14f;
+                                    PauseView.ControlsStep - 28f;
                 check(lastControl > footerTop, "the controls block clears the footer");
 
                 foreach (var line in UiCopy.PauseControls)

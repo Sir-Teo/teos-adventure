@@ -365,6 +365,16 @@ static class Program
         }
 
         {
+            // The dialogue box, at the longest line anybody says and at the moment it is still
+            // typing itself out.
+            var (dsp, dtx) = Dialogue.Longest();
+            WriteBmpRect(Dialogue.Render(dsp, dtx, 1f, false), Battle.W, Battle.H, "dialogue.bmp");
+            WriteBmpRect(Dialogue.Render("Amy", "You came all this way.", 0.55f, true),
+                         Battle.W, Battle.H, "dialogue-typing.bmp");
+            Console.WriteLine(Dialogue.Report());
+        }
+
+        {
             // Every face in the game, side by side. They had all been the same one.
             var (cpx, cwd, cht) = Cast.Render();
             WriteBmpRect(cpx, cwd, cht, "cast.bmp");

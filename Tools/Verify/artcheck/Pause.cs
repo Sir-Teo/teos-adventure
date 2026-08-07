@@ -66,7 +66,7 @@ static class Pause
         Battle.Rect(c, boxLeft, boxTop - 4f, boxLeft + PauseView.BoxWidth, boxTop, Battle.Accent);
 
         // Title: 700x48 at -38 from the top of the box, font 40.
-        Battle.TextCentre(c, settings ? "SETTINGS" : "PAUSED", cx, boxTop - 38f - 12f, 40, Battle.Accent);
+        Battle.TextCentre(c, settings ? "SETTINGS" : "PAUSED", cx, boxTop - 38f - 4f, 40, Battle.Accent);
 
         // The widest state each page can reach: a fresh run mutes nothing, music sits at its
         // default 0.6 of 0.6, and "relaxed" is the longest of the four text speeds.
@@ -81,7 +81,8 @@ static class Pause
             // rowY starts half a font above it. The first pass had this half a band out and the
             // drawn meters landed a whole row high - visible the moment it was looked at, and
             // invisible to every number the check prints.
-            float rowY = boxTop + PauseView.FirstRowY - i * PauseView.RowStep;
+            // Rows pivot from their top edge, so FirstRowY is the top of row 0, not its middle.
+            float rowY = boxTop + PauseView.FirstRowY - i * PauseView.RowStep - PauseView.RowHeight * 0.5f;
             float y = rowY + PauseView.RowFont * 0.5f;
 
             // The caret sits in its own gutter, at the same x on every row. It used to be glued
@@ -122,15 +123,14 @@ static class Pause
                         boxTop + PauseView.RuleY + 2f, Col.Hex(0x2C3250));
             for (int i = 0; i < UiCopy.PauseControls.Length; i++)
                 Battle.TextCentre(c, UiCopy.PauseControls[i], cx,
-                                  boxTop + PauseView.ControlsY - i * PauseView.ControlsStep
-                                      - PauseView.ControlsFont * 0.5f,
+                                  boxTop + PauseView.ControlsY - i * PauseView.ControlsStep - 4f,
                                   (int)PauseView.ControlsFont, Battle.InkDim);
         }
 
         // Footer: anchored to the bottom of the box, 60 tall, centred at +42.
         bool onSlider = settings && (cursor == 1 || cursor == 2);
         Battle.TextCentre(c, PauseView.FooterText(!settings, onSlider), cx,
-                          cy - PauseView.BoxHeight * 0.5f + 42f - PauseView.FooterFont * 0.5f,
+                          cy - PauseView.BoxHeight * 0.5f + 42f + 40f,
                           (int)PauseView.FooterFont, Battle.InkDim);
 
         return c.Px;

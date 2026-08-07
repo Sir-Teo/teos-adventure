@@ -19,6 +19,37 @@ namespace Eggverse
 
         const float CharsPerSecond = 55f;
 
+        // Geometry, public so the render measures the real numbers rather than its own
+        // transcription of them. Every box here pivots from a corner: BoxBottom is the box's
+        // bottom edge, PortraitY/SpeakerY/BodyY are offsets down from its top-left, and
+        // HintX/HintY are offsets in from its bottom-right.
+        // 250, not 300. Nothing anybody says in the whole game is taller than two wrapped rows,
+        // and the body was five rows deep - so every line in the game was delivered above about
+        // a hundred and ten pixels of nothing, with the corner hint marooned at the far end of
+        // it. The box is now three rows deep: one row of headroom over the worst line there is,
+        // which the check below enforces in both directions so it cannot quietly grow back.
+        public const float BoxWidth = 1660f, BoxHeight = 250f, BoxBottom = 46f;
+        public const float PortraitX = 26f, PortraitY = -26f, PortraitSize = 196f;
+        public const int PortraitInset = 5;
+        public const float TextX = 246f, SpeakerY = -26f;
+        public const int SpeakerFont = 30, BodyFont = 28, HintFont = 20;
+        public const float BodyY = -74f, BodyWidth = 1380f, BodyHeight = 98f;
+        public const float HintX = -26f, HintY = 16f;
+
+        /// <summary>
+        /// What the corner hint says.
+        ///
+        /// It said "Space to continue" at every moment of every line, including while the line
+        /// was still typing itself out - where the key does not continue anything, it skips the
+        /// reveal. And on the last line of a script it continues to nothing; the box closes. Two
+        /// small lies on the prompt a player reads more often than any other text in the game.
+        /// </summary>
+        public static string HintText(bool revealed, bool lastLine)
+        {
+            if (!revealed) return "Space to skip";
+            return lastLine ? "Space to close" : "Space to continue";
+        }
+
         /// <summary>The reveal rate for this run, or 0 when text should simply appear.</summary>
         float RevealRate => dir != null && dir.State != null
             ? CharsPerSecond * dir.State.RevealScale
@@ -71,30 +102,35 @@ namespace Eggverse
             UIKit.Stretch(shade.rectTransform, 0, 0, 0, 0);
 
             var box = UIKit.Node(root, "Box");
-            UIKit.Place(box, new Vector2(0.5f, 0f), new Vector2(0.5f, 0f), new Vector2(0f, 46f), new Vector2(1660f, 300f));
+            UIKit.Place(box, new Vector2(0.5f, 0f), new Vector2(0.5f, 0f),
+                        new Vector2(0f, BoxBottom), new Vector2(BoxWidth, BoxHeight));
 
             var bg = UIKit.Panel(box, "Bg", new Color32(0x10, 0x12, 0x20, 0xFA));
             UIKit.Stretch(bg.rectTransform, 0, 0, 0, 0);
             var edge = UIKit.Panel(box, "Edge", UIKit.Accent);
-            UIKit.Place(edge.rectTransform, new Vector2(0f, 1f), new Vector2(0f, 1f), new Vector2(0f, 0f), new Vector2(1660f, 4f));
+            UIKit.Place(edge.rectTransform, new Vector2(0f, 1f), new Vector2(0f, 1f), new Vector2(0f, 0f), new Vector2(BoxWidth, 4f));
 
             portraitFrame = UIKit.Panel(box, "PortraitFrame", UIKit.PanelLight);
-            UIKit.Place(portraitFrame.rectTransform, new Vector2(0f, 1f), new Vector2(0f, 1f), new Vector2(26f, -26f), new Vector2(196f, 196f));
+            UIKit.Place(portraitFrame.rectTransform, new Vector2(0f, 1f), new Vector2(0f, 1f),
+                        new Vector2(PortraitX, PortraitY), new Vector2(PortraitSize, PortraitSize));
 
             portrait = UIKit.Picture(portraitFrame.transform, "Portrait", ProcArt.White);
-            UIKit.Stretch(portrait.rectTransform, 5, 5, 5, 5);
+            UIKit.Stretch(portrait.rectTransform, PortraitInset, PortraitInset, PortraitInset, PortraitInset);
 
-            speakerText = UIKit.Label(box, "Speaker", "", 30, UIKit.Accent, TextAnchor.MiddleLeft, FontStyle.Bold);
-            UIKit.Place(speakerText.rectTransform, new Vector2(0f, 1f), new Vector2(0f, 1f), new Vector2(246f, -26f), new Vector2(900f, 38f));
+            speakerText = UIKit.Label(box, "Speaker", "", SpeakerFont, UIKit.Accent, TextAnchor.MiddleLeft, FontStyle.Bold);
+            UIKit.Place(speakerText.rectTransform, new Vector2(0f, 1f), new Vector2(0f, 1f),
+                        new Vector2(TextX, SpeakerY), new Vector2(900f, 38f));
 
-            bodyText = UIKit.Label(box, "Body", "", 28, UIKit.Ink, TextAnchor.UpperLeft);
+            bodyText = UIKit.Label(box, "Body", "", BodyFont, UIKit.Ink, TextAnchor.UpperLeft);
             // 180, not 190: the body ran down to 36 from the box floor and the hint sits at
             // 16..42 in the same corner, so they overlapped by 6px. Five lines either way at
             // font 28, so nothing is lost.
-            UIKit.Place(bodyText.rectTransform, new Vector2(0f, 1f), new Vector2(0f, 1f), new Vector2(246f, -74f), new Vector2(1380f, 180f));
+            UIKit.Place(bodyText.rectTransform, new Vector2(0f, 1f), new Vector2(0f, 1f),
+                        new Vector2(TextX, BodyY), new Vector2(BodyWidth, BodyHeight));
 
-            hintText = UIKit.Label(box, "Hint", "Space to continue", 20, UIKit.InkDim, TextAnchor.LowerRight);
-            UIKit.Place(hintText.rectTransform, new Vector2(1f, 0f), new Vector2(1f, 0f), new Vector2(-26f, 16f), new Vector2(500f, 26f));
+            hintText = UIKit.Label(box, "Hint", HintText(true, false), HintFont, UIKit.InkDim, TextAnchor.LowerRight);
+            UIKit.Place(hintText.rectTransform, new Vector2(1f, 0f), new Vector2(1f, 0f),
+                        new Vector2(HintX, HintY), new Vector2(500f, 26f));
 
             canvas.gameObject.SetActive(false);
         }
@@ -121,9 +157,11 @@ namespace Eggverse
                 speakerText.color = tint;
                 portrait.sprite = ProcArt.Portrait(line.Speaker, tint);
                 portraitFrame.color = Color.Lerp(UIKit.PanelLight, tint, 0.35f);
-                hintText.text = "Space to continue";
 
+                bool last = i == script.Lines.Length - 1;
+                hintText.text = HintText(false, last);
                 yield return Typewriter(line.Text);
+                hintText.text = HintText(true, last);
 
                 // Wait for a deliberate press before moving on.
                 bool advanced = false;
@@ -146,6 +184,7 @@ namespace Eggverse
             bodyText.text = "";
             float shown = 0f;
             // At "instant" the line is simply there; the loop below would spin a frame anyway.
+            // The skip hint is never true for a frame here, so it never shows.
             if (RevealRate <= 0f) { bodyText.text = text; yield break; }
 
             while (shown < text.Length)

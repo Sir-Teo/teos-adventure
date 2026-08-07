@@ -80,6 +80,9 @@ static class Cast
     /// BMP writer, which already flips - so the whole cast rendered upside down: shoulders above
     /// the head, crests hanging under the chin, brows sitting on cheekbones. It looked plausible
     /// enough at a glance that the first fix went into the marks instead of the transform.
+    public static void EllPublic(Col[] px, int size, float cx, float cy, float rx, float ry, Col col, float soft)
+        => Ell(px, size, cx, cy, rx, ry, col, soft);
+
     static void Ell(Col[] px, int size, float cx, float cy, float rx, float ry, Col col, float soft)
     {
         for (int y = 0; y < size; y++)

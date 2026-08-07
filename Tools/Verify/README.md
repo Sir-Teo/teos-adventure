@@ -161,6 +161,12 @@ Rendering has now found, in things that had passed every assertion:
 | Landmarks | a bell, a ship's bow and nine hundred cairns all drew as the same grey rock |
 | Pause menu | every row laid out from its own width; the caret slid sideways down the list |
 | Portraits | `ProcArt.Portrait` took a name, used it to key the cache, and drew one face for everybody |
+| Dialogue box | 300px tall over a two-row worst case — every line in the game floated above 110px of nothing |
+
+Drawing the dialogue box also turned up something no render could see: the fit check walked
+`StoryDatabase.Npcs`, and **Amy is not an NPC**. The boss's dialogue — the climax of the game —
+had never been measured against the box it is delivered in. It fits, but that was luck. There is
+now one `StoryDatabase.EveryLine()` that everything walks, and a check that it reaches her.
 
 ### A blind spot, stated
 
