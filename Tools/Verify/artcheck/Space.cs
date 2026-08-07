@@ -34,6 +34,34 @@ static class Space
                 }
         }
 
+        // The drift: motes of warmth crossing the sector, every one of them toward Amaranth.
+        // Drawn with a trail so a still picture shows the direction - in motion the direction is
+        // what you notice, and a single frame would otherwise show only scattered dots.
+        void DrawDrift()
+        {
+            var amaranth = PlanetDatabase.Get("amaranth");
+            var drng = new Random(0x0D71F7);
+            for (int i = 0; i < SpaceMode.DriftCount; i++)
+            {
+                float a = (float)drng.NextDouble() * (float)Math.PI * 2f;
+                float r = SpaceMode.DriftFieldRadius * (float)Math.Sqrt(drng.NextDouble());
+                float mx = camX + (float)Math.Cos(a) * r, my = camY + (float)Math.Sin(a) * r;
+
+                float tx = amaranth.SpacePosition.x - mx, ty = amaranth.SpacePosition.y - my;
+                float len = (float)Math.Sqrt(tx * tx + ty * ty);
+                if (len < 0.001f) continue;
+                tx /= len; ty /= len;
+
+                float alpha = 0.34f + 0.34f * (float)drng.NextDouble();
+                float sz = 0.14f + 0.20f * (float)drng.NextDouble();
+                // Tightly spaced so the trail is a streak rather than a row of dots. In motion
+                // the direction is the whole effect; a still has only the streak to say it with.
+                for (int k = 0; k < 9; k++)
+                    Disc(mx - tx * k * 0.20f, my - ty * k * 0.20f, sz * (1f - k * 0.07f),
+                         new Col(1f, 0.84f, 0.58f, alpha * (1f - k * 0.10f)), 0.9f);
+            }
+        }
+
         var rng = new Random(20260807);
 
         // Tiled layers, matching SpaceMode: each wraps around the camera.
@@ -83,6 +111,8 @@ static class Space
                              sz * 2f, col, 1f);
             }
         }
+
+        DrawDrift();
 
         // Planets: glow, body, a simple terminator.
         foreach (var w in Worlds)

@@ -983,6 +983,41 @@ namespace Eggverse
                     }
             }
 
+            // ---- the drift ----
+            {
+                // Motes spawn in a disc around Amaranth and fall toward it. If that disc does
+                // not reach a world, a player standing at that world never sees any of this -
+                // and it would be a silent hole, because nothing in the game ever mentions it.
+                // The field is carried around the player, so it reaches everywhere by
+                // construction - but it has to be wider than the camera, or a player would
+                // watch motes appear out of nothing at the edge of the screen.
+                var amaranth = PlanetDatabase.Get("amaranth");
+                float farthest = 0f; string farthestName = "";
+                foreach (var w in PlanetDatabase.All)
+                {
+                    float d = Vector2.Distance(w.SpacePosition, amaranth.SpacePosition);
+                    if (d > farthest) { farthest = d; farthestName = w.Name; }
+                }
+                const float spaceViewHalfWidth = 15f * 16f / 9f;      // SpaceZoom, 16:9
+                check(SpaceMode.DriftFieldRadius > spaceViewHalfWidth * 1.5f,
+                      "the drift field is wider than the view (" + SpaceMode.DriftFieldRadius +
+                      " against a half-view of " + spaceViewHalfWidth.ToString("0") + ")");
+
+                // And it has to read as drift, not as debris going past the window. A player
+                // crosses 33 units between neighbours in under two seconds; a mote takes minutes.
+                float flightSpeed = 33f / TeoController.FlightSeconds(33f);
+                check(SpaceMode.DriftSpeed < flightSpeed * 0.2f,
+                      "the drift is slow next to flying (" + SpaceMode.DriftSpeed.ToString("0.00") +
+                      " vs " + flightSpeed.ToString("0.0") + " units a second)");
+
+                // It crosses the sector in minutes, not seconds - long enough that a player
+                // notices the direction rather than the movement.
+                float crossing = farthest / SpaceMode.DriftSpeed;
+                check(crossing > 60f,
+                      "a mote takes minutes to cross the sector - " + farthestName + " to Amaranth is " +
+                      crossing.ToString("0") + "s");
+            }
+
             // ---- screen chrome ----
             {
                 // Footers are the longest fixed strings in the game and none had been measured.

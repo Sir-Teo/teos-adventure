@@ -26,6 +26,28 @@ namespace Eggverse
 
         const float LandingMargin = 3.2f;
 
+        // ---- the drift ----
+        //
+        // Amy has been pulling warmth off every nest in the sector for eleven years to hold the
+        // first egg shut. That is the whole plot, and until now none of it was visible: space
+        // was a black field you crossed to get somewhere. It is a thing you can watch happening
+        // from the first minute, if you look - faint motes, all of them going one way, and the
+        // one way is Amaranth.
+        //
+        // Nobody remarks on it. Amy explains it at the end, and after that it stops, which is
+        // the only announcement it gets.
+        public const int DriftCount = 120;
+        public const float DriftSpeed = 1.35f;
+        // A field carried around the player, not a disc around Amaranth. The disc version left
+        // Voltacrest - 220 units out - with no drift at all, which the checks caught: a player
+        // could spend the whole Long Drift never seeing the one thing the plot is made of.
+        // The camera shows 30 units tall, so a 46-unit field is comfortably wider than the view
+        // and 90 motes in it stay sparse.
+        public const float DriftFieldRadius = 46f;
+        readonly List<Transform> drift = new List<Transform>();
+        readonly List<float> driftRate = new List<float>();
+        Vector2 driftTarget;
+
         public void Build(GameDirector director)
         {
             dir = director;
@@ -36,6 +58,7 @@ namespace Eggverse
             labelCanvasRect = (RectTransform)labelCanvas.transform;
 
             BuildStarfield();
+            BuildDrift();
 
             var planets = PlanetDatabase.All;
             for (int i = 0; i < planets.Count; i++) BuildPlanet(planets[i]);
@@ -51,6 +74,101 @@ namespace Eggverse
         readonly List<Transform> parallaxLayers = new List<Transform>();
         readonly List<float> parallaxDepths = new List<float>();
         readonly List<float> parallaxTiles = new List<float>();
+
+        /// <summary>
+        /// Motes of warmth crossing the sector, all of them toward Amaranth. Ninety of them, on
+        /// top of a starfield that already carries 1410 sprites, so they are cheap: one sprite
+        /// each, moved on the CPU, recycled rather than respawned.
+        /// </summary>
+        void BuildDrift()
+        {
+            var amaranth = PlanetDatabase.Get("amaranth");
+            driftTarget = amaranth != null ? amaranth.SpacePosition : Vector2.zero;
+
+            Sprite mote = ProcArt.Star();
+            var rng = new System.Random(0x0D71F7);
+            var layerRoot = new GameObject("Drift").transform;
+            layerRoot.SetParent(root, false);
+
+            for (int i = 0; i < DriftCount; i++)
+            {
+                var go = new GameObject("mote");
+                go.transform.SetParent(layerRoot, false);
+                go.transform.localPosition = RandomDriftStart(rng, Vector2.zero);
+                go.transform.localScale = Vector3.one * Mathf.Lerp(0.14f, 0.34f, (float)rng.NextDouble());
+
+                var sr = go.AddComponent<SpriteRenderer>();
+                sr.sprite = mote;
+                sr.material = ProcArt.SpriteMaterial;
+                // Warm against a sky of cool white stars, which is what makes them a separate
+                // thing rather than more sky. At 0.10-0.30 alpha they were invisible even in a
+                // render with the exposure of a screenshot - "subtle" had turned into "absent",
+                // and a detail nobody can see is one that is not there.
+                sr.color = new Color(1f, 0.84f, 0.58f, Mathf.Lerp(0.34f, 0.68f, (float)rng.NextDouble()));
+                sr.sortingOrder = -40;
+
+                drift.Add(go.transform);
+                driftRate.Add(Mathf.Lerp(0.55f, 1.45f, (float)rng.NextDouble()));
+            }
+        }
+
+        /// <summary>A point in the field, measured from wherever the player currently is.</summary>
+        static Vector3 RandomDriftStart(System.Random rng, Vector2 around)
+        {
+            float a = (float)rng.NextDouble() * Mathf.PI * 2f;
+            float r = DriftFieldRadius * Mathf.Sqrt((float)rng.NextDouble());
+            return new Vector3(around.x + Mathf.Cos(a) * r, around.y + Mathf.Sin(a) * r, 0f);
+        }
+
+        /// <summary>
+        /// True while the sector is still bleeding warmth. Once you and Amy are both holding the
+        /// shell it stops, and nothing says so - the background simply goes still.
+        /// </summary>
+        bool DriftRunning => dir != null && dir.Story != null && !dir.Story.HasFlag("beat_amy");
+
+        void TickDrift()
+        {
+            if (drift.Count == 0) return;
+
+            bool running = DriftRunning;
+            Vector2 here = dir.Teo.transform.position;
+
+            for (int i = 0; i < drift.Count; i++)
+            {
+                var t = drift[i];
+                Vector2 pos = t.localPosition;
+                Vector2 toward = driftTarget - pos;
+                float dist = toward.magnitude;
+
+                var sr = t.GetComponent<SpriteRenderer>();
+                if (!running)
+                {
+                    // Fade out where they stand rather than snapping off. The last few motes
+                    // hang about for a moment after the fight, which is the right amount of
+                    // ceremony for something nobody ever mentioned.
+                    if (sr != null && sr.color.a > 0.001f)
+                    {
+                        var c = sr.color;
+                        c.a = Mathf.MoveTowards(c.a, 0f, Time.deltaTime * 0.12f);
+                        sr.color = c;
+                    }
+                    continue;
+                }
+
+                // Recycled when it arrives, and when the player has flown far enough that it
+                // is behind them - so the field is always around you rather than somewhere you
+                // used to be.
+                if (dist < 2.5f || Vector2.Distance(pos, here) > DriftFieldRadius * 1.25f)
+                {
+                    t.localPosition = RandomDriftStart(driftRng, here);
+                    continue;
+                }
+
+                t.localPosition = pos + toward / dist * (DriftSpeed * driftRate[i] * Time.deltaTime);
+            }
+        }
+
+        readonly System.Random driftRng = new System.Random(0x5EE1);
 
         void BuildStarfield()
         {
@@ -209,6 +327,8 @@ namespace Eggverse
         {
             if (dir == null || dir.Mode != GameMode.Space) return;
             if (dir.OverlayOpen) return;
+
+            TickDrift();
 
             Vector2 teo = dir.Teo.transform.position;
             PlanetView best = null;
