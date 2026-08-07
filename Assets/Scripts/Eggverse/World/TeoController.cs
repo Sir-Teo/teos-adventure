@@ -20,6 +20,17 @@ namespace Eggverse
         /// rather than keeping its own copy of the number.</summary>
         public const float FlyMaxSpeed = 22f;
         const float FlyDrag = 1.4f;
+
+        /// <summary>
+        /// Roughly how long a crossing takes from a standing start, in seconds. Distance over
+        /// top speed is optimistic by a constant third of a second - the time spent getting up
+        /// to it - which is 19% of a short hop between neighbours and worth not lying about on
+        /// a screen that exists to help pick one.
+        /// </summary>
+        public static float FlightSeconds(float distance) =>
+            distance <= 0f ? 0f : distance / FlyMaxSpeed + AccelerationPenalty;
+
+        const float AccelerationPenalty = 0.34f;
         const float WalkSpeed = 13f;
         /// <summary>How much speed the rim takes as you slide along it.</summary>
         const float RimFriction = 0.92f;

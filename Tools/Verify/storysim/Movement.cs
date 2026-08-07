@@ -41,8 +41,37 @@ static class Movement
         return travelled;
     }
 
+    /// Simulates a crossing at full throttle from rest, the way a player actually flies it.
+    static float RealFlightTime(float distance)
+    {
+        const float A = 46f, K = 1.4f, Cap = 22f;
+        float v = 0f, d = 0f, t = 0f;
+        while (d < distance && t < 60f)
+        {
+            v = Math.Min(Cap, (v + A * Dt) * (float)Math.Exp(-K * Dt));
+            d += v * Dt; t += Dt;
+        }
+        return t;
+    }
+
     public static void Run(Action<bool, string> check)
     {
+        // The chart quotes a flight time for every pairing of worlds. It has to be close to what
+        // flying it actually costs, or it is decoration - distance over top speed alone is
+        // optimistic by a third of a second, which is a fifth of a short hop.
+        foreach (var a in PlanetDatabase.All)
+            foreach (var b in PlanetDatabase.All)
+            {
+                if (a.Id == b.Id) continue;
+                float gap = Math.Max(0f, (a.SpacePosition - b.SpacePosition).magnitude
+                                          - a.SpaceRadius - b.SpaceRadius);
+                float quoted = TeoController.FlightSeconds(gap);
+                float real = RealFlightTime(gap);
+                check(Math.Abs(quoted - real) <= 0.25f,
+                      $"the chart's flight time for {a.Name} to {b.Name} is honest " +
+                      $"(says {quoted:0.0}s, takes {real:0.0}s)");
+            }
+
         // The old clamp scaled the whole velocity every frame it was against the rim, so it
         // collapsed within a few frames and walking along the edge stalled.
         foreach (float angle in new[] { 20f, 40f, 60f, 80f })

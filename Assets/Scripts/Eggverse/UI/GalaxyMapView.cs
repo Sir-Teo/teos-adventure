@@ -369,7 +369,7 @@ namespace Eggverse
                                 - from.SpaceRadius - m.Def.SpaceRadius;
                     sb.Append("<color=#A8B2C4>").Append(Mathf.RoundToInt(Mathf.Max(0f, gap)))
                       .Append(" units from ").Append(from.Name)
-                      .Append("  ·  about ").Append((Mathf.Max(0f, gap) / TeoController.FlyMaxSpeed).ToString("0.0"))
+                      .Append("  ·  about ").Append(TeoController.FlightSeconds(Mathf.Max(0f, gap)).ToString("0.0"))
                       .Append("s of flying</color>\n");
                 }
 
