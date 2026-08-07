@@ -12,6 +12,8 @@ class Sim {
         HostileSave();
         Console.WriteLine("== pacing (playing it, not forcing it) ==");
         Pacing.Run_(Check);
+        Console.WriteLine("== walking against the rim ==");
+        Movement.Run(Check);
         Console.WriteLine("== authored prose ==");
         Prose.Run(Check);
         XpCurve();

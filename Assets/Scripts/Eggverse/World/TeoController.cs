@@ -21,6 +21,8 @@ namespace Eggverse
         public const float FlyMaxSpeed = 22f;
         const float FlyDrag = 1.4f;
         const float WalkSpeed = 13f;
+        /// <summary>How much speed the rim takes as you slide along it.</summary>
+        const float RimFriction = 0.92f;
         const float WalkSmoothing = 14f;
 
         SpriteRenderer body;
@@ -96,12 +98,18 @@ namespace Eggverse
             Velocity = Vector2.Lerp(Velocity, target, 1f - Mathf.Exp(-WalkSmoothing * dt));
             Vector3 next = transform.position + (Vector3)(Velocity * dt);
 
-            // Stay on the walkable disc.
+            // Stay on the walkable disc, and slide along the rim rather than stopping dead on
+            // it. Scaling the whole velocity killed any sideways movement too, so walking into
+            // the edge at an angle stalled - and the edge is a circle, so half of walking near
+            // it is at an angle. Keep the component along the rim, drop the one into it.
             Vector2 flat = new Vector2(next.x, next.y);
             if (flat.magnitude > SurfaceRadius)
             {
-                flat = flat.normalized * SurfaceRadius;
-                Velocity *= 0.35f;
+                Vector2 outward = flat.normalized;
+                flat = outward * SurfaceRadius;
+
+                Vector2 along = new Vector2(-outward.y, outward.x);
+                Velocity = along * Vector2.Dot(Velocity, along) * RimFriction;
             }
             transform.position = new Vector3(flat.x, flat.y, 0f);
         }
