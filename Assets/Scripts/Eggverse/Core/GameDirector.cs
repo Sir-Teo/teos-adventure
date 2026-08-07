@@ -134,7 +134,19 @@ namespace Eggverse
             // The Belt gets its own bed, so crossing into Sector III is audible.
             else if (CurrentPlanet.Sector == Sector.ShatteredBelt) want = MusicTrack.Belt;
             else want = MusicTrack.Explore;
-            Audio.SetMusic(want);
+
+            // Not every transition is the same moment. A battle should arrive - an egg has just
+            // jumped you and the music catching up half a second later undercuts it. Coming out
+            // of one should settle rather than snap. And Amaranth is meant to be felt on the way
+            // down, so it takes its time. One fade length for all of it made every change read
+            // like the same shrug.
+            float seconds =
+                want == MusicTrack.Battle ? 0.45f :
+                Audio.CurrentTrack == MusicTrack.Battle ? 1.8f :
+                want == MusicTrack.Amaranth ? 3.0f :
+                1.1f;
+
+            Audio.SetMusic(want, seconds);
         }
 
         // ==================================================================

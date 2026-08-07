@@ -12,6 +12,10 @@ namespace Eggverse
         AudioSource musicA, musicB;
         bool usingA = true;
         MusicTrack current = MusicTrack.None;
+
+        /// <summary>What is playing now, so a caller can pace the fade by where it is coming from
+        /// as well as where it is going.</summary>
+        public MusicTrack CurrentTrack => current;
         Coroutine fade;
 
         public float SfxVolume = 0.55f;

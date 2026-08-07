@@ -117,6 +117,18 @@ static class AudioCheck
                   $"effects and music together leave headroom ({worstMix:0.000}: " +
                   $"{loudestName} {loudestSfx:0.000} + music {loudestMusic:0.000} x 0.6)");
 
+            // Every music loop has to be long enough that the longest fade into it is a fade
+            // rather than most of the track. Amaranth takes three seconds to arrive.
+            foreach (var name in builders)
+            {
+                var mm = t.GetMethod(name, BindingFlags.NonPublic | BindingFlags.Static);
+                if (mm == null) continue;
+                var mbuf = (float[])mm.Invoke(null, null);
+                float secs = mbuf.Length / (float)SR;
+                check(secs >= 3.0f * 2f,
+                      $"{name} is long enough for its fade to be a fade ({secs:0.0}s against a 3.0s crossfade)");
+            }
+
             check(spread <= 20f,
                   $"the effects sit within a usable range of each other ({spread:0.0}x, " +
                   $"{levels[0].name} over {levels[levels.Count - 1].name})");

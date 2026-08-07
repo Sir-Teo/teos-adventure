@@ -126,6 +126,11 @@ riff for battles, a swelling chord for Amaranth Prime, and — for the Shattered
 sustained note** with its own overtones drifting in and out, because that is exactly what Pim
 says the Belt is doing. Crossing into Sector III is audible before it is visible.
 
+Transitions are paced by what they are, not by one number. A battle arrives in **0.45s** — an egg
+has just jumped you and music catching up half a second later undercuts it. Coming out of one
+settles over **1.8s**. Amaranth takes **3s**, because it is meant to be felt on the way down.
+Everything else crossfades in 1.1s.
+
 ### Lingering conditions
 
 Every other move effect in the game resolves the instant it lands. These are the ones you are
