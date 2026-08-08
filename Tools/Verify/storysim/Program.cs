@@ -342,6 +342,12 @@ class Sim {
                 string root = System.IO.Path.Combine(
                     System.IO.Path.GetDirectoryName(System.Reflection.Assembly.GetExecutingAssembly().Location) ?? ".",
                     "..", "..", "..", "..", "..", "..", "Assets", "Scripts", "Eggverse");
+                    Feedback.StraySentences(root, new[]
+                    {
+                        "UiCopy.cs", "BattleLog.cs", "Prompts.cs", "StoryDatabase.cs", "SpeciesDatabase.cs",
+                        "LandmarkDatabase.cs", "MoveDatabase.cs", "PlanetDatabase.cs", "SelfCheck.cs",
+                        "EggType.cs", "EggInstance.cs", "UIKit.cs", "ProcArt.cs",
+                    }, Check);
                     Feedback.Toasts(new[]
                     {
                         System.IO.Path.Combine(root, "Core", "GameDirector.cs"),

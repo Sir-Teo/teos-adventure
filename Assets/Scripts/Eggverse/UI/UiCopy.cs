@@ -247,6 +247,16 @@ namespace Eggverse
             "Amy put you back on the ship. \"Warm them up. Then come down again.\"",
         };
 
+        /// <summary>
+        /// What a world still owes your record, read in three places - the chart, the approach
+        /// prompt and the toast on landing.
+        /// </summary>
+        public const string NothingOwed = "Every egg here is already in your record.";
+
+        /// <summary>What a Nest Station did for you, when it did something.</summary>
+        public const string RestMended = "Shells mended, supplies restocked.";
+        public const string RestRestocked = "Supplies restocked. Nothing else needed doing.";
+
         public static readonly string[] RestIdle =
         {
             "Nothing needed doing. The pad is warm anyway.",

@@ -141,8 +141,8 @@ static class Prose
             Add("move " + mv.Name, mv.Describe());
         }
 
-        for (int i = 0; i < BattleMode.ActionHelp.Length; i++)
-            Add("action help " + i, BattleMode.ActionHelp[i]);
+        for (int i = 0; i < BattleLog.ActionHelp.Length; i++)
+            Add("action help " + i, BattleLog.ActionHelp[i]);
 
         for (int i = 0; i < UiCopy.BattleLines.Length; i++)
             Add("battle line " + i, UiCopy.BattleLines[i]);
@@ -218,12 +218,28 @@ static class Prose
         Add("challenge Amy", Prompts.FaceAmy(false));
         Add("rematch Amy", Prompts.FaceAmy(true));
         Add("beyond the charts", Prompts.BeyondCharts("Cairnhold"));
+
+        AddLayout("swap heading", BattleLog.SwapHeading);
+        Add("what swapping costs", BattleLog.SwapCost);
+        Add("what a forced swap costs", BattleLog.SwapForced);
+        Add("it broke free", BattleLog.BrokeFree(2));
+        Add("it burst out", BattleLog.BrokeFree(0));
+        Add("offer a name", BattleLog.OfferName);
+        Add("won over an Elder", BattleLog.WonElder("Pebbles"));
+        Add("won untouched", BattleLog.WonUntouched("Pebbles"));
+        Add("won fast", BattleLog.WonFast("Pebbles"));
+        Add("won narrowly", BattleLog.WonNarrow("Pebbles"));
+        Add("won a long one", BattleLog.WonLong);
+        Add("won plainly", BattleLog.WonPlain);
+        Add("rest mended", UiCopy.RestMended);
+        Add("rest restocked", UiCopy.RestRestocked);
+        Add("nothing owed", UiCopy.NothingOwed);
         foreach (EggStatus cond in System.Enum.GetValues(typeof(EggStatus)))
         {
             if (cond == EggStatus.None) continue;
             var lit = EggInstance.Wild(SpeciesDatabase.All[0].Id, 20);
             lit.Status = cond;
-            Add("condition " + cond, BattleMode.ConditionLine(lit, true));
+            Add("condition " + cond, BattleLog.ConditionLine(lit, true));
         }
 
         // And what each resident says about their own world's landmark.

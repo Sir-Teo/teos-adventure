@@ -302,7 +302,7 @@ static class Battle
             // The action menu explains whichever action is highlighted, the same way the move
             // menu below it does. FIGHT is the default cursor position.
             Text(c, ("What will " + mine.Name + " do?").ToUpperInvariant(), 72, 196, 30, Ink);
-            Text(c, Strip(Eggverse.BattleMode.ActionMessageText(0, mine, false)).ToUpperInvariant(),
+            Text(c, Strip(Eggverse.BattleLog.ActionMessageText(0, mine, false)).ToUpperInvariant(),
                  72, 196 - 30f * 1.16f - 8f, 24, InkDim);
         }
         Text(c, Eggverse.UiCopy.BattleFooter.ToUpperInvariant(), 72, 84, 19, InkDim);

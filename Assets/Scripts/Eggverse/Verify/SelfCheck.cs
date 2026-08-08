@@ -1958,7 +1958,7 @@ namespace Eggverse
                 // mechanics underneath. Prose that describes a formula is prose that can stop
                 // being true when the formula moves - and this is the screen where the game
                 // teaches its own rules, so a line that goes stale here teaches them wrong.
-                var help = BattleMode.ActionHelp;
+                var help = BattleLog.ActionHelp;
 
                 // "Wear the egg down first - a healthy one kicks straight back out."
                 {
@@ -2400,9 +2400,9 @@ namespace Eggverse
                 // attached, and the player is picking a move without being reminded their egg
                 // is moving at half speed.
                 var well = EggInstance.Wild(SpeciesDatabase.All[0].Id, 20);
-                check(BattleMode.ConditionLine(well, true).Length == 0,
+                check(BattleLog.ConditionLine(well, true).Length == 0,
                       "a healthy egg has nothing to report");
-                check(BattleMode.ConditionLine(null, true).Length == 0,
+                check(BattleLog.ConditionLine(null, true).Length == 0,
                       "and neither does no egg at all");
 
                 foreach (EggStatus st in System.Enum.GetValues(typeof(EggStatus)))
@@ -2411,8 +2411,8 @@ namespace Eggverse
                     var egg = EggInstance.Wild(SpeciesDatabase.All[0].Id, 20);
                     egg.Status = st;
 
-                    string yours = BattleMode.ConditionLine(egg, true);
-                    string theirs = BattleMode.ConditionLine(egg, false);
+                    string yours = BattleLog.ConditionLine(egg, true);
+                    string theirs = BattleLog.ConditionLine(egg, false);
 
                     check(yours.Length > 0, st + " says something");
                     check(yours.Contains(egg.Name), "and names your egg: " + yours);
@@ -2428,9 +2428,9 @@ namespace Eggverse
 
                     // It has to fit under the action description in the message box, which is
                     // 1040 wide and 210 tall at font 28.
-                    for (int i = 0; i < BattleMode.ActionHelp.Length; i++)
+                    for (int i = 0; i < BattleLog.ActionHelp.Length; i++)
                     {
-                        string whole = BattleMode.ActionMessageText(i, egg, false) + "\n" + yours + "\n" + theirs;
+                        string whole = BattleLog.ActionMessageText(i, egg, false) + "\n" + yours + "\n" + theirs;
                         check(lines(whole, 1040f, 28) <= capacity(210f, 28),
                               "action " + i + " plus two conditions still fits the box (" +
                               lines(whole, 1040f, 28) + " of " + capacity(210f, 28) + ")");
@@ -2446,7 +2446,7 @@ namespace Eggverse
                     egg.Status = st;
                     var other = EggInstance.Wild(SpeciesDatabase.All[1].Id, 20);
                     other.Status = st;
-                    check(BattleMode.ConditionLine(egg, true) != BattleMode.ConditionLine(other, true),
+                    check(BattleLog.ConditionLine(egg, true) != BattleLog.ConditionLine(other, true),
                           st + "'s line names whichever egg has it");
                 }
             }
@@ -3420,9 +3420,9 @@ namespace Eggverse
                 var mine = EggInstance.Wild("sprouteg", 20);
                 mine.CurrentHP = mine.MaxHP / 2;
 
-                for (int i = 0; i < BattleMode.ActionHelp.Length; i++)
+                for (int i = 0; i < BattleLog.ActionHelp.Length; i++)
                 {
-                    string wild = BattleMode.ActionMessageText(i, mine, false);
+                    string wild = BattleLog.ActionMessageText(i, mine, false);
                     check(wild.Length > 0, "action " + i + " says what it does");
                     check(lines(wild, 1040f, 28) <= capacity(210f, 28),
                           "action " + i + "'s line fits the message box: " + wild);
@@ -3430,22 +3430,22 @@ namespace Eggverse
 
                 // The two the game refuses against a trainer say why, rather than sitting
                 // greyed with no reason given.
-                check(BattleMode.ActionMessageText(1, mine, true) != BattleMode.ActionHelp[1],
+                check(BattleLog.ActionMessageText(1, mine, true) != BattleLog.ActionHelp[1],
                       "the carton says why it is greyed against a trainer");
-                check(BattleMode.ActionMessageText(4, mine, true) != BattleMode.ActionHelp[4],
+                check(BattleLog.ActionMessageText(4, mine, true) != BattleLog.ActionHelp[4],
                       "and so does running");
 
                 // And the salve, which is greyed for a reason a player might not guess.
                 var whole = EggInstance.Wild("sprouteg", 20);
-                check(BattleMode.ActionMessageText(2, whole, false).Contains("not hurt"),
+                check(BattleLog.ActionMessageText(2, whole, false).Contains("not hurt"),
                       "the salve says why it is greyed on an untouched egg: " +
-                      BattleMode.ActionMessageText(2, whole, false));
-                check(BattleMode.ActionMessageText(2, mine, false) == BattleMode.ActionHelp[2],
+                      BattleLog.ActionMessageText(2, whole, false));
+                check(BattleLog.ActionMessageText(2, mine, false) == BattleLog.ActionHelp[2],
                       "and explains itself normally on a hurt one");
 
                 // One line per button in the menu, or the indices stop lining up.
-                check(BattleMode.ActionHelp.Length == 5,
-                      "there is a line for every action (" + BattleMode.ActionHelp.Length + ")");
+                check(BattleLog.ActionHelp.Length == 5,
+                      "there is a line for every action (" + BattleLog.ActionHelp.Length + ")");
             }
 
             // ---- running low says so in a word too ----

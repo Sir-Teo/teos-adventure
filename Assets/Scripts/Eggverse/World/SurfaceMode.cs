@@ -567,12 +567,12 @@ namespace Eggverse
             if (hurt > 0)
             {
                 restIdle = 0;
-                return "Shells mended, supplies restocked.";
+                return UiCopy.RestMended;
             }
             if (shortOfSupplies)
             {
                 restIdle = 0;
-                return "Supplies restocked. Nothing else needed doing.";
+                return UiCopy.RestRestocked;
             }
 
             // Nothing to fix. Rather than lie about mending anything, say so - and vary it,

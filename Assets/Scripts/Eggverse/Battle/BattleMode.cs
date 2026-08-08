@@ -157,7 +157,7 @@ namespace Eggverse
             UIKit.Place(partyPanel, new Vector2(0.5f, 0.5f), new Vector2(0.5f, 0.5f), Vector2.zero, new Vector2(900f, 660f));
             var partyBg = UIKit.Panel(partyPanel, "Bg", UIKit.PanelDark);
             UIKit.Stretch(partyBg.rectTransform, 0, 0, 0, 0);
-            var partyTitle = UIKit.Label(partyPanel, "Title", "SEND OUT WHICH EGG?", 30, UIKit.Accent, TextAnchor.MiddleCenter, FontStyle.Bold);
+            var partyTitle = UIKit.Label(partyPanel, "Title", BattleLog.SwapHeading, 30, UIKit.Accent, TextAnchor.MiddleCenter, FontStyle.Bold);
             UIKit.Place(partyTitle.rectTransform, new Vector2(0.5f, 1f), new Vector2(0.5f, 1f), new Vector2(0f, -40f), new Vector2(820f, 44f));
             for (int i = 0; i < GameState.PartySize; i++)
             {
@@ -406,7 +406,7 @@ namespace Eggverse
                         }
                         RefreshPartyButtons();
                         UIKit.SetActive(partyPanel, true);
-                        messageText.text = "Send out which egg?";
+                        messageText.text = BattleLog.SwapCost;
                         yield return WaitChoice(partyButtons, 1, true);
                         UIKit.SetActive(partyPanel, false);
                         if (pendingChoice == -2) continue;
@@ -812,7 +812,7 @@ namespace Eggverse
                 // Offer a nickname, but never force the player through a text prompt.
                 // Watch for N across the whole message rather than sampling once at the end.
                 bool wantsName = false;
-                messageText.text = "Press <b>N</b> to name it, or Space to carry on.";
+                messageText.text = BattleLog.OfferName;
                 menuHint.text = "";
                 float waited = 0f;
                 while (waited < 2.6f)
@@ -845,7 +845,7 @@ namespace Eggverse
             else
             {
                 dir.Audio.Play(Sfx.CatchFail);
-                yield return Say(shakes >= 2 ? "So close! It broke free." : "It burst straight out!");
+                yield return Say(BattleLog.BrokeFree(shakes));
             }
         }
 
@@ -913,7 +913,7 @@ namespace Eggverse
         {
             RefreshPartyButtons();
             UIKit.SetActive(partyPanel, true);
-            messageText.text = "Send out which egg?";
+            messageText.text = BattleLog.SwapForced;
             yield return WaitChoice(partyButtons, 1, false);
             UIKit.SetActive(partyPanel, false);
             if (pendingChoice >= 0) { activeIndex = pendingChoice; foughtThisBattle.Add(activeIndex); }
@@ -943,12 +943,12 @@ namespace Eggverse
         string WildVictoryLine()
         {
             var mine = Mine;
-            if (foeWasElder) return "An Elder, no less. " + mine.Name + " stands over it.";
-            if (mine.CurrentHP >= mine.MaxHP) return "Not a scratch on " + mine.Name + ".";
-            if (rounds <= 1) return "One hit. " + mine.Name + " barely looked up.";
-            if (mine.HPFraction < 0.2f) return "That was close. " + mine.Name + " is still standing, just.";
-            if (rounds >= 8) return "A long one. Both of them are breathing hard.";
-            return "You won the scrap.";
+            if (foeWasElder) return BattleLog.WonElder(mine.Name);
+            if (mine.CurrentHP >= mine.MaxHP) return BattleLog.WonUntouched(mine.Name);
+            if (rounds <= 1) return BattleLog.WonFast(mine.Name);
+            if (mine.HPFraction < 0.2f) return BattleLog.WonNarrow(mine.Name);
+            if (rounds >= 8) return BattleLog.WonLong;
+            return BattleLog.WonPlain;
         }
 
         // ==================================================================
@@ -1399,64 +1399,6 @@ namespace Eggverse
             }
         }
 
-        /// <summary>
-        /// What each action does, in the words a player needs at the moment they are choosing.
-        ///
-        /// The same job the move descriptions do one level down, and the same reason: this is
-        /// where the mechanics actually get taught. Ori explains cartons once in the opening
-        /// brief and Lune explains salves two sectors later; the menu explains both every time
-        /// a player looks at it.
-        /// </summary>
-        public static readonly string[] ActionHelp =
-        {
-            "Choose a move.",
-            "Throw one. Wear the egg down first — a healthy one kicks straight back out.",
-            "Mends the egg in front of you. It costs you the turn.",
-            "Bring another egg out. You take a hit on the way in.",
-            "Get clear. A faster egg gets away more often.",
-        };
-
-        /// <summary>
-        /// What a condition is doing to somebody, in the moment a player is choosing what to do
-        /// about it.
-        ///
-        /// The card shows SCORCHED, CHILLED or DAZED, and the line that lands each one explains
-        /// it — once. Three turns later the chip is a word with no meaning attached, and the
-        /// player is picking a move without being reminded that their egg is moving at half
-        /// speed. The chip is the state; this is what the state costs.
-        /// </summary>
-        public static string ConditionLine(EggInstance egg, bool yours)
-        {
-            if (egg == null || egg.Status == EggStatus.None) return "";
-            string who = yours ? egg.Name : "It";
-            switch (egg.Status)
-            {
-                case EggStatus.Scorched:
-                    return "<color=#E5734A>" + who + " is scorched — losing shell every turn.</color>";
-                case EggStatus.Chilled:
-                    return "<color=#8FE3F2>" + who + " is chilled — moving at half speed.</color>";
-                case EggStatus.Dazed:
-                    return "<color=#FFC24D>" + who + " is dazed — may lose the turn outright.</color>";
-            }
-            return "";
-        }
-
-        public static string ActionMessageText(int index, EggInstance mine, bool isTrainer)
-        {
-            if (index < 0 || index >= ActionHelp.Length) return "";
-
-            // The two the game refuses outright against a trainer say why, rather than sitting
-            // greyed with no reason given.
-            if (isTrainer && index == 1) return "<color=#9AA4B6>Nothing here is yours to take.</color>";
-            if (isTrainer && index == 4) return "<color=#9AA4B6>There is no walking away from this one.</color>";
-
-            // A salve on an untouched egg is the one case where the button is greyed for a
-            // reason a player might not guess.
-            if (index == 2 && mine != null && mine.CurrentHP >= mine.MaxHP)
-                return "<color=#9AA4B6>" + mine.Name + " is not hurt.</color>";
-
-            return ActionHelp[index];
-        }
 
         /// <summary>
         /// Whether there is anybody to swap to: another egg in the party, still standing.
@@ -1746,14 +1688,14 @@ namespace Eggverse
             // "What will Pebbles do?" - above six hundred pixels of nothing, on the screen a
             // player makes every decision in the game on. The move menu below it has explained
             // its options since it was written.
-            else if (activeMenu == actionButtons && cursor < ActionHelp.Length)
+            else if (activeMenu == actionButtons && cursor < BattleLog.ActionHelp.Length)
             {
                 // Yours first: it is the one you can do something about this turn.
-                string mine = ConditionLine(Mine, true);
-                string theirs = ConditionLine(Foe, false);
+                string mine = BattleLog.ConditionLine(Mine, true);
+                string theirs = BattleLog.ConditionLine(Foe, false);
                 string conditions = mine + (mine.Length > 0 && theirs.Length > 0 ? "\n" : "") + theirs;
 
-                messageText.text = ActionMessageText(cursor, Mine, IsTrainer) +
+                messageText.text = BattleLog.ActionMessageText(cursor, Mine, IsTrainer) +
                                    (conditions.Length > 0 ? "\n" + conditions : "");
             }
 

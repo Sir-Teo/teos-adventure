@@ -422,7 +422,7 @@ namespace Eggverse
         public string StillOwed(PlanetDef planet)
         {
             int missing = State.UnrecordedOn(planet);
-            if (missing == 0) return "Every egg here is already in your record.";
+            if (missing == 0) return UiCopy.NothingOwed;
             return Words.Count(missing, "egg") + " here you have not recorded yet.";
         }
 

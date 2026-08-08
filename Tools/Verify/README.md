@@ -317,6 +317,22 @@ And planting a space before an exclamation mark went straight through: there was
 it. `"Go, Pebbles !"` is the kind of slip that survives every reading, because the eye supplies
 what it expects.
 
+### The general form
+
+Toasts and prompts each got their own pass; `Feedback.StraySentences` is the general one. A
+capitalised sentence ending in punctuation, in any file that is not a place authored text lives,
+is a line the prose pass will never read. **8,370 lines scanned, none found.**
+
+Every stray it turned up was worth moving for a second reason as well as the first:
+
+- the swap panel's heading asked "SEND OUT WHICH EGG?" while the message box under it asked "Send
+  out which egg?" — **the same question twice, on screen at once**. The box now says what swapping
+  costs, which is the thing a player needs at that moment.
+- "Every egg here is already in your record" was a fourth copy of a sentence the chart, the
+  approach prompt and the landing toast already share.
+
+620 authored strings before the sweep, 635 after.
+
 ## Which assertions never ran
 
 "Did anything fail" and "did everything get asked" are different questions, and a suite this size

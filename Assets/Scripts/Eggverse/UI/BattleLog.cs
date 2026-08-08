@@ -67,6 +67,88 @@ namespace Eggverse
         public static string ShookOff(string egg, EggStatus status) =>
             egg + " shook off the " + status.ToString().ToLowerInvariant() + ".";
 
+        // ---- the swap menu ----
+        //
+        // The panel's heading and the message box under it asked the same question at the same
+        // time, in two casings. The heading is where a question belongs; the box below it can
+        // carry the thing a player actually needs at that moment, which is what swapping costs.
+        public const string SwapHeading = "SEND OUT WHICH EGG?";
+        public const string SwapCost = "Whoever comes out takes a hit on the way in.";
+        public const string SwapForced = "Whoever comes out starts fresh.";
+
+        // ---- a carton that did not hold ----
+        public static string BrokeFree(int shakes) =>
+            shakes >= 2 ? "So close! It broke free." : "It burst straight out!";
+
+        public const string OfferName = "Press <b>N</b> to name it, or Space to carry on.";
+
+        // ---- how the fight ended ----
+        public static string WonElder(string egg) => "An Elder, no less. " + egg + " stands over it.";
+        public static string WonUntouched(string egg) => "Not a scratch on " + egg + ".";
+        public static string WonFast(string egg) => "One hit. " + egg + " barely looked up.";
+        public static string WonNarrow(string egg) => "That was close. " + egg + " is still standing, just.";
+        public const string WonLong = "A long one. Both of them are breathing hard.";
+        public const string WonPlain = "You won the scrap.";
+
+        /// <summary>
+        /// What each action does, in the words a player needs at the moment they are choosing.
+        ///
+        /// The same job the move descriptions do one level down, and the same reason: this is
+        /// where the mechanics actually get taught. Ori explains cartons once in the opening
+        /// brief and Lune explains salves two sectors later; the menu explains both every time
+        /// a player looks at it.
+        /// </summary>
+        public static readonly string[] ActionHelp =
+        {
+            "Choose a move.",
+            "Throw one. Wear the egg down first — a healthy one kicks straight back out.",
+            "Mends the egg in front of you. It costs you the turn.",
+            "Bring another egg out. You take a hit on the way in.",
+            "Get clear. A faster egg gets away more often.",
+        };
+
+        /// <summary>
+        /// What a condition is doing to somebody, in the moment a player is choosing what to do
+        /// about it.
+        ///
+        /// The card shows SCORCHED, CHILLED or DAZED, and the line that lands each one explains
+        /// it — once. Three turns later the chip is a word with no meaning attached, and the
+        /// player is picking a move without being reminded that their egg is moving at half
+        /// speed. The chip is the state; this is what the state costs.
+        /// </summary>
+        public static string ConditionLine(EggInstance egg, bool yours)
+        {
+            if (egg == null || egg.Status == EggStatus.None) return "";
+            string who = yours ? egg.Name : "It";
+            switch (egg.Status)
+            {
+                case EggStatus.Scorched:
+                    return "<color=#E5734A>" + who + " is scorched — losing shell every turn.</color>";
+                case EggStatus.Chilled:
+                    return "<color=#8FE3F2>" + who + " is chilled — moving at half speed.</color>";
+                case EggStatus.Dazed:
+                    return "<color=#FFC24D>" + who + " is dazed — may lose the turn outright.</color>";
+            }
+            return "";
+        }
+
+        public static string ActionMessageText(int index, EggInstance mine, bool isTrainer)
+        {
+            if (index < 0 || index >= ActionHelp.Length) return "";
+
+            // The two the game refuses outright against a trainer say why, rather than sitting
+            // greyed with no reason given.
+            if (isTrainer && index == 1) return "<color=#9AA4B6>Nothing here is yours to take.</color>";
+            if (isTrainer && index == 4) return "<color=#9AA4B6>There is no walking away from this one.</color>";
+
+            // A salve on an untouched egg is the one case where the button is greyed for a
+            // reason a player might not guess.
+            if (index == 2 && mine != null && mine.CurrentHP >= mine.MaxHP)
+                return "<color=#9AA4B6>" + mine.Name + " is not hurt.</color>";
+
+            return ActionHelp[index];
+        }
+
         // ---- supplies ----
         public static string ThrewCarton(int left) =>
             "You lobbed an egg carton!  (" + Words.Count(left, "carton") + " left)";

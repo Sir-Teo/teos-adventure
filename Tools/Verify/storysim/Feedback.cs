@@ -128,6 +128,48 @@ static class Feedback
                   : $"{literals.Count} toast(s) written at the call site: {literals[0]}");
     }
 
+    /// No sentence a player reads is written outside a prose home.
+    ///
+    /// Toasts and prompts each got their own pass; this is the general form. A capitalised
+    /// sentence ending in punctuation, in a file that is not one of the places authored text
+    /// lives, is a line the prose pass will never read — and every one of the six that turned up
+    /// last was either duplicated elsewhere or asked a question the panel above it had already
+    /// asked.
+    public static void StraySentences(string root, string[] homes, Action<bool, string> check)
+    {
+        var sentence = new Regex(@"""([A-Z][^""]{14,}[.!?])""", RegexOptions.Compiled);
+        var stray = new List<string>();
+        int scanned = 0;
+
+        foreach (var path in Directory.GetFiles(root, "*.cs", SearchOption.AllDirectories))
+        {
+            string name = Path.GetFileName(path);
+            if (Array.IndexOf(homes, name) >= 0) continue;
+
+            var lines = File.ReadAllLines(path);
+            for (int i = 0; i < lines.Length; i++)
+            {
+                string line = lines[i];
+                string t = line.TrimStart();
+                if (t.StartsWith("//")) continue;
+                // Engine diagnostics are for whoever is building the game, not for a player.
+                if (line.Contains("Debug.Log") || line.Contains("LogWarning") || line.Contains("LogError")) continue;
+                scanned++;
+                var m = sentence.Match(line);
+                if (m.Success) stray.Add(name + ":" + (i + 1) + "  \"" + m.Groups[1].Value + "\"");
+            }
+        }
+
+        Console.WriteLine($"  {scanned} lines scanned for stray player text, {stray.Count} found");
+        foreach (var x in stray) Console.WriteLine("    STRAY  " + x);
+
+        check(scanned > 0, "the stray-sentence pass read the sources");
+        check(stray.Count == 0,
+              stray.Count == 0
+                  ? "every sentence a player reads lives where the prose pass reads it"
+                  : $"{stray.Count} sentence(s) outside a prose home: {stray[0]}");
+    }
+
     public static void Run(string sourcePath, Action<bool, string> check)
     {
         if (!File.Exists(sourcePath))
