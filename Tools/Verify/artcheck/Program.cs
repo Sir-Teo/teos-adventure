@@ -365,6 +365,31 @@ static class Program
         }
 
         {
+            // Do any two species fight with the same four moves?
+            var sets = new System.Collections.Generic.Dictionary<string, System.Collections.Generic.List<string>>();
+            foreach (var sp in Eggverse.SpeciesDatabase.All)
+            {
+                var egg = Eggverse.EggInstance.Wild(sp.Id, 30);
+                var ids = new System.Collections.Generic.List<string>();
+                foreach (var m in egg.Moves) ids.Add(m.Move.Id);
+                ids.Sort();
+                string key = string.Join(",", ids.ToArray());
+                if (!sets.ContainsKey(key)) sets[key] = new System.Collections.Generic.List<string>();
+                sets[key].Add(sp.Name);
+            }
+            int shared = 0;
+            foreach (var kv in sets) if (kv.Value.Count > 1) shared++;
+            Console.WriteLine($"  movesets at Lv 30: {sets.Count} distinct across " +
+                              $"{Eggverse.SpeciesDatabase.All.Count} species, {shared} shared by more than one");
+            foreach (var kv in sets)
+                if (kv.Value.Count > 1)
+                    Console.WriteLine("      moves: " + kv.Key);
+            foreach (var kv in sets)
+                if (kv.Value.Count > 1)
+                    Console.WriteLine("    same four: " + string.Join(", ", kv.Value.ToArray()));
+        }
+
+        {
             // How much of the objective panel any beat actually uses.
             int worst = 0; string worstBeat = "";
             for (int b = 0; b < Eggverse.StoryDatabase.Beats.Length; b++)

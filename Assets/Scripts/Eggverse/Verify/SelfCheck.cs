@@ -1671,6 +1671,68 @@ namespace Eggverse
                 check(elder.Elder && !ordinary.Elder, "and knows it");
             }
 
+            // ---- no two unrelated species fight the same way ----
+            {
+                // Every other axis of a species is checked for distinctness - its cry, its
+                // shell, its stats, its trait. How it actually plays was not, and how it plays
+                // is the four moves it has at the level a player meets it with.
+                //
+                // Scoped to species that are not in one evolution line. Three pairs share all
+                // four moves at level thirty - Emberoo and Sizzlette, Craggle and Boulderoo,
+                // Cosmolette and Starlette - and every one of them is a stage and its own
+                // evolution. A stage keeping its line's moves is the whole idea of a line, and
+                // an Emberoo at thirty does not exist because it evolves at twenty-six. The
+                // measurement found them; the premise said they were fine.
+                Func<SpeciesDef, SpeciesDef, bool> sameLine = (a, b) =>
+                {
+                    for (var at = a; at != null; at = string.IsNullOrEmpty(at.EvolvesIntoId)
+                                                       ? null : SpeciesDatabase.Get(at.EvolvesIntoId))
+                        if (at.Id == b.Id) return true;
+                    for (var at = b; at != null; at = string.IsNullOrEmpty(at.EvolvesIntoId)
+                                                       ? null : SpeciesDatabase.Get(at.EvolvesIntoId))
+                        if (at.Id == a.Id) return true;
+                    return false;
+                };
+
+                Func<SpeciesDef, string> setAt = sp =>
+                {
+                    var egg = EggInstance.Wild(sp.Id, 30);
+                    var ids = new System.Collections.Generic.List<string>();
+                    foreach (var m in egg.Moves) ids.Add(m.Move.Id);
+                    ids.Sort();
+                    return string.Join(",", ids.ToArray());
+                };
+
+                int related = 0;
+                var all = SpeciesDatabase.All;
+                for (int i = 0; i < all.Count; i++)
+                    for (int j = i + 1; j < all.Count; j++)
+                    {
+                        if (sameLine(all[i], all[j])) { related++; continue; }
+                        check(setAt(all[i]) != setAt(all[j]),
+                              all[i].Name + " and " + all[j].Name +
+                              " do not fight with the same four moves");
+                    }
+
+                // And some pairs really are related, or the exemption is excusing nothing and
+                // the roster has no evolution lines in it at all.
+                check(related > 0, "some species are in one line together (" + related + " pairs)");
+
+                // Every species has a full hand by the time a player meets it at depth.
+                foreach (var sp in all)
+                {
+                    var egg = EggInstance.Wild(sp.Id, 30);
+                    check(egg.Moves.Count == EggInstance.MaxMoves,
+                          sp.Name + " has a full set of moves at level 30 (" + egg.Moves.Count + ")");
+
+                    // And at least one of them does something other than damage, or the egg is
+                    // four buttons that all mean the same thing.
+                    bool anyEffect = false;
+                    foreach (var m in egg.Moves) if (m.Move.Effect != MoveEffect.None) anyEffect = true;
+                    check(anyEffect, sp.Name + " has something to do besides hit");
+                }
+            }
+
             // ---- the prompts share one grammar ----
             {
                 // These are the most-read strings in the game - a prompt is on screen for the

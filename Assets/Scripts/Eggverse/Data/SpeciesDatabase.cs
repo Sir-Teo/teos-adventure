@@ -302,7 +302,7 @@ namespace Eggverse
             Add(new SpeciesDef("obsidyolk", "Obsidyolk", EggType.Stone,
                 83, 71, 88, 46, 3, C(0x4A4550), C(0x111015), 92,
                 "Volcanic glass wrapped around a molten core. Its chips are razor sharp.",
-                L(E(1, "bouldercrack"), E(1, "fortify"), E(1, "tectonic"), E(1, "scramble"))));
+                L(E(1, "bouldercrack"), E(1, "fortify"), E(1, "tectonic"), E(1, "glassshatter"))));
 
             Add(new SpeciesDef("reginova", "Reginova", EggType.Aether,
                 80, 81, 74, 78, 3, C(0xEBC7FF), C(0x5B1E9E), 93,

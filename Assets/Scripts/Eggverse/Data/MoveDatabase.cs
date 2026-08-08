@@ -191,6 +191,14 @@ namespace Eggverse
             Add(new MoveDef("omegashell", "Omega Shell", EggType.Aether, 105, 90, 6, MoveEffect.None, "A perfect, final shell."));
             Add(new MoveDef("tectonic", "Tectonic", EggType.Stone, 100, 85, 8, MoveEffect.None, "Splits the crust open."));
 
+            // Obsidyolk's own. It is the rarest egg in the game — catch rate three, the heaviest
+            // shell, the lowest voice — and it arrived knowing four moves every other Stone egg
+            // also knows, so the one creature a player might spend twenty cartons on played
+            // exactly like the one they met on their second world. Its blurb has said "its chips
+            // are razor sharp" since it was written; nobody had made that a thing it does.
+            Add(new MoveDef("glassshatter", "Glass Shatter", EggType.Stone, 55, 90, 10,
+                            MoveEffect.MultiHit2, "Sheds a shower of glass. Twice over."));
+
             // Four elements had a hundred-power finisher and four stopped at seventy-five, so
             // half the roster's late game was strictly weaker than the other half's. These are
             // the missing four, on the same terms: high power, thinner accuracy, few uses.

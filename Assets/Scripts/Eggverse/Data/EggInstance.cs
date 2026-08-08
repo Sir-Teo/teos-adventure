@@ -349,12 +349,33 @@ namespace Eggverse
                 return null;
             }
 
-            int worst = 0;
-            for (int i = 1; i < Moves.Count; i++)
-                if (Moves[i].Move.Power < Moves[worst].Move.Power) worst = i;
+            // Like for like. This picked the lowest-power move in the set, and a status move
+            // has no power at all — so every attack an egg learned evicted its utility first,
+            // and by level thirty a Sprouteg that had learned Harden and Photo Rest knew
+            // neither. Nineteen of the thirty-nine moves in the game carry an effect and a
+            // levelled egg kept none of them; the whole status design was being thrown away by
+            // the rule that decides what to forget.
+            //
+            // An attack replaces the weakest attack; a status move replaces the weakest status
+            // move. An egg that has settled into two of each stays that shape, which is what
+            // makes one egg play differently from another.
+            int worst = -1;
+            for (int i = 0; i < Moves.Count; i++)
+            {
+                if (Moves[i].Move.IsStatus != move.IsStatus) continue;
+                if (worst < 0 || Moves[i].Move.Power < Moves[worst].Move.Power) worst = i;
+            }
 
-            // Never trade a strong move for a weaker one.
-            if (Moves[worst].Move.Power >= move.Power && !move.IsStatus) return null;
+            // Nothing of its own kind to trade against — an all-attack egg learning its first
+            // status move, or the reverse. Then the weakest of anything is the candidate, which
+            // is what the rule always did.
+            if (worst < 0)
+                for (int i = 0; i < Moves.Count; i++)
+                    if (worst < 0 || Moves[i].Move.Power < Moves[worst].Move.Power) worst = i;
+
+            // Never trade a strong move for a weaker one. Status moves have no power to compare,
+            // so a newer one always wins: it is later in the learnset and meant to supersede.
+            if (!move.IsStatus && Moves[worst].Move.Power >= move.Power) return null;
 
             string forgotten = Moves[worst].Move.Name;
             Moves[worst] = new MoveSlot(move);
