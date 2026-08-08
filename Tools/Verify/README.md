@@ -330,6 +330,17 @@ They are generated now, so retuning `OverheatBoost` to 1.5 makes the record page
 by itself. The check still pins the current wording, which is the point: a retune should be a
 decision, not a silent consequence.
 
+Three move effects stated their share **three times** — in the effect's name (`Lifesteal50`,
+`Recoil25`, `Heal50`), in the sentence a player reads while choosing, and in the division the
+fight does. All three now read one constant, through `Words.Fraction`, which turns 0.125 into "an
+eighth" so a sentence can be built from a number rather than typed beside it.
+
+Checking that turned up something else: **every shipped move with one of those effects has an
+authored blurb**, which takes precedence — "Reckless full-force hit" beats "Costs the user a
+quarter of the damage dealt". So the generated sentences are a fallback the roster cannot
+exercise, the same shape as the overclaim detector nobody's dialogue trips. The generator is
+tested directly, on a `MoveDef` built for the purpose.
+
 The last one is the sharpest. `1.2f` and `0.8f` appeared as literals across five concerns: Tough
 Shell's trigger, the screen shake, a damage number's colour and size, the move card's arrow, the
 message box's wording, the swap menu's warning, and the record page's three matchup lists. Every

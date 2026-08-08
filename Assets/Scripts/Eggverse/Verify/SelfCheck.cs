@@ -1671,6 +1671,65 @@ namespace Eggverse
                 check(elder.Elder && !ordinary.Elder, "and knows it");
             }
 
+            // ---- move descriptions quote the shares the fight deals in ----
+            {
+                // Three effects state a fraction three times over: in the name (Lifesteal50,
+                // Recoil25, Heal50), in the sentence a player reads while choosing the move,
+                // and in the division the fight actually does. Nothing held the three together.
+                check(Words.Fraction(MoveDef.LifestealShare) == "half",
+                      "a half is called a half (" + Words.Fraction(MoveDef.LifestealShare) + ")");
+                check(Words.Fraction(MoveDef.RecoilShare) == "a quarter",
+                      "and a quarter a quarter (" + Words.Fraction(MoveDef.RecoilShare) + ")");
+
+                // The helper has to be right about the numbers this game actually uses, or
+                // every sentence built from it is confidently wrong.
+                check(Words.Fraction(0.125f) == "an eighth", "an eighth");
+                check(Words.Fraction(0.25f) == "a quarter", "a quarter");
+                check(Words.Fraction(1f / 3f) == "a third", "a third");
+                check(Words.PercentAbove(1.3f) == "30%", "thirty per cent above one");
+                check(Words.PercentAbove(1.15f) == "15%", "fifteen per cent above one");
+
+                // Every move that carries one of these effects says so, and says the right one.
+                int said = 0;
+                foreach (var move in MoveDatabase.All)
+                {
+                    string text = move.Describe();
+                    check(text.Length > 0, move.Name + " describes itself");
+                    check(lines(text, 1040f, 24) <= 2, move.Name + "'s description fits: " + text);
+
+                    // A move with an authored blurb shows that instead, on purpose - "Reckless
+                    // full-force hit" beats "Costs the user a quarter of the damage dealt". Every
+                    // shipped move with one of these effects has one, which is what `said`
+                    // counts, and the generated sentences are tested directly below rather than
+                    // through a roster that cannot reach them.
+                    if (string.IsNullOrEmpty(move.Blurb) &&
+                        (move.Effect == MoveEffect.Lifesteal50 ||
+                         move.Effect == MoveEffect.Recoil25 ||
+                         move.Effect == MoveEffect.Heal50)) said++;
+                }
+
+                // Every shipped move with one of these effects has an authored blurb, so the
+                // generated sentences are a fallback nothing currently reaches. That is fine —
+                // "Reckless full-force hit" is better than "Costs the user a quarter of the
+                // damage dealt" — but it means the roster cannot exercise them, exactly like the
+                // overclaim detector nobody's dialogue trips. So the generator is what gets
+                // tested, built directly.
+                check(said == 0,
+                      "no shipped move needs the generated share sentence (" + said + ")");
+
+                foreach (var pair in new[]
+                {
+                    (MoveEffect.Lifesteal50, Words.Fraction(MoveDef.LifestealShare)),
+                    (MoveEffect.Recoil25, Words.Fraction(MoveDef.RecoilShare)),
+                    (MoveEffect.Heal50, Words.Fraction(MoveDef.SelfHealShare)),
+                })
+                {
+                    var bare = new MoveDef("probe", "Probe", EggType.Molten, 60, 100, 10, pair.Item1);
+                    check(bare.Describe().Contains(pair.Item2),
+                          pair.Item1 + "'s fallback sentence quotes its real share: " + bare.Describe());
+                }
+            }
+
             // ---- the trait blurbs quote the numbers the fight uses ----
             {
                 // Six of the eight sentences on the record page quote a magnitude, and every

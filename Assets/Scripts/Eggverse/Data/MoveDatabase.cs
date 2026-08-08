@@ -62,6 +62,14 @@ namespace Eggverse
             return Words.Spell(n) + (n == 1 ? " round" : " rounds");
         }
 
+        /// <summary>
+        /// The shares three of these effects deal in. The names encode them — Lifesteal50,
+        /// Recoil25, Heal50 — and the sentences quoted them in words, and the fight divided by
+        /// 2 and 4 in a third place. Three statements of one number with nothing holding them
+        /// together, on the line a player reads while choosing the move.
+        /// </summary>
+        public const float LifestealShare = 0.5f, RecoilShare = 0.25f, SelfHealShare = 0.5f;
+
         public string Describe()
         {
             // The message box holds 60 characters, which is not enough for flavour and
@@ -74,10 +82,13 @@ namespace Eggverse
             switch (Effect)
             {
                 case MoveEffect.MultiHit2: return "Strikes twice in a row.";
-                case MoveEffect.Lifesteal50: return "Gives back half the damage as health.";
-                case MoveEffect.Recoil25: return "Costs the user a quarter of the damage dealt.";
+                case MoveEffect.Lifesteal50:
+                    return "Gives back " + Words.Fraction(LifestealShare) + " the damage as health.";
+                case MoveEffect.Recoil25:
+                    return "Costs the user " + Words.Fraction(RecoilShare) + " of the damage dealt.";
                 case MoveEffect.SpdDownFoe: return "Slows the target down.";
-                case MoveEffect.Heal50: return "Restores half of the user's health.";
+                case MoveEffect.Heal50:
+                    return "Restores " + Words.Fraction(SelfHealShare) + " of the user's health.";
                 case MoveEffect.AtkUp: return "Raises the user's attack.";
                 case MoveEffect.DefUp: return "Raises the user's defence.";
                 case MoveEffect.SpdUp: return "Raises the user's speed.";

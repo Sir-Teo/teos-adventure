@@ -195,40 +195,19 @@ namespace Eggverse
             switch (trait)
             {
                 case EggTrait.Overheat:
-                    return "Hits " + Percent(BattleCalc.OverheatBoost) + " harder below a third health.";
+                    return "Hits " + Words.PercentAbove(BattleCalc.OverheatBoost) + " harder below a third health.";
                 case EggTrait.Featherlight:
-                    return Percent(EggInstance.FeatherlightSpeed) + " faster than its bulk suggests.";
+                    return Words.PercentAbove(EggInstance.FeatherlightSpeed) + " faster than its bulk suggests.";
                 case EggTrait.WarmYolk: return "Mends a little every round.";
                 case EggTrait.Static:
-                    return "Attackers take " + Fraction(BattleCalc.StaticShare) + " of the damage back.";
+                    return "Attackers take " + Words.Fraction(BattleCalc.StaticShare) + " of the damage back.";
                 case EggTrait.ToughShell:
-                    return "Takes " + Fraction(1f - BattleCalc.ToughShellResist) +
+                    return "Takes " + Words.Fraction(1f - BattleCalc.ToughShellResist) +
                            " less from super-effective hits.";
                 case EggTrait.Sturdy: return "Survives a knockout from full health with 1 HP.";
                 case EggTrait.Lucky: return "Cracks critically far more often.";
                 case EggTrait.Hardhead: return "Its stats cannot be lowered.";
                 default: return "";
-            }
-        }
-
-        /// <summary>A multiplier as the percentage above one that it is: 1.3 becomes "30%".</summary>
-        static string Percent(float multiplier) =>
-            Mathf.RoundToInt((multiplier - 1f) * 100f) + "%";
-
-        /// <summary>A small fraction in the words this game uses for them.</summary>
-        static string Fraction(float part)
-        {
-            int denominator = Mathf.RoundToInt(1f / Mathf.Max(0.0001f, part));
-            switch (denominator)
-            {
-                case 2: return "half";
-                case 3: return "a third";
-                case 4: return "a quarter";
-                case 5: return "a fifth";
-                case 6: return "a sixth";
-                case 8: return "an eighth";
-                case 10: return "a tenth";
-                default: return "a " + denominator + "th";
             }
         }
 

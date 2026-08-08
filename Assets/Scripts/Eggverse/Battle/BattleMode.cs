@@ -603,7 +603,7 @@ namespace Eggverse
             {
                 case MoveEffect.Lifesteal50:
                     {
-                        int healed = Mathf.Max(1, totalDealt / 2);
+                        int healed = Mathf.Max(1, Mathf.RoundToInt(totalDealt * MoveDef.LifestealShare));
                         user.Heal(healed);
                         SpawnHealNumber(userIsPlayer ? myEggImage : foeEggImage, healed);
                         RefreshCards(false);
@@ -612,7 +612,7 @@ namespace Eggverse
                     }
                 case MoveEffect.Recoil25:
                     {
-                        int recoil = Mathf.Max(1, totalDealt / 4);
+                        int recoil = Mathf.Max(1, Mathf.RoundToInt(totalDealt * MoveDef.RecoilShare));
                         user.TakeDamage(recoil);
                         SpawnDamageNumber(userIsPlayer ? myEggImage : foeEggImage, recoil, 1f, false);
                         RefreshCards(false);
@@ -642,7 +642,7 @@ namespace Eggverse
                 case MoveEffect.Heal50:
                     {
                         int before = user.CurrentHP;
-                        user.Heal(user.MaxHP / 2);
+                        user.Heal(Mathf.RoundToInt(user.MaxHP * MoveDef.SelfHealShare));
                         SpawnHealNumber(ReferenceEquals(user, Mine) ? myEggImage : foeEggImage, user.CurrentHP - before);
                         yield return Say(user.Name + " mended " + (user.CurrentHP - before) + " HP.");
                         break;
