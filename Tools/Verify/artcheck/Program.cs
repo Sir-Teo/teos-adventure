@@ -365,9 +365,32 @@ static class Program
         }
 
         {
+            // How much of the objective panel any beat actually uses.
+            int worst = 0; string worstBeat = "";
+            for (int b = 0; b < Eggverse.StoryDatabase.Beats.Length; b++)
+            {
+                var probe = new Eggverse.StoryState();
+                probe.RestoreFrom(new string[0], b);
+                var st = new Eggverse.GameState(false);
+                string panel = Eggverse.HudView.ObjectiveText(
+                    probe.Current.Chapter, probe.Current.Objective, probe.CurrentBlockerText(st));
+                int rows = 0;
+                foreach (var line in panel.Split('\n'))
+                {
+                    string plain = System.Text.RegularExpressions.Regex.Replace(line, "<[^>]+>", "");
+                    rows += Math.Max(1, (int)Math.Ceiling(plain.Length / (524f / (20f * 0.52f))));
+                }
+                if (rows > worst) { worst = rows; worstBeat = probe.Current.Id; }
+            }
+            Console.WriteLine($"  objective panel: worst beat is {worstBeat} at {worst} rows " +
+                              $"in a box holding {(int)(150f / (20f * 1.16f))}");
+        }
+
+        {
             // The plain surface HUD - the screen a player spends most of the game looking at,
             // and the last one nobody had drawn.
             WriteBmpRect(Hud.Render(false), Battle.W, Battle.H, "hud.bmp");
+            WriteBmpRect(Hud.Render(false, true), Battle.W, Battle.H, "hud-space.bmp");
             Console.WriteLine("  surface HUD rendered");
         }
 

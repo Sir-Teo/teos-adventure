@@ -1671,6 +1671,61 @@ namespace Eggverse
                 check(elder.Elder && !ordinary.Elder, "and knows it");
             }
 
+            // ---- the approach prompt warns when you are outmatched ----
+            {
+                // The comment above this prompt says it is where the choice is actually made,
+                // and it was the one place that gave the level band and left the player to do
+                // the arithmetic. The chart says where you stand and the descent prompt says it
+                // in front of Amy; approaching any other world said nothing.
+                foreach (var w in PlanetDatabase.All)
+                {
+                    // Well under, just under, in it, and well over.
+                    foreach (int lv in new[] { 1, Mathf.Max(1, w.MinLevel - 1), w.MinLevel, w.MaxLevel + 10 })
+                    {
+                        var st = new GameState(false);
+                        st.Party.Add(EggInstance.Wild(SpeciesDatabase.All[0].Id, lv));
+                        string line = SpaceMode.LandPrompt(w, st, "3 eggs here you have not recorded yet.");
+
+                        // It always says the thing it was already saying.
+                        check(line.Contains(w.Name), w.Name + "'s prompt names the world at Lv " + lv);
+                        check(line.Contains("Lv " + w.MinLevel + "-" + w.MaxLevel),
+                              "and its band at Lv " + lv);
+
+                        // The warning appears exactly when the lead is under everything down
+                        // there. A warning that appears every time is not a warning.
+                        bool warns = line.Contains("E55555");
+                        check(warns == (lv + GalaxyMapView.ComfortGap < w.MinLevel),
+                              w.Name + " warns exactly when it should at Lv " + lv +
+                              " (band " + w.MinLevel + "-" + w.MaxLevel + ")");
+                        if (warns) check(line.Contains("Lv " + lv), "and quotes the real lead level");
+
+                        // And the whole thing still fits the 1200px panel it is drawn in.
+                        check(lines(line, 1200f, 24) == 1,
+                              w.Name + "'s prompt fits its panel at Lv " + lv + ": " +
+                              System.Text.RegularExpressions.Regex.Replace(line, "<[^>]+>", ""));
+                    }
+                }
+
+                // It agrees with the chart, which is the other place the same question gets
+                // answered - two readings of "you are outmatched" that disagreed would be worse
+                // than one of them not existing.
+                foreach (var w in PlanetDatabase.All)
+                    for (int lv = 1; lv <= EggInstance.MaxLevel; lv += 3)
+                    {
+                        var st = new GameState(false);
+                        st.Party.Add(EggInstance.Wild(SpeciesDatabase.All[0].Id, lv));
+                        bool promptWarns = SpaceMode.LandPrompt(w, st, null).Contains("E55555");
+                        bool chartWarns = GalaxyMapView.Readiness(w, st).Contains("E55555");
+                        check(promptWarns == chartWarns,
+                              "the chart and the approach agree about " + w.Name + " at Lv " + lv);
+                    }
+
+                // With no eggs at all it says nothing about a lead it does not have.
+                check(!SpaceMode.LandPrompt(PlanetDatabase.Home, new GameState(false), null)
+                          .Contains("your lead"),
+                      "a player with no eggs is not told about their lead");
+            }
+
             // ---- the 'still needed' line earns its place or is not there ----
             {
                 // It exists for a beat that wants two things: the moment a player most wants

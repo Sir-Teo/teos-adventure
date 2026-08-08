@@ -382,9 +382,7 @@ namespace Eggverse
                 // chart says this and so does the toast on landing; this is where the choice is
                 // actually made.
                 string owed = dir.State.Visited.Contains(best.Def.Id) ? dir.StillOwed(best.Def) : null;
-                dir.Hud.SetPrompt("Press <b>E</b> to land on <b>" + best.Def.Name + "</b>  ·  Lv " +
-                                  best.Def.MinLevel + "-" + best.Def.MaxLevel +
-                                  (owed != null ? "  ·  " + owed : ""));
+                dir.Hud.SetPrompt(LandPrompt(best.Def, dir.State, owed));
             }
 
             if (EggInput.InteractPressed)
@@ -405,6 +403,36 @@ namespace Eggverse
         /// 26 against her 23 - the oldest things in the game live on the first egg - and a
         /// prompt that mentioned only her would understate the walk to her door.
         /// </summary>
+        /// <summary>
+        /// The prompt for going down to an ordinary world.
+        ///
+        /// The comment above the call says this is where the choice is actually made, and it was
+        /// the one place that gave the level band and left the player to do the arithmetic. The
+        /// chart says where you stand; the descent prompt says it in front of Amy; approaching
+        /// any other world said nothing.
+        ///
+        /// Only when it is worth saying. This line is already near the width of its panel, and a
+        /// warning that appears every time is not a warning - so it speaks when the lead is
+        /// under everything down there, which is the case that changes the decision, and stays
+        /// quiet otherwise.
+        /// </summary>
+        public static string LandPrompt(PlanetDef world, GameState state, string owed)
+        {
+            var lead = state.Leader;
+            bool outmatched = lead != null &&
+                              lead.Level + GalaxyMapView.ComfortGap < world.MinLevel;
+
+            // The warning takes the owed clause's place rather than sitting after it. Partly
+            // because all three together overrun the 1200px panel - the check said so
+            // immediately - and partly because they are not both the decision: what a world
+            // still owes your record does not matter while your lead cannot survive it.
+            return "Press <b>E</b> to land on <b>" + world.Name + "</b>  ·  Lv " +
+                   world.MinLevel + "-" + world.MaxLevel +
+                   (outmatched
+                       ? "  ·  <color=#E55555>your lead is Lv " + lead.Level + "</color>"
+                       : owed != null ? "  ·  " + owed : "");
+        }
+
         public static string BossPrompt(PlanetDef world, int leadLevel)
         {
             int amy = StoryDatabase.TopLevelOf("amy");

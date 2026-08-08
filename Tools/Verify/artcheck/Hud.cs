@@ -11,15 +11,17 @@ using Eggverse;
 /// Geometry and text both from HudView. Nothing here is typed.
 static class Hud
 {
-    public static Col[] Render(bool cold)
+    public static Col[] Render(bool cold, bool inSpace = false)
     {
         int w = Battle.W, h = Battle.H;
         var c = new Battle.Ctx { Px = new Col[w * h] };
 
         var def = PlanetDatabase.Get(cold ? "mosswell" : "glacierim");
-        var behind = Surface.Render(w, Program.ToHexPublic(def.Ocean), Program.ToHexPublic(def.Land),
-                                    Program.ToHexPublic(def.Atmosphere), def.Theme.ToString(),
-                                    def.Seed, "Scattered", 26f, def.Id, true);
+        var behind = inSpace
+            ? Space.Render(w, 0f, 0f, 30f, false)
+            : Surface.Render(w, Program.ToHexPublic(def.Ocean), Program.ToHexPublic(def.Land),
+                             Program.ToHexPublic(def.Atmosphere), def.Theme.ToString(),
+                             def.Seed, "Scattered", 26f, def.Id, true);
         int band = (w - h) / 2;
         for (int y = 0; y < h; y++)
             for (int x = 0; x < w; x++)
@@ -70,8 +72,9 @@ static class Hud
         float ox = w + HudView.ObjectiveAt.x - HudView.ObjectiveSize.x, otop = h + HudView.ObjectiveAt.y;
         Panel(c, ox, otop - HudView.ObjectiveSize.y, ox + HudView.ObjectiveSize.x, otop);
 
-        Battle.Text(c, def.Name.ToUpperInvariant(), ox + 18f, otop + HudView.PlanetY - 6f,
-                    HudView.PlanetFont, Battle.Accent);
+        // What the panel calls where you are. In space it is not a world.
+        Battle.Text(c, inSpace ? "DEEP SPACE" : def.Name.ToUpperInvariant(),
+                    ox + 18f, otop + HudView.PlanetY - 6f, HudView.PlanetFont, Battle.Accent);
 
         var beat = story.Current;
         string blocker = story.CurrentBlockerText(state);
@@ -91,8 +94,13 @@ static class Hud
                  HudView.SuppliesFont, Battle.InkDim);
 
         // ---- prompt, bottom centre ----
-        Battle.TextCentre(c, "WASD walk  ·  Q lift off  ·  Tab party",
-                          w / 2f, HudView.PromptAt.y + 20f, 24, Battle.Ink);
+        // The approach prompt, which is what a player flying actually reads. On the surface it
+        // is the movement line.
+        string prompt = inSpace
+            ? "Press E to land on " + def.Name + "  ·  Lv " + def.MinLevel + "-" + def.MaxLevel +
+              "  ·  " + Owed(def, state)
+            : "WASD walk  ·  Q lift off  ·  Tab party";
+        Battle.TextCentre(c, Strip(prompt), w / 2f, HudView.PromptAt.y + 20f, 24, Battle.Ink);
 
         // ---- toast, under the top edge ----
         string toast = cold ? UiCopy.RestCold[0] : UiCopy.RestIdle[0];
@@ -102,6 +110,16 @@ static class Hud
         Battle.TextCentre(c, Strip(toast), w / 2f, ty + 8f, 22, Battle.Ink);
 
         return c.Px;
+    }
+
+    /// GameDirector.StillOwed, which is an instance method - the same two sentences, built from
+    /// the same count, so the render cannot invent a third phrasing of it.
+    static string Owed(PlanetDef planet, GameState state)
+    {
+        int missing = state.UnrecordedOn(planet);
+        return missing == 0
+            ? "Every egg here is already in your record."
+            : Words.Count(missing, "egg") + " here you have not recorded yet.";
     }
 
     static GameState Roster(PlanetDef where)
