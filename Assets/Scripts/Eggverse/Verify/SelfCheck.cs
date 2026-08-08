@@ -1671,6 +1671,68 @@ namespace Eggverse
                 check(elder.Elder && !ordinary.Elder, "and knows it");
             }
 
+            // ---- the sandbox really does contain everything ----
+            {
+                // A run with every egg and every world in it, for looking at the game rather
+                // than playing it. Built from the databases rather than a list, because a
+                // sandbox that quietly stops including the newest species is worse than none -
+                // it is the one place you would go to look at it.
+                var box = GameState.Sandbox();
+
+                check(box.Party.Count == GameState.PartySize,
+                      "the sandbox hands you a full party (" + box.Party.Count + ")");
+
+                // Every species, held or nested, so every record entry can be opened.
+                foreach (var sp in SpeciesDatabase.All)
+                {
+                    check(box.Caught.Contains(sp.Id), sp.Name + " is in the sandbox record");
+                    check(box.Seen.Contains(sp.Id), sp.Name + " has been seen in the sandbox");
+
+                    bool held = false;
+                    foreach (var egg in box.Party) if (egg.Species.Id == sp.Id) held = true;
+                    foreach (var egg in box.Nest) if (egg.Species.Id == sp.Id) held = true;
+                    check(held, sp.Name + " is actually there to look at, not just recorded");
+                }
+                check(box.TotalCollected == SpeciesDatabase.Count,
+                      "one of everything and no duplicates (" + box.TotalCollected + " of " +
+                      SpeciesDatabase.Count + ")");
+
+                // Every world charted, every cache dug, every stone read.
+                foreach (var w in PlanetDatabase.All)
+                {
+                    check(box.Visited.Contains(w.Id), w.Name + " is charted in the sandbox");
+                    if (PlanetDatabase.HasCache(w.Id))
+                        check(box.Caches.Contains(w.Id), w.Name + "'s cache is dug");
+                    if (LandmarkDatabase.For(w.Id) != null)
+                        check(box.Landmarks.Contains(w.Id), w.Name + "'s inscription is read");
+                }
+
+                // Supplies, and the record reading full - which is the state the ending card
+                // is written for, so it can be looked at too.
+                check(box.Cartons == box.MaxCartons, "cartons are topped up");
+                check(box.Salves == GameState.MaxSalves, "and salves");
+                check(box.RecordedCatchable == SpeciesDatabase.CatchableCount,
+                      "the record reads complete (" + box.RecordedCatchable + " of " +
+                      SpeciesDatabase.CatchableCount + ")");
+                check(box.DistinctTypesHeld >= 6,
+                      "the party spans most of the chart (" + box.DistinctTypesHeld + " elements)");
+
+                // Nothing sealed. The sandbox runs the story to its last beat so every sector
+                // is open; a sandbox that cannot fly to the Belt is not one.
+                var open = new StoryState();
+                open.RestoreFrom(new string[0], StoryDatabase.Beats.Length - 1);
+                foreach (Sector sector in System.Enum.GetValues(typeof(Sector)))
+                    check(open.CanEnter(sector), "the sandbox can reach " + sector);
+
+                // And it says what it is. A run that quietly replaced a save would be a nasty
+                // surprise, so the title card carries the warning rather than the toast.
+                check(UiCopy.SandboxHint.Contains("S"), "the title names the key");
+                check(lines(UiCopy.SandboxHint, 1600f, 20) == 1,
+                      "and the hint fits its line: " + UiCopy.SandboxHint);
+                check(lines(UiCopy.SandboxStarted, 900f, 22) <= 2,
+                      "and the toast fits: " + UiCopy.SandboxStarted);
+            }
+
             // ---- the record says whose egg it is ----
             {
                 // Four species spawn nowhere and are evolved into by nothing, because they

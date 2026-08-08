@@ -298,7 +298,23 @@ namespace Eggverse
             if (repaired != null) Hud.Toast(repaired);
         }
 
-        void StartFreshGame()
+        /// <summary>
+        /// A run with everything in it. Same path as a fresh start, with a stocked state and the
+        /// story at its last beat so nothing is sealed.
+        ///
+        /// It deletes the save like any new run does, and then autosaves like any run does — so
+        /// starting one over a real save costs that save. The title says so rather than leaving
+        /// it to be found out.
+        /// </summary>
+        void StartSandboxGame()
+        {
+            StartFreshGame(GameState.Sandbox(), StoryDatabase.Beats.Length - 1);
+            Hud.Toast(UiCopy.SandboxStarted);
+        }
+
+        void StartFreshGame() => StartFreshGame(new GameState(), 0);
+
+        void StartFreshGame(GameState state, int beatIndex)
         {
             SaveSystem.Delete();
             pendingSave = null;
@@ -306,8 +322,9 @@ namespace Eggverse
             // Reaching the title via the pause menu leaves the old run live, so a "new run"
             // has to rebuild the state rather than just hiding the title card.
             Story.BeatAdvanced -= OnBeatAdvanced;
-            State = new GameState();
+            State = state;
             Story = new StoryState();
+            Story.RestoreFrom(new string[0], beatIndex);
             Story.BeatAdvanced += OnBeatAdvanced;
             playSeconds = 0f;
             Hud.Rebind(State);
@@ -691,6 +708,10 @@ namespace Eggverse
                     else if (pendingSave != null && EggInput.NKeyPressed)
                     {
                         StartFreshGame();
+                    }
+                    else if (EggInput.SKeyPressed)
+                    {
+                        StartSandboxGame();
                     }
                     return;
 

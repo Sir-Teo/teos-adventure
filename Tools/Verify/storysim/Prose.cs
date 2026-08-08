@@ -234,6 +234,8 @@ static class Prose
         Add("rest mended", UiCopy.RestMended);
         Add("rest restocked", UiCopy.RestRestocked);
         Add("nothing owed", UiCopy.NothingOwed);
+        Add("sandbox hint", UiCopy.SandboxHint);
+        Add("sandbox started", UiCopy.SandboxStarted);
 
         // The record's line for an egg that belongs to somebody. Four species reach it and it
         // had never been read here, because it did not exist.

@@ -287,6 +287,56 @@ namespace Eggverse
             return toParty;
         }
 
+        /// <summary>
+        /// A run with everything in it, for looking at the game rather than playing it.
+        ///
+        /// Six eggs high enough to fight anything, one of every element that has a species; the
+        /// nest holding one of every other species so the record reads full; every world
+        /// charted, every cache dug, every inscription read; supplies topped up. The story is
+        /// left at the last beat so no sector is sealed.
+        ///
+        /// Built from the databases rather than a list, so it stays complete when a species or
+        /// a world is added — a sandbox that quietly stops including the newest thing is worse
+        /// than none, because it is the one place you would go to look at it.
+        /// </summary>
+        public static GameState Sandbox()
+        {
+            var st = new GameState(false);
+
+            // One of every element, at a level that can stand on Amaranth.
+            var taken = new HashSet<EggType>();
+            foreach (var sp in SpeciesDatabase.All)
+            {
+                if (st.Party.Count >= PartySize) break;
+                if (sp.Type == EggType.Plain || !taken.Add(sp.Type)) continue;
+                st.Party.Add(EggInstance.Wild(sp.Id, 30));
+            }
+            // If the roster ever has fewer elements than party slots, fill the rest rather than
+            // handing back a short party.
+            for (int i = 0; st.Party.Count < PartySize && i < SpeciesDatabase.All.Count; i++)
+                st.Party.Add(EggInstance.Wild(SpeciesDatabase.All[i].Id, 30));
+
+            // Everything else in the nest, one each, so every entry can be opened and read.
+            foreach (var sp in SpeciesDatabase.All)
+            {
+                bool held = false;
+                foreach (var egg in st.Party) if (egg.Species.Id == sp.Id) held = true;
+                if (!held) st.Nest.Add(EggInstance.Wild(sp.Id, 25));
+            }
+
+            foreach (var sp in SpeciesDatabase.All) { st.Seen.Add(sp.Id); st.Caught.Add(sp.Id); }
+            foreach (var w in PlanetDatabase.All)
+            {
+                st.Visited.Add(w.Id);
+                if (PlanetDatabase.HasCache(w.Id)) st.Caches.Add(w.Id);
+                if (LandmarkDatabase.For(w.Id) != null) st.Landmarks.Add(w.Id);
+            }
+
+            st.CurrentPlanetId = PlanetDatabase.Home.Id;
+            st.RestockSupplies();
+            return st;
+        }
+
         /// <summary>Restores health and PP, but not supplies.</summary>
         public void RestoreEggs()
         {

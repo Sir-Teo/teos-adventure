@@ -56,6 +56,7 @@ namespace Eggverse
         Text autosaveLine;
         float autosaveTimer;
         Text collectionBody, collectionDex, dexDetail, dexLore, titleHint, titleSaveLine;
+        Text titleSandboxLine;
         Image dexPortrait;
         int dexCursor;
         // The collection screen has two things worth pointing at: the field record, and your
@@ -412,6 +413,13 @@ namespace Eggverse
             // eighteen characters more than "6 in nest" and put the longest form over a 119
             // character box. The line is centred on a 1920 screen; the room was there.
             UIKit.Place(titleSaveLine.rectTransform, new Vector2(0.5f, 0f), new Vector2(0.5f, 0f), new Vector2(0f, 62f), new Vector2(1600f, 28f));
+
+            // The sandbox, said out loud on the card. A key nobody is told about is a key
+            // nobody presses, and this one is for looking at the game rather than playing it.
+            titleSandboxLine = UIKit.Label(titlePanel, "SandboxLine", UiCopy.SandboxHint,
+                                           20, UIKit.InkDim, TextAnchor.MiddleCenter);
+            UIKit.Place(titleSandboxLine.rectTransform, new Vector2(0.5f, 0f), new Vector2(0.5f, 0f),
+                        new Vector2(0f, 34f), new Vector2(1600f, 26f));
         }
 
         void BuildVictory(RectTransform root)

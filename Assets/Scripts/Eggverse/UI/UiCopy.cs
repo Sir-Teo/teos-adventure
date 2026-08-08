@@ -14,6 +14,16 @@ namespace Eggverse
         public const string Subtitle = "Teo and the Long Way to Amy";
         public const string BeginHint = "press SPACE to begin";
 
+        /// <summary>
+        /// The sandbox, offered on the title card rather than hidden behind a key nobody is told
+        /// about. It is for looking at the game — every egg, every world, every inscription —
+        /// and it starts a run like any other, which means it replaces a save. Saying so on the
+        /// card is cheaper than saying sorry afterwards.
+        /// </summary>
+        public const string SandboxHint = "press S for a sandbox run — every egg, every world, nothing sealed";
+        public const string SandboxStarted =
+            "Sandbox run. Every egg is in your record and every world is charted.";
+
         /// <summary>The premise, the controls, and the one rule nothing else states up front.</summary>
         public const string TitleBody =
             "Every planet you have ever stood on is a piece of shell. One egg broke, a long time ago, and the pieces\n" +
