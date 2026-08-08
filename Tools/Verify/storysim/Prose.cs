@@ -207,6 +207,17 @@ static class Prose
         Add("shook it off", BattleLog.ShookOff("Pebbles", EggStatus.Chilled));
         Add("threw a carton", BattleLog.ThrewCarton(3));
         Add("used a salve", BattleLog.UsedSalve(1));
+
+        // The prompts. On screen for the whole of every walk, which makes them the most-read
+        // strings in the game, and they were written where they were raised.
+        AddLayout("walking prompt", Prompts.Walking());
+        Add("talk prompt", Prompts.TalkTo("Ori"));
+        AddLayout("rest prompt", Prompts.RestHere());
+        Add("read a landmark", Prompts.ReadLandmark("The Listening Hollow", false));
+        Add("read it again", Prompts.ReadLandmark("The Listening Hollow", true));
+        Add("challenge Amy", Prompts.FaceAmy(false));
+        Add("rematch Amy", Prompts.FaceAmy(true));
+        Add("beyond the charts", Prompts.BeyondCharts("Cairnhold"));
         foreach (EggStatus cond in System.Enum.GetValues(typeof(EggStatus)))
         {
             if (cond == EggStatus.None) continue;

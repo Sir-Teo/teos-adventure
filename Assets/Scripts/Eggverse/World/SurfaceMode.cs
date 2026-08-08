@@ -1333,7 +1333,7 @@ namespace Eggverse
 
             if (nearest != null)
             {
-                prompt = "Press <b>E</b> to talk to <b>" + nearest.Def.Name + "</b>";
+                prompt = Prompts.TalkTo(nearest.Def.Name);
                 dir.Hud.SetPrompt(prompt);
                 if (EggInput.InteractPressed)
                 {
@@ -1350,9 +1350,8 @@ namespace Eggverse
                 Vector2.Distance(teo, landmark.position) < LandmarkRange &&
                 (nestStation == null || Vector2.Distance(teo, nestStation.position) >= NestRange))
             {
-                dir.Hud.SetPrompt(dir.State.Landmarks.Contains(current.Id)
-                    ? "Press <b>E</b> to read <b>" + landmarkDef.Name + "</b> again"
-                    : "Press <b>E</b> to read what is written here");
+                dir.Hud.SetPrompt(Prompts.ReadLandmark(landmarkDef.Name,
+                                                      dir.State.Landmarks.Contains(current.Id)));
                 if (EggInput.InteractPressed)
                 {
                     // Reading it changes nothing and unlocks nothing. It is remembered because
@@ -1377,9 +1376,7 @@ namespace Eggverse
 
             if (current.IsBossWorld && amyFigure != null && Vector2.Distance(teo, amyFigure.position) < 4.5f)
             {
-                prompt = dir.State.AmyDefeated
-                    ? "Press <b>E</b> to rematch <b>Amy</b>."
-                    : "Press <b>E</b> to challenge <b>Amy</b>.";
+                prompt = Prompts.FaceAmy(dir.State.AmyDefeated);
                 if (EggInput.InteractPressed)
                 {
                     dir.PlayDialogue(StoryDatabase.AmyIntro(dir.Story));
@@ -1388,7 +1385,7 @@ namespace Eggverse
             }
             else if (nestStation != null && Vector2.Distance(teo, nestStation.position) < NestRange)
             {
-                prompt = "Press <b>E</b> to rest at the <b>Nest Station</b>  ·  <b>Q</b> to lift off";
+                prompt = Prompts.RestHere();
                 if (EggInput.InteractPressed)
                 {
                     // Look at what resting actually did before doing it. The same line every time
@@ -1412,7 +1409,7 @@ namespace Eggverse
             }
             else
             {
-                prompt = "<b>WASD</b> walk  ·  <b>Q</b> lift off  ·  <b>Tab</b> party";
+                prompt = Prompts.Walking();
             }
 
             dir.Hud.SetPrompt(prompt);

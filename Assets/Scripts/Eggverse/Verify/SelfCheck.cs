@@ -1671,6 +1671,97 @@ namespace Eggverse
                 check(elder.Elder && !ordinary.Elder, "and knows it");
             }
 
+            // ---- the prompts share one grammar ----
+            {
+                // These are the most-read strings in the game - a prompt is on screen for the
+                // whole of every walk - and they were written where they were raised, eight
+                // lines apart in two files. They share a grammar: a key in bold, the thing it
+                // acts on in bold, fields separated by a double-spaced middot. Scattered, that
+                // was a thing to remember; together it is a thing to check.
+                var every = new[]
+                {
+                    ("walking", Prompts.Walking()),
+                    ("talk", Prompts.TalkTo("Ori")),
+                    ("rest", Prompts.RestHere()),
+                    ("read", Prompts.ReadLandmark("The Listening Hollow", false)),
+                    ("read again", Prompts.ReadLandmark("The Listening Hollow", true)),
+                    ("challenge Amy", Prompts.FaceAmy(false)),
+                    ("rematch Amy", Prompts.FaceAmy(true)),
+                    ("beyond the charts", Prompts.BeyondCharts("Cairnhold")),
+                };
+
+                foreach (var p in every)
+                {
+                    string plain = System.Text.RegularExpressions.Regex.Replace(p.Item2, "<[^>]+>", "");
+
+                    // The panel is 1200px at font 24, which is what the approach prompt was
+                    // already measured against.
+                    check(lines(p.Item2, 1200f, 24) == 1,
+                          "the " + p.Item1 + " prompt fits its panel: " + plain);
+
+                    // Something is emphasised, or the prompt is a wall of grey.
+                    check(p.Item2.Contains("<b>"), "the " + p.Item1 + " prompt marks its key");
+
+                    // Balanced markup, which is what a nickname smuggling a tag would break.
+                    int opens = 0, closes = 0;
+                    foreach (var ch in p.Item2) { if (ch == '<') opens++; if (ch == '>') closes++; }
+                    check(opens == closes, "the " + p.Item1 + " prompt's markup balances");
+                }
+
+                // Every prompt that offers an action names the key for it. A prompt that says
+                // what is here without saying what to press is a prompt that has forgotten its
+                // job.
+                foreach (var p in every)
+                {
+                    string plain = System.Text.RegularExpressions.Regex.Replace(p.Item2, "<[^>]+>", "");
+                    if (!plain.StartsWith("Press")) continue;
+                    check(plain.Contains("E"), "the " + p.Item1 + " prompt names the key to press");
+                }
+
+                // One separator, used everywhere. Two prompts with different field separators is
+                // the sort of thing nobody sees and everybody feels.
+                //
+                // The count matters as much as the rule: changing Gap made every prompt stop
+                // containing a middot, so the per-prompt check simply never ran and only the
+                // coverage pass noticed. A rule that can be switched off by moving the thing it
+                // is about is not yet a rule.
+                int separated = 0;
+                foreach (var p in every)
+                {
+                    string plain = System.Text.RegularExpressions.Regex.Replace(p.Item2, "<[^>]+>", "");
+                    if (!plain.Contains(Prompts.Gap)) continue;
+                    separated++;
+                    check(!System.Text.RegularExpressions.Regex.IsMatch(
+                              plain.Replace(Prompts.Gap, ""), @"\s[·/|]\s"),
+                          "the " + p.Item1 + " prompt has no second kind of separator in it");
+                }
+                check(separated >= 2,
+                      "more than one prompt joins fields, so the separator is a shared rule (" +
+                      separated + ")");
+
+                // Against the game's typography, not against the constant. Asking whether the
+                // prompts contain Prompts.Gap is the code agreeing with itself - change Gap and
+                // they all still contain it. The house separator is a double-spaced middot, and
+                // it is what the collection footer and the supplies line already use.
+                check(Prompts.Gap.Contains("·"),
+                      "the prompt separator is the middot the rest of the game uses (\"" +
+                      Prompts.Gap + "\")");
+                check(Prompts.Gap.StartsWith("  ") && Prompts.Gap.EndsWith("  "),
+                      "and is spaced the way the other separators are");
+                check(HudView.HintFor(new GameState(false)).Contains(Prompts.Gap),
+                      "the collection footer joins its fields the same way a prompt does");
+
+                // The one that offers two things at once has to offer both.
+                check(Prompts.RestHere().Contains("Nest Station") && Prompts.RestHere().Contains("lift off"),
+                      "standing on a pad offers both the things you can do there");
+
+                // And rematching says rematch. Coming back to Amy after beating her and being
+                // told to challenge her would be the game forgetting the whole ending.
+                check(Prompts.FaceAmy(true) != Prompts.FaceAmy(false),
+                      "Amy knows whether you have already beaten her");
+                check(Prompts.FaceAmy(true).Contains("rematch"), "and says so");
+            }
+
             // ---- counted nouns are spelled the way English spells them ----
             {
                 // Count() pluralised by adding -s, and the first caller to pass a word ending

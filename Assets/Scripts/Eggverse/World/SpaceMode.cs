@@ -368,7 +368,7 @@ namespace Eggverse
             if (sealedWorld)
             {
                 string missing = dir.Story.CurrentBlockerText(dir.State);
-                dir.Hud.SetPrompt("<b>" + best.Def.Name + "</b> is beyond your charted route." +
+                dir.Hud.SetPrompt(Prompts.BeyondCharts(best.Def.Name) +
                                   (missing != null ? "  Still needed: " + missing + "." : "  " + dir.Story.Current.Objective));
             }
             else if (best.Def.IsBossWorld)
