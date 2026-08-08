@@ -342,6 +342,13 @@ class Sim {
                 string root = System.IO.Path.Combine(
                     System.IO.Path.GetDirectoryName(System.Reflection.Assembly.GetExecutingAssembly().Location) ?? ".",
                     "..", "..", "..", "..", "..", "..", "Assets", "Scripts", "Eggverse");
+                    Feedback.Thresholds(new[]
+                    {
+                        System.IO.Path.Combine(root, "Battle", "BattleMode.cs"),
+                        System.IO.Path.Combine(root, "Battle", "BattleCalc.cs"),
+                        System.IO.Path.Combine(root, "Data", "EggType.cs"),
+                        System.IO.Path.Combine(root, "UI", "HudView.cs"),
+                    }, Check);
                 Feedback.Cries(new[]
                 {
                     System.IO.Path.Combine(root, "Battle", "BattleMode.cs"),

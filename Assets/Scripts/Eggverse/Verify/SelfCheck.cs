@@ -1671,6 +1671,62 @@ namespace Eggverse
                 check(elder.Elder && !ordinary.Elder, "and knows it");
             }
 
+            // ---- every reading of 'strong' is the same reading ----
+            {
+                // 1.2 and 0.8 were bare literals in thirteen places across five concerns: what
+                // counts as strong enough for Tough Shell to resist, how hard the screen
+                // shakes, the colour and size of a damage number, whether the move card shows
+                // an arrow, what the message box says, what the swap menu warns about, and the
+                // three matchup lists on the record page. Every one meant the same thing and
+                // nothing held them together - so an arrow could promise a strong hit that
+                // Tough Shell then refused to treat as one.
+                check(TypeChart.WeakBelow < 1f && TypeChart.StrongAbove > 1f,
+                      "strong is above even and weak is below it");
+
+                foreach (EggType a in System.Enum.GetValues(typeof(EggType)))
+                    foreach (EggType d in System.Enum.GetValues(typeof(EggType)))
+                    {
+                        float m = TypeChart.Multiplier(a, d);
+                        check(!(TypeChart.IsStrong(m) && TypeChart.IsWeak(m)),
+                              a + " on " + d + " is not both strong and weak");
+
+                        // The battle line, the card's arrow and the record's lists all have to
+                        // agree about this pair. They are four separate readings of one number.
+                        string line = TypeChart.EffectivenessLine(m);
+                        check((line != null) == (TypeChart.IsStrong(m) || TypeChart.IsWeak(m)),
+                              "the battle line appears exactly when the hit is not even (" +
+                              a + " on " + d + ")");
+
+                        if (a == d) continue;
+                        bool listedStrong = System.Array.IndexOf(TypeChart.StrongAgainst(a), d) >= 0;
+                        check(listedStrong == TypeChart.IsStrong(m),
+                              "the record lists " + a + " as strong on " + d +
+                              " exactly when a fight would be (" + m.ToString("0.00") + ")");
+
+                        bool listedVuln = System.Array.IndexOf(TypeChart.VulnerableTo(d), a) >= 0;
+                        check(listedVuln == TypeChart.IsStrong(m),
+                              "and the other way round, from " + d + "'s page");
+
+                        bool listedResist = System.Array.IndexOf(TypeChart.Resists(d), a) >= 0;
+                        check(listedResist == TypeChart.IsWeak(m),
+                              d + " is listed as resisting " + a + " exactly when it does");
+                    }
+
+                // Tough Shell resists a strong hit and nothing else. This is the pair that
+                // would have gone wrong in silence: the card promises an arrow, the trait
+                // decides separately whether to fire.
+                foreach (EggType a in System.Enum.GetValues(typeof(EggType)))
+                    foreach (EggType d in System.Enum.GetValues(typeof(EggType)))
+                    {
+                        float m = TypeChart.Multiplier(a, d);
+                        bool arrow = TypeChart.IsStrong(m);
+                        bool resisted = BattleCalc.ToughShellResists(m);
+                        check(arrow == resisted,
+                              "Tough Shell fires exactly when the card promised a strong hit (" +
+                              a + " on " + d + ")");
+                    }
+            }
+
             // ---- the approach prompt warns when you are outmatched ----
             {
                 // The comment above this prompt says it is where the choice is actually made,

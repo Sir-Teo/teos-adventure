@@ -53,6 +53,42 @@ static class Feedback
                   : $"{raw.Count} cry volume(s) are typed at the call site: {string.Join(", ", raw)}");
     }
 
+    /// Nobody writes 1.2 or 0.8 at a call site again.
+    ///
+    /// They were bare literals in thirteen places across five concerns, all meaning "strong" and
+    /// "weak" — Tough Shell's trigger, the screen shake, a damage number's colour and size, the
+    /// move card's arrow, the message box's wording, the swap menu's warning, and the record
+    /// page's three matchup lists. Naming them made it a rule. This is what keeps it one.
+    public static void Thresholds(string[] sources, Action<bool, string> check)
+    {
+        var loose = new List<string>();
+        int scanned = 0;
+        foreach (var path in sources)
+        {
+            if (!File.Exists(path)) { check(false, "the threshold pass can find " + path); continue; }
+            var lines = File.ReadAllLines(path);
+            for (int i = 0; i < lines.Length; i++)
+            {
+                string line = lines[i];
+                if (line.TrimStart().StartsWith("//") || line.TrimStart().StartsWith("///")) continue;
+                // The declarations themselves are where the numbers belong.
+                if (line.Contains("StrongAbove =") || line.Contains("WeakBelow =")) continue;
+                scanned++;
+                if (Regex.IsMatch(line, @"[<>]=?\s*1\.2f") || Regex.IsMatch(line, @"[<>]=?\s*0\.8f"))
+                    loose.Add(Path.GetFileName(path) + ":" + (i + 1) + "  " + line.Trim());
+            }
+        }
+
+        Console.WriteLine($"  {scanned} lines scanned for loose effectiveness thresholds, {loose.Count} found");
+        foreach (var l in loose) Console.WriteLine("    LOOSE  " + l);
+
+        check(scanned > 0, "the threshold pass read the sources");
+        check(loose.Count == 0,
+              loose.Count == 0
+                  ? "every reading of strong and weak goes through TypeChart"
+                  : $"{loose.Count} loose threshold(s): {loose[0]}");
+    }
+
     public static void Run(string sourcePath, Action<bool, string> check)
     {
         if (!File.Exists(sourcePath))

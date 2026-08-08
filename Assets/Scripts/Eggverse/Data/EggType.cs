@@ -103,13 +103,13 @@ namespace Eggverse
         }
 
         /// <summary>What this element's own attacks crush.</summary>
-        public static EggType[] StrongAgainst(EggType t) => Where(d => d != t && Multiplier(t, d) > 1.2f);
+        public static EggType[] StrongAgainst(EggType t) => Where(d => d != t && IsStrong(Multiplier(t, d)));
 
         /// <summary>What crushes this element in return.</summary>
-        public static EggType[] VulnerableTo(EggType t) => Where(a => a != t && Multiplier(a, t) > 1.2f);
+        public static EggType[] VulnerableTo(EggType t) => Where(a => a != t && IsStrong(Multiplier(a, t)));
 
         /// <summary>What bounces off it.</summary>
-        public static EggType[] Resists(EggType t) => Where(a => a != t && Multiplier(a, t) < 0.8f);
+        public static EggType[] Resists(EggType t) => Where(a => a != t && IsWeak(Multiplier(a, t)));
 
         /// <summary>Comma-joined tags for the collection screen.</summary>
         public static string Join(EggType[] types)
@@ -198,10 +198,26 @@ namespace Eggverse
         }
 
         /// <summary>Flavour line shown after a hit lands.</summary>
+        /// <summary>
+        /// Where "strong" and "weak" begin.
+        ///
+        /// These were bare literals in eleven places across four concerns: what counts as strong
+        /// enough for Tough Shell to resist, how hard the screen shakes, what colour and size a
+        /// damage number is, whether the move card shows an arrow, what the message box says,
+        /// and what the swap menu warns about. Every one of them meant the same thing and
+        /// nothing held them together — so an arrow could promise a strong hit that Tough Shell
+        /// then refused to treat as one, on a screen whose whole job is telling a player what
+        /// their move will do.
+        /// </summary>
+        public const float StrongAbove = 1.2f, WeakBelow = 0.8f;
+
+        public static bool IsStrong(float mult) => mult > StrongAbove;
+        public static bool IsWeak(float mult) => mult < WeakBelow;
+
         public static string EffectivenessLine(float mult)
         {
-            if (mult > 1.2f) return "It cracked right through!";
-            if (mult < 0.8f) return "The shell barely dented...";
+            if (IsStrong(mult)) return "It cracked right through!";
+            if (IsWeak(mult)) return "The shell barely dented...";
             return null;
         }
     }

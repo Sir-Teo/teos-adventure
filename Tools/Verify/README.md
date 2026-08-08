@@ -301,6 +301,31 @@ Undeclared dead checks fail the suite. Guarding one assertion away is caught; gu
 away is caught as seven. There is also a ceiling on how much of the suite may be tripwires, since
 a suite that is mostly tripwires checks nothing.
 
+## One fact said in more than one place
+
+The most reliable finding after "a mechanism built once and never applied to its neighbour" has
+been a fact the game states twice and holds together nowhere.
+
+| the fact | said in | what went wrong |
+|---|---|---|
+| Vesper's pad after Amy | the ending card, the surface, the chart | the card said it stays dark; the world warmed it |
+| what "comfortable" means | the chart, the descent prompt | two constants that happened to agree |
+| what "strong" means | thirteen places | thirteen bare `1.2f` and `0.8f` |
+
+The last one is the sharpest. `1.2f` and `0.8f` appeared as literals across five concerns: Tough
+Shell's trigger, the screen shake, a damage number's colour and size, the move card's arrow, the
+message box's wording, the swap menu's warning, and the record page's three matchup lists. Every
+one meant the same thing. An arrow could have promised a strong hit that Tough Shell then declined
+to treat as one — on the screen whose whole job is telling a player what their move will do.
+
+Two checks hold it now. The self-check asks, for all 81 element pairs, whether the battle line,
+the card's arrow, the record's three lists and Tough Shell's decision all agree. A source pass
+asks whether anybody has written `1.2f` or `0.8f` at a call site again.
+
+**Both plants had to be chosen carefully.** Changing Tough Shell's threshold from `1.2` to `1.4`
+is a no-op — the chart's multipliers are 2.0, 1.0 and 0.5, so nothing falls between them. A plant
+that does not change an outcome proves nothing about the check, only about the plant.
+
 ## Checks that pass and prove nothing
 
 ### The code agreeing with itself

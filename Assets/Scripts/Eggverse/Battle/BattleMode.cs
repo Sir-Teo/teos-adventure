@@ -576,7 +576,7 @@ namespace Eggverse
                 dir.Audio.PlayHit(typeMult, crit);
                 Image victimImage = userIsPlayer ? foeEggImage : myEggImage;
                 SpawnDamageNumber(victimImage, dealt, typeMult, crit);
-                Shake(crit ? 26f : typeMult > 1.2f ? 18f : typeMult < 0.8f ? 5f : 11f);
+                Shake(crit ? 26f : TypeChart.IsStrong(typeMult) ? 18f : TypeChart.IsWeak(typeMult) ? 5f : 11f);
                 yield return AnimateHit(victimImage,
                                         userIsPlayer ? foeHpBar : myHpBar,
                                         target);
@@ -1208,11 +1208,11 @@ namespace Eggverse
         void SpawnDamageNumber(Image target, int amount, float typeMultiplier, bool critical)
         {
             Color color = critical ? new Color32(0xFF, 0xE0, 0x5C, 0xFF)
-                        : typeMultiplier > 1.2f ? new Color32(0xFF, 0x8A, 0x3D, 0xFF)
-                        : typeMultiplier < 0.8f ? new Color32(0x9A, 0xA4, 0xB6, 0xFF)
+                        : TypeChart.IsStrong(typeMultiplier) ? new Color32(0xFF, 0x8A, 0x3D, 0xFF)
+                        : TypeChart.IsWeak(typeMultiplier) ? new Color32(0x9A, 0xA4, 0xB6, 0xFF)
                         : Color.white;
 
-            int size = critical ? 62 : typeMultiplier > 1.2f ? 54 : 44;
+            int size = critical ? 62 : TypeChart.IsStrong(typeMultiplier) ? 54 : 44;
             SpawnNumber(target, (critical ? "!" : "") + amount, color, size);
         }
 
@@ -1541,8 +1541,8 @@ namespace Eggverse
             if (!slot.Move.IsStatus)
             {
                 float mult = TypeChart.Multiplier(slot.Move.Type, foeType);
-                if (mult > 1.2f) edge = " <color=#FF8A3D>\u25b2</color>";
-                else if (mult < 0.8f) edge = " <color=#9AA4B6>\u25bc</color>";
+                if (TypeChart.IsStrong(mult)) edge = " <color=#FF8A3D>\u25b2</color>";
+                else if (TypeChart.IsWeak(mult)) edge = " <color=#9AA4B6>\u25bc</color>";
             }
 
             return "<color=#" + hex + ">" + slot.Move.Name + "</color>" + accuracy + edge + "\n" +
@@ -1564,8 +1564,8 @@ namespace Eggverse
                 // The full name, not the abbreviation. The card abbreviates because it has a
                 // 286px button; this box is 1040px and was using half of it to say "TDL" to a
                 // player who has no reason yet to know what that stands for.
-                : mult > 1.2f ? "   <color=#FF8A3D>strong against " + TypeChart.Name(foeType) + "</color>"
-                : mult < 0.8f ? "   <color=#9AA4B6>weak against " + TypeChart.Name(foeType) + "</color>"
+                : TypeChart.IsStrong(mult) ? "   <color=#FF8A3D>strong against " + TypeChart.Name(foeType) + "</color>"
+                : TypeChart.IsWeak(mult) ? "   <color=#9AA4B6>weak against " + TypeChart.Name(foeType) + "</color>"
                 : "";
             return "<color=#" + hex + "><b>" + slot.Move.Name + "</b></color>" + effect +
                    "\n<size=24><color=#A8B2C4>" + slot.Move.Describe() + "</color></size>";
@@ -1607,9 +1607,9 @@ namespace Eggverse
             if (foe != null && !egg.IsFainted && !unavailable)
             {
                 float incoming = TypeChart.Multiplier(foe.Type, egg.Type);
-                facing = incoming > 1.2f
+                facing = TypeChart.IsStrong(incoming)
                     ? "   <color=#E55555>weak to " + TypeChart.Abbrev(foe.Type) + "</color>"
-                    : incoming < 0.8f
+                    : TypeChart.IsWeak(incoming)
                         ? "   <color=#5FD068>resists " + TypeChart.Abbrev(foe.Type) + "</color>"
                         : "";
             }

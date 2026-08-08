@@ -8,6 +8,12 @@ namespace Eggverse
         public const float CritMultiplier = 1.6f;
 
         /// <summary>Standard damage roll. Returns 0 when the move is a status move.</summary>
+        /// <summary>
+        /// Whether Tough Shell has anything to resist. Named because the card's arrow and this
+        /// decision are two readings of one number, and they were two separate literals.
+        /// </summary>
+        public static bool ToughShellResists(float typeMultiplier) => TypeChart.IsStrong(typeMultiplier);
+
         public static int Damage(EggInstance attacker, EggInstance defender, MoveDef move,
                                  out float typeMultiplier, out bool critical)
         {
@@ -24,7 +30,7 @@ namespace Eggverse
 
             // Passives: Overheat rewards fighting hurt, Tough Shell blunts type advantage.
             float traitBoost = attacker.Trait == EggTrait.Overheat && attacker.HPFraction < 0.34f ? 1.3f : 1f;
-            float traitResist = defender.Trait == EggTrait.ToughShell && typeMultiplier > 1.2f ? 0.75f : 1f;
+            float traitResist = defender.Trait == EggTrait.ToughShell && ToughShellResists(typeMultiplier) ? 0.75f : 1f;
 
             float baseDamage = ((2f * attacker.Level / 5f + 2f) * move.Power * attacker.Atk / Mathf.Max(1, defender.Def)) / 28f + 2f;
             return Mathf.Max(1, Mathf.RoundToInt(baseDamage * stab * typeMultiplier * crit * roll * traitBoost * traitResist));
@@ -108,7 +114,7 @@ namespace Eggverse
             float mult = TypeChart.Multiplier(move.Type, target.Type);
 
             // Tough Shell eats a quarter of any super-effective hit, so it is worth less here too.
-            if (target.Trait == EggTrait.ToughShell && mult > 1.2f) mult *= 0.75f;
+            if (target.Trait == EggTrait.ToughShell && ToughShellResists(mult)) mult *= 0.75f;
 
             float hits = move.Effect == MoveEffect.MultiHit2 ? 2f : 1f;
             float boost = user.Trait == EggTrait.Overheat && user.HPFraction < 0.34f ? 1.3f : 1f;
