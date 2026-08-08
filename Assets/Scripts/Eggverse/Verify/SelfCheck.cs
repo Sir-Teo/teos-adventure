@@ -1671,6 +1671,56 @@ namespace Eggverse
                 check(elder.Elder && !ordinary.Elder, "and knows it");
             }
 
+            // ---- neither egg sits on top of a card ----
+            {
+                // Four things on one screen, and each egg is diagonally opposite its own card:
+                // the foe upper right with its card upper left, yours lower left with its card
+                // on the right. That is what stops any of them covering another, and it was
+                // four sets of numbers with nothing holding them apart.
+                var foeEgg = BattleMode.FoeEggRect;
+                var foeCard = BattleMode.FoeCardRect;
+                var myEgg = BattleMode.MyEggRect;
+                var myCard = BattleMode.MyCardRect;
+
+                var all = new (string name, Rect r)[]
+                {
+                    ("the foe's egg", foeEgg), ("the foe's card", foeCard),
+                    ("your egg", myEgg), ("your card", myCard),
+                };
+
+                for (int i = 0; i < all.Length; i++)
+                {
+                    check(all[i].r.xMin >= 0f && all[i].r.xMax <= 1920f,
+                          all[i].name + " is on the screen horizontally");
+                    check(all[i].r.yMin >= 0f && all[i].r.yMax <= 1080f,
+                          all[i].name + " is on the screen vertically");
+
+                    for (int j = i + 1; j < all.Length; j++)
+                        check(!all[i].r.Overlaps(all[j].r),
+                              all[i].name + " does not cover " + all[j].name);
+                }
+
+                // Diagonally opposite, which is the property the four numbers were chosen for
+                // and the one a render can get wrong without anybody noticing.
+                check((foeEgg.center.x > 960f) != (foeCard.center.x > 960f),
+                      "the foe's egg is on the far side from its card");
+                check((myEgg.center.x > 960f) != (myCard.center.x > 960f),
+                      "and yours from its own");
+                // Against each other, not against a midline. The first version asked whether
+                // yours sat below the middle of the screen and it sits five pixels above it -
+                // a line the layout was never built around, failing a design that is fine. What
+                // was meant is that the foe is the further of the two, and it is, by 205px.
+                check(myEgg.center.y < foeEgg.center.y,
+                      "the foe is the one further away (" + foeEgg.center.y + " against " +
+                      myEgg.center.y + ")");
+
+                // Yours is nearer, so yours is bigger. A player looking at two eggs should be
+                // able to tell which one is theirs without reading either card.
+                check(myEgg.width > foeEgg.width,
+                      "your egg is the larger of the two (" + myEgg.width + " against " +
+                      foeEgg.width + ")");
+            }
+
             // ---- the ending card and the world it hands back agree ----
             {
                 // The card says "Vesper stays dark a while longer. Vess says she can wait, now

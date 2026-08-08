@@ -1023,6 +1023,23 @@ namespace Eggverse
         public const float IdleRise = 7f, IdleRate = 1.35f;
 
         /// <summary>
+        /// Where the two eggs and their two cards sit, in screen pixels on the 1920x1080 canvas.
+        ///
+        /// Public because the check measures the real placement, and because the render drew the
+        /// eggs from two colour pairs typed against two positions — which had drifted, so the
+        /// picture showed the player's green egg in the foe's slot. Reading that screenshot the
+        /// layout looked broken; it was not, the picture was. A transcription raises a false
+        /// alarm as readily as it gives false comfort.
+        ///
+        /// Each egg sits diagonally opposite its own card, which is what stops either covering
+        /// the other on a screen with four things on it.
+        /// </summary>
+        public static readonly Rect FoeEggRect  = new Rect(1920f - 430f - 150f, 1080f - 330f - 150f, 300f, 300f);
+        public static readonly Rect FoeCardRect = new Rect(70f, 1080f - 70f - 150f, 660f, 150f);
+        public static readonly Rect MyEggRect   = new Rect(440f - 180f, 545f - 180f, 360f, 360f);
+        public static readonly Rect MyCardRect  = new Rect(1920f - 70f - 700f, 540f - 110f - 210f, 700f, 210f);
+
+        /// <summary>
         /// A pair of phases far enough apart that two eggs never move as one object. The surface
         /// learned this with its warming ring - six eggs rising in lockstep read as one lid
         /// lifting rather than six creatures.

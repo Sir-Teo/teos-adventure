@@ -138,6 +138,14 @@ text builder from the view — `GalaxyMapView.DetailBody`, `BattleMode.MoveCardT
 
 If you add a panel to a render, do not type its contents.
 
+**A transcription raises a false alarm as readily as it gives false comfort.** The battle render
+drew its two eggs from two colour pairs typed against two positions, and those had drifted from
+the cards — so the picture showed the player's green egg in the foe's slot and the foe's blue one
+in the player's. Looking at that screenshot, the layout appeared broken. It was not; the picture
+was. The eggs are built from the same species the cards describe now, and the four placements are
+constants the self-check measures: nothing covers anything, each egg sits diagonally opposite its
+own card, and yours is the larger of the two because yours is nearer.
+
 The collection screen was the last one still laying out a column itself. Converting its two
 columns to draw `CollectionBodyText` and `CollectionDexText` line for line immediately showed
 four things the render had been hiding: the party's 1-6 numbers, the nest's real summary line,

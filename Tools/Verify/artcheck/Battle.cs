@@ -239,17 +239,33 @@ static class Battle
         var c = new Ctx { Px = new Col[W * H] };
         for (int i = 0; i < c.Px.Length; i++) c.Px[i] = Col.Hex(0x080A14);
 
-        Disc(c, 1490, 750, 450, new Col(0.35f, 0.28f, 0.6f, 0.35f), 1.4f);
-        Disc(c, 440, 540, 500, new Col(0.25f, 0.45f, 0.55f, 0.30f), 1.4f);
+        // The two combatants, built before they are drawn, so the eggs are coloured from the
+        // same species the cards describe. These were two hardcoded colour pairs typed against
+        // two hardcoded positions - and they had drifted apart from the cards, so the render
+        // showed the player's green egg in the foe's slot and the foe's blue one in the
+        // player's. Reading that screenshot, the layout looked broken. It was not; the picture
+        // was. A transcription can raise a false alarm as easily as give false comfort.
+        var foeDef = Eggverse.SpeciesDatabase.Get("wavelet");
+        var mineDef = Eggverse.SpeciesDatabase.Get("sprouteg");
+        Col foeBody = new Col(foeDef.Body.r, foeDef.Body.g, foeDef.Body.b, 1f);
+        Col foeAccent = new Col(foeDef.Accent.r, foeDef.Accent.g, foeDef.Accent.b, 1f);
+        Col mineBody = new Col(mineDef.Body.r, mineDef.Body.g, mineDef.Body.b, 1f);
+        Col mineAccent = new Col(mineDef.Accent.r, mineDef.Accent.g, mineDef.Accent.b, 1f);
 
-        Egg(c, 1490, 750, 150, Col.Hex(0x8FCB6B), Col.Hex(0x3E7A4E), 11);
-        Egg(c, 440, 545, 180, Col.Hex(0x3D93C4), Col.Hex(0x14486E), 23);
+        // Foe upper right, yours lower left, each diagonally opposite its own card. That is the
+        // game's placement: FoeEgg anchors top-right at (-430,-330), MyEgg bottom-left at
+        // (440,545), and the cards sit on the far side so neither covers the other.
+        Disc(c, 1490, 750, 450, new Col(foeBody.r, foeBody.g, foeBody.b, 0.32f), 1.4f);
+        Disc(c, 440, 540, 500, new Col(mineBody.r, mineBody.g, mineBody.b, 0.30f), 1.4f);
+
+        Egg(c, 1490, 750, 150, foeBody, foeAccent, foeDef.ArtSeed);
+        Egg(c, 440, 545, 180, mineBody, mineAccent, mineDef.ArtSeed);
 
         // Both plates from the game's own builders. Typed out, the meta line read
         // "WARM YOLK  ATK +1" - the game draws "ATK +1▲", with one arrow per stage, and the
         // arrows are how you read the magnitude at a glance.
-        var foe = Eggverse.EggInstance.Wild("wavelet", 21);
-        var mine = Eggverse.EggInstance.Wild("sprouteg", 22);
+        var foe = Eggverse.EggInstance.Wild(foeDef.Id, 21);
+        var mine = Eggverse.EggInstance.Wild(mineDef.Id, 22);
         mine.Nickname = "Pebbles";
         mine.AtkStage = 1;                       // so the plate's stage arrow is exercised
         mine.CurrentHP = mine.MaxHP / 3;         // and the health bar's low-HP colour
