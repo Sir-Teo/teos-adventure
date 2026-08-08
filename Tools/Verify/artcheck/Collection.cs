@@ -125,70 +125,11 @@ static class Collection
             // drawing the game's own text; these two were missed.
             float tx2 = x0 + 1450, ty2 = ey2;
             foreach (var raw in Eggverse.HudView.EggDetailText(shown).Split('\n'))
-            {
-                if (Strip(raw).Length == 0) { ty2 -= step19; continue; }
-
-                // Per run, and size tags dropped first. FirstCol painted a whole line in the
-                // first colour it found anywhere in it, so "Frosty <grey>Glacegg</grey>" came
-                // out entirely grey and the egg's own name looked dimmer than its trait. Runs
-                // fixes that and then trips over <size=26>, which this render has no notion of -
-                // it draws one size per panel. Both halves had to be right for the line to be.
-                string sized = raw.Replace("<size=26>", "").Replace("<size=17>", "")
-                                  .Replace("</size>", "");
-
-                // A line that changes colour partway through gets drawn run by run and is short
-                // enough not to need wrapping - that is the title, and it is the only one. A
-                // line that is one colour gets wrapped, because the trait blurb under it is the
-                // longest thing on the panel and uGUI wraps it in the game.
-                // Not "more than one colour tag" - the title has exactly one, wrapping its
-                // species suffix, and that rule sent it down the single-colour path and painted
-                // the name grey again. What makes a line mixed is text *before* its first
-                // colour tag: "Frosty <grey>Glacegg</grey>" starts in the panel's own ink and
-                // changes partway through.
-                // A line is mixed if it starts in the panel's own ink and changes partway
-                // through ("Frosty <grey>Glacegg</grey>") *or* if it carries more than one
-                // colour ("<cyan>Frost</cyan> <grey>Lv 24</grey> <amber>ELDER</amber>"). Either
-                // condition alone gets one of those two lines wrong, and I wrote each of them
-                // in turn before noticing there were two shapes to catch.
-                int firstTint = sized.IndexOf("<color=");
-                int tints = System.Text.RegularExpressions.Regex.Matches(sized, "<color=").Count;
-                bool startsPlain = firstTint > 0 &&
-                                   Strip(sized.Substring(0, firstTint)).Trim().Length > 0;
-                if (startsPlain || tints > 1)
-                {
-                    float pen = tx2;
-                    foreach (var r in Runs(sized, Battle.Ink))
-                    {
-                        if (r.text.Trim().Length > 0)
-                            Battle.Text(c, r.text.ToUpperInvariant(), pen, ty2, 19, r.col);
-                        pen += Battle.TextWidth(r.text, 19);
-                    }
-                    ty2 -= step19;
-                }
-                else
-                {
-                    foreach (var line in WrapLines(Strip(sized), 28))
-                    {
-                        Battle.Text(c, line.ToUpperInvariant(), tx2, ty2, 19, FirstCol(sized, Battle.Ink));
-                        ty2 -= step19;
-                    }
-                }
-            }
+                PanelLine(c, raw, tx2, ref ty2, 19, 28);
 
             float lx3 = x0 + 1280, ly3 = y1 - 262;
             foreach (var raw in Eggverse.HudView.EggLoreText(shown, estate).Split('\n'))
-            {
-                var plain = Strip(raw);
-                if (plain.Length == 0) { ly3 -= step19; continue; }
-                // These lines are one colour each - a heading in amber, a body in dim ink - so
-                // FirstCol is the right tool and wrapping still has to happen. The title above
-                // is the only line on this panel that changes colour partway through.
-                foreach (var line in WrapLines(plain, 46))
-                {
-                    Battle.Text(c, line.ToUpperInvariant(), lx3, ly3, 19, FirstCol(raw, Battle.Ink));
-                    ly3 -= step19;
-                }
-            }
+                PanelLine(c, raw, lx3, ref ly3, 19, 46);
 
             Battle.TextCentre(c, FooterFor(roster),
                               Battle.W / 2f, y0 + 40, 20, dim);
@@ -230,16 +171,11 @@ static class Collection
             seenState.Caught.Add(cur.Id);
         }
 
+        // Through the same rule as the egg panels. This stripped every tag and drew the lot in
+        // one ink, so the record's amber headings - MATCHUPS, BASE STATS, FOUND ON - came out as
+        // body text and the page read as one undifferentiated block.
         foreach (var raw in Eggverse.HudView.DexLoreText(cur, seenState, true).Split('\n'))
-        {
-            var plain = System.Text.RegularExpressions.Regex.Replace(raw, "<[^>]+>", "");
-            if (plain.Length == 0) { ly2 -= step19; continue; }   // blank rows are spacing, not nothing
-            foreach (var line in WrapLines(plain, 46))
-            {
-                Battle.Text(c, line.ToUpperInvariant(), lx, ly2, 19, Battle.Ink);
-                ly2 -= step19;
-            }
-        }
+            PanelLine(c, raw, lx, ref ly2, 19, 46);
 
         Battle.TextCentre(c, FooterFor(roster),
                           Battle.W / 2f, y0 + 40, 20, dim);
@@ -293,6 +229,46 @@ static class Collection
             i = next;
         }
         return outp;
+    }
+
+    /// One line of a panel, drawn the way the game would.
+    ///
+    /// A line is mixed if it starts in the panel's own ink and changes partway through
+    /// ("Frosty <grey>Glacegg</grey>") or if it carries more than one colour
+    /// ("<dim>ATK</dim> 70  <dim>DEF</dim> 74"). Either condition alone gets one of those two
+    /// shapes wrong, and both shapes are on this screen.
+    ///
+    /// A mixed line is drawn run by run and not wrapped: every one of them on this screen is a
+    /// heading or a stat row, and short. A single-colour line is wrapped, because the blurbs are
+    /// the longest things here and uGUI wraps them in the game.
+    static void PanelLine(Battle.Ctx c, string raw, float x, ref float y, int size, int wrapCols)
+    {
+        string sized = raw.Replace("<size=26>", "").Replace("<size=17>", "")
+                          .Replace("<size=15>", "").Replace("</size>", "");
+        if (Strip(sized).Length == 0) { y -= size * 1.16f; return; }
+
+        int firstTint = sized.IndexOf("<color=");
+        int tints = System.Text.RegularExpressions.Regex.Matches(sized, "<color=").Count;
+        bool startsPlain = firstTint > 0 && Strip(sized.Substring(0, firstTint)).Trim().Length > 0;
+
+        if (startsPlain || tints > 1)
+        {
+            float pen = x;
+            foreach (var r in Runs(sized, Battle.Ink))
+            {
+                if (r.text.Trim().Length > 0)
+                    Battle.Text(c, r.text.ToUpperInvariant(), pen, y, size, r.col);
+                pen += Battle.TextWidth(r.text, size);
+            }
+            y -= size * 1.16f;
+            return;
+        }
+
+        foreach (var line in WrapLines(Strip(sized), wrapCols))
+        {
+            Battle.Text(c, line.ToUpperInvariant(), x, y, size, FirstCol(sized, Battle.Ink));
+            y -= size * 1.16f;
+        }
     }
 
     static string Strip(string t) =>

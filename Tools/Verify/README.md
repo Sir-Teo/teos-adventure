@@ -178,6 +178,15 @@ Fixing it took three tries, each of which broke the line the previous one fixed.
 holds: a line is mixed if it **starts in the panel's own ink and changes partway through**, or if
 it **carries more than one colour**. Either condition alone gets one of the two lines wrong.
 
+Then the same question, asked of the rest of the screen. The egg's stat row is
+`<dim>ATK</dim> 70  <dim>DEF</dim> 74` — labels quiet, numbers bright — and it was drawn entirely
+quiet, numbers included. And the record's lore panel stripped *every* tag and drew the lot in one
+ink, so `MATCHUPS`, `BASE STATS` and `FOUND ON` came out as body text and **every element
+abbreviation lost its colour** — on the one panel in the game that carries eight of them at once.
+
+The most colour-rich screen in the game had been rendered flat since it was first drawn, and it
+looked fine, because a flat panel looks like a panel.
+
 `artcheck` reimplements the game's *drawing*, not its data. That reimplementation has produced
 false alarms seven times: a font metric that overstated every label by two thirds, sector captions
 placed by an older algorithm than the game's, a truncating text wrap that hid the overflow it
