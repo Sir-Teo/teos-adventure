@@ -28,8 +28,27 @@ namespace Eggverse
         }
 
         /// <summary>"1 world" / "2 worlds", for counts that can legitimately be one.</summary>
+        /// <summary>
+        /// A count and its noun. The default plural adds -s, except after a consonant + y, where
+        /// English wants -ies: "entry" became "3 entrys" the first time a caller passed a word
+        /// ending in one, which was the save-repair line and would have shipped saying it.
+        ///
+        /// An explicit plural still wins, which is what irregular nouns are for.
+        /// </summary>
         public static string Count(int n, string singular, string plural = null) =>
-            n + " " + (n == 1 ? singular : (plural ?? singular + "s"));
+            n + " " + (n == 1 ? singular : (plural ?? Plural(singular)));
+
+        static string Plural(string singular)
+        {
+            if (string.IsNullOrEmpty(singular)) return singular;
+            char last = singular[singular.Length - 1];
+            char before = singular.Length > 1 ? singular[singular.Length - 2] : 'a';
+            bool vowelBefore = before == 'a' || before == 'e' || before == 'i' ||
+                               before == 'o' || before == 'u';
+            if (last == 'y' && !vowelBefore) return singular.Substring(0, singular.Length - 1) + "ies";
+            if (last == 's' || last == 'x' || last == 'z') return singular + "es";
+            return singular + "s";
+        }
 
         /// <summary>
         /// A small fraction in the words this game uses for them, so a sentence describing a

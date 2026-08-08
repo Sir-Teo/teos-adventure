@@ -1671,6 +1671,80 @@ namespace Eggverse
                 check(elder.Elder && !ordinary.Elder, "and knows it");
             }
 
+            // ---- counted nouns are spelled the way English spells them ----
+            {
+                // Count() pluralised by adding -s, and the first caller to pass a word ending
+                // in a consonant and a y got "3 entrys" - in the save-repair line, which would
+                // have shipped saying it. Found by planting a fault at something else and
+                // reading the failure text.
+                check(Words.Count(1, "entry") == "1 entry", "one entry");
+                check(Words.Count(3, "entry") == "3 entries", "three entries (" + Words.Count(3, "entry") + ")");
+                check(Words.Count(2, "egg") == "2 eggs", "two eggs");
+                check(Words.Count(2, "day") == "2 days", "a vowel before the y keeps the -s");
+                check(Words.Count(2, "box") == "2 boxes", "and -x takes -es");
+                check(Words.Count(2, "more egg") == "2 more eggs", "a phrase pluralises its last word");
+                check(Words.Count(2, "child", "children") == "2 children",
+                      "an explicit plural still wins");
+
+                // Every noun the game actually counts, so a bad plural cannot reach a player.
+                foreach (var noun in new[] { "egg", "more egg", "entry", "more type", "fight", "world" })
+                    for (int n = 0; n <= 3; n++)
+                    {
+                        string said = Words.Count(n, noun);
+                        check(said.StartsWith(n.ToString()), noun + " is counted at " + n);
+                        check(!said.EndsWith("ys"), noun + " is not pluralised as -ys: " + said);
+                    }
+            }
+
+            // ---- a save that had to be repaired says so ----
+            {
+                // SaveSystem drops entries it no longer recognises and moves eggs out of an
+                // over-long party. It counted both and told nobody: StaleEntriesDropped was
+                // set on every load and read nowhere in the game. A file quietly repaired is a
+                // file a player thinks was fine, and then wonders where the egg went.
+                check(UiCopy.SaveRepaired(0, 0) == null, "a clean save says nothing");
+
+                foreach (var pair in new[] { (1, 0), (0, 1), (3, 2), (12, 7) })
+                {
+                    string line = UiCopy.SaveRepaired(pair.Item1, pair.Item2);
+                    check(line != null, "a repaired save says so (" + pair.Item1 + "," + pair.Item2 + ")");
+                    check(lines(line, 900f, 22) <= 2, "and fits the toast: " + line);
+
+                    // It names what happened, not just that something did.
+                    check(line.Contains("entr") == (pair.Item1 > 0),
+                          "dropped entries are mentioned exactly when there were some: " + line);
+                    check(line.Contains("nest") == (pair.Item2 > 0),
+                          "and moved eggs likewise: " + line);
+                }
+
+                // The bound itself. Every other field in a save is clamped - cartons, salves,
+                // text speed, the planet id - and the party was not: a file with eight in it
+                // showed six, and Collect's "Party.Count < PartySize" is false forever, so
+                // every egg caught from then on went to the nest and the two extras were
+                // carried in the save, invisible and unreachable, for the rest of the run.
+                {
+                    var over = new GameState(false);
+                    for (int i = 0; i < GameState.PartySize + 3; i++)
+                        over.Party.Add(EggInstance.Wild(SpeciesDatabase.All[0].Id, 5));
+
+                    var data = SaveSystem.Capture(over, new StoryState(), PlanetDatabase.Home.Id, 0f);
+                    GameState back; StoryState backStory; string where; float secs;
+                    check(SaveSystem.Restore(data, out back, out backStory, out where, out secs),
+                          "an over-long party still loads");
+                    check(back.Party.Count == GameState.PartySize,
+                          "and comes back the right size (" + back.Party.Count + ")");
+                    check(back.Nest.Count == 3,
+                          "with the extras kept rather than binned (" + back.Nest.Count + ")");
+                    check(SaveSystem.PartyOverflowMoved == 3,
+                          "and the move is counted so it can be reported (" +
+                          SaveSystem.PartyOverflowMoved + ")");
+
+                    // The thing the bug actually broke: you can still catch into your party.
+                    check(back.Party.Count < GameState.PartySize + 1,
+                          "and catching into the party works again");
+                }
+            }
+
             // ---- move descriptions quote the shares the fight deals in ----
             {
                 // Three effects state a fraction three times over: in the name (Lifesteal50,

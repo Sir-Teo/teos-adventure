@@ -137,6 +137,24 @@ namespace Eggverse
         public const string WokeCold = "You woke on cold stone. It took a while. Everything is patched up, and nobody is saying how.";
 
         /// <summary>
+        /// What a load had to repair, in words.
+        ///
+        /// SaveSystem drops entries it no longer recognises and moves eggs out of an over-long
+        /// party, and it counted both and told nobody: StaleEntriesDropped was set on every load
+        /// and read nowhere. A file quietly repaired is a file a player thinks was fine — and
+        /// then wonders where the egg went.
+        /// </summary>
+        public static string SaveRepaired(int dropped, int moved)
+        {
+            if (dropped <= 0 && moved <= 0) return null;
+
+            var parts = new System.Collections.Generic.List<string>();
+            if (dropped > 0) parts.Add(Words.Count(dropped, "entry") + " your copy no longer knows");
+            if (moved > 0) parts.Add(Words.Count(moved, "egg") + " moved from your party to the nest");
+            return "That save needed patching up: " + string.Join(", ", parts.ToArray()) + ".";
+        }
+
+        /// <summary>
         /// What to do about having run out.
         ///
         /// The supply line says "Cartons none" in red, which is the state and not the recovery.

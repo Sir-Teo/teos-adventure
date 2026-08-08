@@ -277,6 +277,13 @@ namespace Eggverse
             Hud.Toast(outstanding != null
                 ? "Welcome back. Still needed: " + outstanding
                 : "Welcome back. " + Story.Current.Objective);
+
+            // And say so if the file had to be repaired to be loaded. Both counts existed and
+            // neither was ever read, so a save that lost an entry or had eggs moved out of an
+            // over-long party looked exactly like one that was fine.
+            string repaired = UiCopy.SaveRepaired(SaveSystem.StaleEntriesDropped,
+                                                  SaveSystem.PartyOverflowMoved);
+            if (repaired != null) Hud.Toast(repaired);
         }
 
         void StartFreshGame()

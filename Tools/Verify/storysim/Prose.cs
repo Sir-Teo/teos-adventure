@@ -156,6 +156,9 @@ static class Prose
         Add("out of salves", UiCopy.OutOf(false, true));
         Add("out of both", UiCopy.OutOf(true, true));
         Add("what an Elder is", EggInstance.ElderBlurb);
+        Add("save repaired, entries", UiCopy.SaveRepaired(3, 0));
+        Add("save repaired, eggs", UiCopy.SaveRepaired(0, 2));
+        Add("save repaired, both", UiCopy.SaveRepaired(3, 2));
         foreach (EggStatus cond in System.Enum.GetValues(typeof(EggStatus)))
         {
             if (cond == EggStatus.None) continue;

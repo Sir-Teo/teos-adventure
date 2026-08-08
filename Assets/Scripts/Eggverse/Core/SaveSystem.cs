@@ -220,6 +220,7 @@ namespace Eggverse
                 stale += AddKnown(state.Landmarks, data.landmarks, id => LandmarkDatabase.For(id) != null);
                 stale += AddKnown(state.LandmarkAsides, data.landmarkAsides, id => StoryDatabase.NpcById(id) != null);
                 StaleEntriesDropped = stale;
+                PartyOverflowMoved = 0;
                 state.Cartons = Mathf.Clamp(data.cartons, 0, state.MaxCartons);
                 state.Salves = Mathf.Clamp(data.salves, 0, GameState.MaxSalves);
                 state.AmyDefeated = data.amyDefeated;
@@ -228,6 +229,22 @@ namespace Eggverse
 
                 // A save with an empty party would be unplayable; hand back a starter.
                 if (state.Party.Count == 0) state.Party.Add(EggInstance.Wild("sprouteg", 5));
+
+                // And an over-long one is worse than unplayable, because it looks fine. Every
+                // other field here is bounded — cartons, salves, text speed, the planet id — and
+                // the party was not. A file with eight in it shows six, and Collect's
+                // "Party.Count < PartySize" is false forever, so every egg caught from then on
+                // goes to the nest and the two extras are carried in the save, invisible and
+                // unreachable, for the rest of the run.
+                //
+                // They are the player's eggs, so they go to the nest rather than the bin.
+                while (state.Party.Count > GameState.PartySize)
+                {
+                    var overflow = state.Party[state.Party.Count - 1];
+                    state.Party.RemoveAt(state.Party.Count - 1);
+                    state.Nest.Insert(0, overflow);
+                    PartyOverflowMoved++;
+                }
                 if (state.Visited.Count == 0) state.Visited.Add(PlanetDatabase.Home.Id);
 
                 story = new StoryState();
@@ -256,6 +273,13 @@ namespace Eggverse
         /// removed would silently turn the player's Elder Glacegg into a level-30 Sprouteg. Better
         /// to drop it and say so than to hand back something the player never caught.
         /// </summary>
+        /// <summary>
+        /// How many eggs a load had to move out of an over-long party. Reported the same way
+        /// stale entries are, because a load that quietly rearranges a player's party should say
+        /// so rather than be discovered.
+        /// </summary>
+        public static int PartyOverflowMoved;
+
         static int Fill(List<EggInstance> target, EggSave[] saves)
         {
             target.Clear();
