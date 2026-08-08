@@ -356,7 +356,17 @@ static class Battle
                 {
                     int size = r == 0 ? 24 : 17;
                     float y = top - (r == 0 ? 0f : 24f * 1.16f + (r - 1) * 17f * 1.16f);
-                    Text(c, (Strip(rows[r])), bx + 22, y, size, FirstColour(rows[r], InkDim));
+                    // Run by run. FirstColour painted the whole row in the first colour it found,
+                    // and row zero is "<element>Frost Crack</element> <orange>▲</orange>" — so
+                    // the effectiveness arrow, the one mark on this card a player is actually
+                    // deciding on, came out in the move's element colour instead of its own.
+                    float pen = bx + 22;
+                    foreach (var run in Split(rows[r], InkDim))
+                    {
+                        if (run.text.Trim().Length > 0)
+                            Text(c, run.text, pen, y, size, run.col);
+                        pen += TextWidth(run.text, size);
+                    }
                 }
             }
         }
@@ -375,6 +385,33 @@ static class Battle
         System.Text.RegularExpressions.Regex.Replace(t, "<[^>]+>", "");
 
 
+
+    /// A rich-text line as coloured runs, so a line that changes colour partway through is drawn
+    /// the way the game draws it rather than in whichever colour came first.
+    static System.Collections.Generic.List<(string text, Col col)> Split(string line, Col baseCol)
+    {
+        var outp = new System.Collections.Generic.List<(string, Col)>();
+        int i = 0;
+        Col current = baseCol;
+        while (i < line.Length)
+        {
+            var m = System.Text.RegularExpressions.Regex.Match(
+                line.Substring(i), @"^<(/?)(b|i|color|size)(=[^>]*)?>");
+            if (m.Success)
+            {
+                if (m.Groups[1].Value == "/") current = baseCol;
+                else if (m.Groups[2].Value == "color" && m.Groups[3].Value.Length == 8)
+                    current = Col.Hex(Convert.ToInt32(m.Groups[3].Value.Substring(2), 16));
+                i += m.Length;
+                continue;
+            }
+            int next = line.IndexOf('<', i + 1);
+            if (next < 0) next = line.Length;
+            outp.Add((line.Substring(i, next - i), current));
+            i = next;
+        }
+        return outp;
+    }
 
     static Col FirstColour(string richText, Col fallback)
     {

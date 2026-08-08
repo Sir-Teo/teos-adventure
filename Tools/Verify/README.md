@@ -187,6 +187,16 @@ abbreviation lost its colour** — on the one panel in the game that carries eig
 The most colour-rich screen in the game had been rendered flat since it was first drawn, and it
 looked fine, because a flat panel looks like a panel.
 
+The battle move cards were the same. Row zero is
+`<element>Frost Crack</element> <orange>▲</orange>` — so the **effectiveness arrow**, the one mark
+on that card a player is actually deciding on, was drawn in the move's element colour instead of
+its own, and was indistinguishable from the name beside it. The rider lines under it — LEAVES
+CHILLED, LEAVES SCORCHED — lost their condition's colour the same way.
+
+Three renders, one fault, three different ways of not noticing: a heading that looked dim on
+purpose, a stat row that looked uniformly quiet on purpose, and an arrow that looked like part of
+its move's name.
+
 `artcheck` reimplements the game's *drawing*, not its data. That reimplementation has produced
 false alarms seven times: a font metric that overstated every label by two thirds, sector captions
 placed by an older algorithm than the game's, a truncating text wrap that hid the overflow it
