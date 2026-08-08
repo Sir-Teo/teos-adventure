@@ -39,8 +39,34 @@ namespace Eggverse
             float traitBoost = attacker.Trait == EggTrait.Overheat && attacker.HPFraction < 0.34f ? OverheatBoost : 1f;
             float traitResist = defender.Trait == EggTrait.ToughShell && ToughShellResists(typeMultiplier) ? ToughShellResist : 1f;
 
-            float baseDamage = ((2f * attacker.Level / 5f + 2f) * move.Power * attacker.Atk / Mathf.Max(1, defender.Def)) / 28f + 2f;
-            return Mathf.Max(1, Mathf.RoundToInt(baseDamage * stab * typeMultiplier * crit * roll * traitBoost * traitResist));
+            return Mathf.Max(1, Mathf.RoundToInt(
+                TypicalDamage(attacker, defender, move) * crit * roll / AverageRoll));
+        }
+
+        /// <summary>The average of the variance roll, so a typical hit is the roll factored out.</summary>
+        public const float AverageRoll = 0.925f;
+
+        /// <summary>
+        /// What a hit does before luck touches it: every term of the damage formula except the
+        /// critical roll and the variance roll.
+        ///
+        /// Split out because Damage cannot run outside the engine — it rolls — and how long a
+        /// fight lasts is the single most important number in a battle game and had never been
+        /// measured because of it. Rewriting the formula in a measuring script would have been
+        /// the same fault as a render typing out a panel: two copies, and the game moves.
+        /// </summary>
+        public static float TypicalDamage(EggInstance attacker, EggInstance defender, MoveDef move)
+        {
+            if (move.IsStatus) return 0f;
+
+            float typeMultiplier = TypeChart.Multiplier(move.Type, defender.Type);
+            float stab = attacker.Type == move.Type ? 1.4f : 1f;
+            float traitBoost = attacker.Trait == EggTrait.Overheat && attacker.HPFraction < 0.34f ? OverheatBoost : 1f;
+            float traitResist = defender.Trait == EggTrait.ToughShell && ToughShellResists(typeMultiplier) ? ToughShellResist : 1f;
+
+            float baseDamage = ((2f * attacker.Level / 5f + 2f) * move.Power * attacker.Atk /
+                                Mathf.Max(1, defender.Def)) / 28f + 2f;
+            return baseDamage * stab * typeMultiplier * traitBoost * traitResist * AverageRoll;
         }
 
         public static bool Hits(MoveDef move) => EggRandom.Range(0, 100) < move.Accuracy;

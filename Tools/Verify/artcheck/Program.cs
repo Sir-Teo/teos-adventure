@@ -365,6 +365,40 @@ static class Program
         }
 
         {
+            // How many turns does a fight last, world by world?
+            //
+            // Median across every species as the attacker, not one. Measuring with a Sprouteg
+            // gave 1.7 turns on Umbralux and 9.9 on Mosswell, which is the type chart talking
+            // rather than the pacing - a player brings something suited to where they are.
+            foreach (var w in Eggverse.PlanetDatabase.All)
+            {
+                if (w.Spawns == null || w.Spawns.Length == 0) continue;
+                int band = (w.MinLevel + w.MaxLevel) / 2;
+
+                var turns = new System.Collections.Generic.List<float>();
+                foreach (var sp in w.Spawns)
+                {
+                    var foe = Eggverse.EggInstance.Wild(sp.SpeciesId, band);
+                    foreach (var attacker in Eggverse.SpeciesDatabase.All)
+                    {
+                        var mine = Eggverse.EggInstance.Wild(attacker.Id, band);
+                        float top = 0f;
+                        foreach (var slot in mine.Moves)
+                        {
+                            float d = Eggverse.BattleCalc.TypicalDamage(mine, foe, slot.Move);
+                            if (d > top) top = d;
+                        }
+                        if (top > 0f) turns.Add(foe.MaxHP / top);
+                    }
+                }
+                turns.Sort();
+                float median = turns[turns.Count / 2];
+                Console.WriteLine($"  {w.Name,-14} Lv {band,2}  median fight {median:0.0} turns" +
+                                  $"  (best {turns[0]:0.0}, worst {turns[turns.Count - 1]:0.0})");
+            }
+        }
+
+        {
             // How many fights does a level cost, at each stage of the run?
             foreach (var world in new[] { "yolkhaven", "mosswell", "glacierim", "arcmoor", "cairnhold", "amaranth" })
             {

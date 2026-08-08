@@ -378,6 +378,21 @@ fights a level**, asserted on the midpoint. The gentler plant reads 2.9 and fail
 
 That is the same shape as the trait blurbs. A rebalance should be a decision, not a drift.
 
+The other half of the same pair is **how long a fight lasts** — the single most important number
+in a battle game, and it had never been measured, because `Damage` rolls and a function that rolls
+cannot run out here. `TypicalDamage` is that formula with the luck factored out, so the check asks
+the game rather than a copy of its arithmetic. Writing the formula out again in a measuring script
+would have been the same fault as a render typing out a panel.
+
+The median fight is **3.0 to 5.1 turns**, every world, first to last. Halving the damage divisor
+drops Yolkhaven to 1.9 — a fight that ends before a player has decided anything. Doubling it
+pushes Cinderoost to 7.2, where choosing a move stops mattering and starts being a button.
+
+Measuring it needed one correction: the first pass used a Sprouteg against everything and read
+1.7 turns on Umbralux and 9.9 on Mosswell. That is **the type chart's opinion, not the pacing** —
+a player brings something suited to where they are. The median across all twenty-eight species as
+attacker is the number that means something.
+
 ## Which assertions never ran
 
 "Did anything fail" and "did everything get asked" are different questions, and a suite this size

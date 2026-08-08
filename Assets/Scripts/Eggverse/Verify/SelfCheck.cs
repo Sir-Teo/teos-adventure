@@ -1671,6 +1671,71 @@ namespace Eggverse
                 check(elder.Elder && !ordinary.Elder, "and knows it");
             }
 
+            // ---- a fight lasts about four turns, anywhere in the run ----
+            {
+                // The single most important number in a battle game, and it had never been
+                // measured - because Damage rolls, and a function that rolls cannot run out
+                // here. TypicalDamage is that formula with the luck factored out, so this asks
+                // the game rather than a copy of its arithmetic.
+                //
+                // Median across every species as the attacker. Measuring with one gives the
+                // type chart's opinion rather than the pacing: a Sprouteg reads 1.7 turns on
+                // Umbralux and 9.9 on Mosswell, and a player brings something suited.
+                float quickest = 99f, slowestFight = 0f;
+                string quickWorld = "", slowWorldName = "";
+
+                foreach (var w in PlanetDatabase.All)
+                {
+                    if (w.Spawns == null || w.Spawns.Length == 0) continue;
+                    int band = (w.MinLevel + w.MaxLevel) / 2;
+
+                    var turns = new System.Collections.Generic.List<float>();
+                    foreach (var sp in w.Spawns)
+                    {
+                        var foe = EggInstance.Wild(sp.SpeciesId, band);
+                        foreach (var attacker in SpeciesDatabase.All)
+                        {
+                            var mine = EggInstance.Wild(attacker.Id, band);
+                            float top = 0f;
+                            foreach (var slot in mine.Moves)
+                                top = Mathf.Max(top, BattleCalc.TypicalDamage(mine, foe, slot.Move));
+                            if (top > 0f) turns.Add(foe.MaxHP / top);
+                        }
+                    }
+                    turns.Sort();
+                    check(turns.Count > 0, w.Name + " can be fought at all");
+                    float median = turns[turns.Count / 2];
+
+                    if (median < quickest) { quickest = median; quickWorld = w.Name; }
+                    if (median > slowestFight) { slowestFight = median; slowWorldName = w.Name; }
+
+                    // Two turns is a fight that ends before a player has made a decision. Seven
+                    // is where choosing a move stops feeling like it matters and starts feeling
+                    // like holding a button.
+                    check(median >= 2f,
+                          w.Name + " gives a player time to decide something (" +
+                          median.ToString("0.0") + " turns)");
+                    check(median <= 7f,
+                          w.Name + " does not turn into a slog (" + median.ToString("0.0") + " turns)");
+
+                    // Somebody's best matchup still has to be worth having. A world where even
+                    // the right element takes five turns is a world that ignores the type chart.
+                    check(turns[0] < median,
+                          "bringing the right element to " + w.Name + " is worth doing (" +
+                          turns[0].ToString("0.0") + " against " + median.ToString("0.0") + ")");
+                }
+
+                // And the run keeps its rhythm. A late world twice the length of an early one
+                // is a game that gets slower as a player gets better at it.
+                check(slowestFight <= quickest * 2f,
+                      "fights stay about the same length across the run (" + quickWorld + " " +
+                      quickest.ToString("0.0") + ", " + slowWorldName + " " + slowestFight.ToString("0.0") + ")");
+
+                float middle = (quickest + slowestFight) * 0.5f;
+                check(middle > 3f && middle < 5.5f,
+                      "a fight is about four turns (" + middle.ToString("0.0") + ")");
+            }
+
             // ---- a level costs about the same anywhere in the run ----
             {
                 // It does, and remarkably so: between 1.7 and 1.9 fights per level from
