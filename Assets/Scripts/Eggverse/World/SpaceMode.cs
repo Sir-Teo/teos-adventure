@@ -387,7 +387,7 @@ namespace Eggverse
 
             if (EggInput.InteractPressed)
             {
-                if (sealedWorld) dir.Hud.Toast("Your charts do not reach that far yet.");
+                if (sealedWorld) dir.Hud.Toast(UiCopy.RouteSealed);
                 else dir.Land(best.Def);
             }
         }

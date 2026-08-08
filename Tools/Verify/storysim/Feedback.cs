@@ -89,6 +89,45 @@ static class Feedback
                   : $"{loose.Count} loose threshold(s): {loose[0]}");
     }
 
+    /// Anything the game says to a player lives in UiCopy, not at a call site.
+    ///
+    /// Fourteen toasts were string literals where they were raised, and not one reached the prose
+    /// pass that reads every other authored line. They are the strings most likely to be clumsy —
+    /// written in a hurry, seen rarely, never re-read — and two of them turned out to be
+    /// different wordings of the same refusal.
+    public static void Toasts(string[] sources, Action<bool, string> check)
+    {
+        var literals = new List<string>();
+        int calls = 0;
+        foreach (var path in sources)
+        {
+            if (!File.Exists(path)) { check(false, "the toast pass can find " + path); continue; }
+            var lines = File.ReadAllLines(path);
+            for (int i = 0; i < lines.Length; i++)
+            {
+                string line = lines[i];
+                if (line.TrimStart().StartsWith("//")) continue;
+                if (!Regex.IsMatch(line, @"\bToast\s*\(")) continue;
+                calls++;
+
+                // A literal that is the whole message, rather than a fragment being joined to
+                // something the game worked out. "Nest " + count is a built sentence; a bare
+                // quoted sentence ending in punctuation is a written one.
+                var m = Regex.Match(line, @"Toast\s*\(\s*""([^""]*[.!?])""\s*\)");
+                if (m.Success) literals.Add(Path.GetFileName(path) + ":" + (i + 1) + "  \"" + m.Groups[1].Value + "\"");
+            }
+        }
+
+        Console.WriteLine($"  {calls} toasts raised, {literals.Count} written at the call site");
+        foreach (var l in literals) Console.WriteLine("    LITERAL  " + l);
+
+        check(calls > 0, "the toast pass found the toasts");
+        check(literals.Count == 0,
+              literals.Count == 0
+                  ? "every written toast lives in UiCopy where the prose pass reads it"
+                  : $"{literals.Count} toast(s) written at the call site: {literals[0]}");
+    }
+
     public static void Run(string sourcePath, Action<bool, string> check)
     {
         if (!File.Exists(sourcePath))

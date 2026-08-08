@@ -698,7 +698,7 @@ namespace Eggverse
             int partyRows = state.Party.Count;
             if (nestCursor < partyRows)
             {
-                Toast("That one is already with you. Pick an egg from the nest.");
+                Toast(UiCopy.AlreadyWithYou);
                 return;
             }
 

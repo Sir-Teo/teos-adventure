@@ -279,6 +279,28 @@ The last one has a check that generalises: **`Feedback`** scans `BattleMode.cs` 
 health changes, six numbers. Deleting any one of them fails by file and line, so the next effect
 somebody adds gets asked the same question without anybody remembering to ask it.
 
+## The strings nobody re-reads
+
+The prose pass reads every authored line in `UiCopy` — five hundred and eighty of them. It did not
+read a single one of the game's **refusals**, because those were string literals at the call sites
+that raised them. They are the strings most likely to be clumsy: written in a hurry, seen rarely,
+never re-read.
+
+Moving fourteen of them into `UiCopy` found two pairs saying one thing twice:
+
+| situation | one place said | the other said |
+|---|---|---|
+| flying at a sealed sector | "That route is sealed." | "Your charts do not reach that far yet." |
+| a save that would not write | "Could not write the save file." | "…Your progress is not being saved." |
+
+The second wording wins in both cases, and for the same reason. A *sealed route* sounds like a
+door somebody shut; *charts that do not reach* is a fact about you, and the fact about you is the
+one that changes. And a failed write that does not say the run has stopped being written down has
+left out the only part that matters.
+
+`Feedback.Toasts` now scans for a quoted sentence passed straight to `Toast(` and fails by file and
+line. Thirty-three toasts, none written where it is raised.
+
 ## Which assertions never ran
 
 "Did anything fail" and "did everything get asked" are different questions, and a suite this size

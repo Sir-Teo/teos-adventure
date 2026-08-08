@@ -159,6 +159,19 @@ static class Prose
         Add("save repaired, entries", UiCopy.SaveRepaired(3, 0));
         Add("save repaired, eggs", UiCopy.SaveRepaired(0, 2));
         Add("save repaired, both", UiCopy.SaveRepaired(3, 2));
+
+        // The refusals. Fourteen literals at fourteen call sites never reached this pass, and
+        // they are the strings most likely to be clumsy: written in a hurry, seen rarely, never
+        // re-read.
+        Add("route sealed", UiCopy.RouteSealed);
+        Add("already there", UiCopy.AlreadyThere);
+        Add("already with you", UiCopy.AlreadyWithYou);
+        Add("save unreadable", UiCopy.SaveUnreadable);
+        Add("save unwritable", UiCopy.SaveUnwritable);
+        Add("save written", UiCopy.SaveWritten);
+        Add("back to space", UiCopy.BackToSpace);
+        Add("nest warmed by a scene", UiCopy.NestWarmedByScene);
+        Add("cartons given", UiCopy.CartonsGiven(12, 12));
         foreach (EggStatus cond in System.Enum.GetValues(typeof(EggStatus)))
         {
             if (cond == EggStatus.None) continue;

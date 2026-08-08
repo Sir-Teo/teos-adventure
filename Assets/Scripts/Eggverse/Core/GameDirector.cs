@@ -214,7 +214,11 @@ namespace Eggverse
             bool ok = SaveSystem.Save(State, Story, CurrentPlanet != null ? CurrentPlanet.Id : PlanetDatabase.Home.Id, playSeconds);
             if (announce)
             {
-                Hud.Toast(ok ? "Progress saved." : "Could not write the save file.");
+                // The same sentence either way. A save the player asked for and an autosave that
+                // failed are the same failure, and one of them was saying only half of it -
+                // "Could not write the save file" without the part that matters, which is that
+                // the run has stopped being written down.
+                Hud.Toast(ok ? UiCopy.SaveWritten : UiCopy.SaveUnwritable);
                 if (ok) Audio.Play(Sfx.Save);
             }
             else if (ok)
@@ -227,7 +231,7 @@ namespace Eggverse
             {
                 // A failed autosave is the one case worth interrupting for: the player would
                 // otherwise keep playing believing the run is being written down.
-                Hud.Toast("Could not write the save file. Your progress is not being saved.");
+                Hud.Toast(UiCopy.SaveUnwritable);
             }
         }
 
@@ -240,7 +244,7 @@ namespace Eggverse
 
             if (!SaveSystem.Load(out loadedState, out loadedStory, out planetId, out seconds))
             {
-                Hud.Toast("That save could not be read. Starting a new run.");
+                Hud.Toast(UiCopy.SaveUnreadable);
                 StartFreshGame();
                 return;
             }
@@ -435,7 +439,7 @@ namespace Eggverse
             Cam.transform.position = new Vector3(Teo.transform.position.x, Teo.transform.position.y, -10f);
 
             Hud.Refresh();
-            Hud.Toast("Back in the black. M opens the chart.");
+            Hud.Toast(UiCopy.BackToSpace);
             Audio.Play(Sfx.Liftoff);
             Transition.FlashDark(0.5f);
         }
@@ -486,12 +490,12 @@ namespace Eggverse
             if (script.HealsParty)
             {
                 State.RestoreEggs();
-                Hud.Toast("Your nest is warm again.");
+                Hud.Toast(UiCopy.NestWarmedByScene);
             }
             if (script.RestocksCartons)
             {
                 State.RestockSupplies();
-                Hud.Toast("Cartons restocked.");
+                Hud.Toast(UiCopy.CartonsGiven(State.Cartons, State.MaxCartons));
             }
 
             if (!string.IsNullOrEmpty(script.GivesSpeciesId))

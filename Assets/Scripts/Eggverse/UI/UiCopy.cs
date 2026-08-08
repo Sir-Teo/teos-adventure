@@ -136,6 +136,47 @@ namespace Eggverse
         public const string WokeWarm = "You woke at the Nest Station. The pad was warm, and everything is patched up.";
         public const string WokeCold = "You woke on cold stone. It took a while. Everything is patched up, and nobody is saying how.";
 
+        // ---- what the game says when it will not do something ----
+        //
+        // These were fourteen string literals at fourteen call sites, and not one of them went
+        // through the prose pass that reads all five hundred and seventy other authored lines.
+        // They are the strings most likely to be clumsy: written in a hurry, seen rarely, never
+        // re-read. Two of them turned out to be different refusals for the same situation.
+
+        /// <summary>
+        /// Trying to fly somewhere the story has not opened.
+        ///
+        /// The chart said "That route is sealed." and flying at the same world said "Your charts
+        /// do not reach that far yet." — two answers to one question, and the second is the
+        /// better one because it says whose limit it is. A sealed route sounds like a door
+        /// somebody shut; charts that do not reach is a thing about you, and the thing about you
+        /// is what changes.
+        /// </summary>
+        public const string RouteSealed = "Your charts do not reach that far yet.";
+
+        public const string AlreadyThere = "You are already there.";
+        public const string AlreadyWithYou = "That one is already with you. Pick an egg from the nest.";
+        public const string SaveUnreadable = "That save could not be read. Starting a new run.";
+        public const string SaveWritten = "Progress saved.";
+
+        /// <summary>
+        /// One sentence for a failed write, wherever it happens. A save the player asked for and
+        /// an autosave that failed are the same failure, and the first said only "Could not write
+        /// the save file" - leaving out the part that matters, which is that the run has stopped
+        /// being written down.
+        /// </summary>
+        public const string SaveUnwritable = "Could not write the save file. Your progress is not being saved.";
+        public const string BackToSpace = "Back in the black. M opens the chart.";
+
+        /// <summary>
+        /// What a resident does for you when a scene says so. "Cartons restocked." said what
+        /// happened and not what it means, which is the whole of it: they have given you more
+        /// than you can normally carry back out.
+        /// </summary>
+        public const string NestWarmedByScene = "Your nest is warm again.";
+        public static string CartonsGiven(int now, int max) =>
+            "Cartons restocked. " + Words.Count(now, "carton") + " to carry back out.";
+
         /// <summary>
         /// What a load had to repair, in words.
         ///

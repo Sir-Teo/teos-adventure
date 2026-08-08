@@ -632,12 +632,12 @@ namespace Eggverse
             var m = markers[selected];
             if (PresenceAt(m.Def) != Presence.Elsewhere)
             {
-                dir.Hud.Toast("You are already there.");
+                dir.Hud.Toast(UiCopy.AlreadyThere);
                 return;
             }
             if (!dir.Story.CanEnter(m.Def.Sector))
             {
-                dir.Hud.Toast("That route is sealed.");
+                dir.Hud.Toast(UiCopy.RouteSealed);
                 return;
             }
             if (!dir.State.Visited.Contains(m.Def.Id))
