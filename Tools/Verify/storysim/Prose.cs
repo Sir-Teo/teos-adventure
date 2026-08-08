@@ -172,6 +172,41 @@ static class Prose
         Add("back to space", UiCopy.BackToSpace);
         Add("nest warmed by a scene", UiCopy.NestWarmedByScene);
         Add("cartons given", UiCopy.CartonsGiven(12, 12));
+
+        // The battle log. Thirty-three sentences written where they were spoken, and the second
+        // most-read text in the game after the dialogue box - a player who fights two hundred
+        // times reads these far more often than any single line of story.
+        Add("trainer sends out", BattleLog.TrainerSendsOut("Marn", "Frizzlebolt", 18));
+        Add("an Elder appears", BattleLog.ElderAppears("Craggle", 21));
+        Add("a wild egg appears", BattleLog.WildAppears("Wavelet", 14));
+        Add("go out", BattleLog.GoOut("Pebbles"));
+        Add("come back", BattleLog.ComeBack("Pebbles"));
+        Add("salve not needed", BattleLog.SalveNotNeeded("Pebbles"));
+        Add("salve offered", BattleLog.SalveOffered("Pebbles"));
+        Add("no stealing", BattleLog.NoStealing("Marn"));
+        Add("no running", BattleLog.NoRunning("Marn"));
+        Add("too dazed", BattleLog.TooDazed("Pebbles"));
+        Add("out of moves", BattleLog.OutOfMoves("Pebbles"));
+        Add("used a move", BattleLog.Used("Pebbles", "Shell Bash"));
+        Add("held on", BattleLog.HeldOn("Pebbles"));
+        Add("hit several times", BattleLog.HitTimes(3));
+        Add("jolted", BattleLog.Jolted("Pebbles", 4));
+        Add("drained", BattleLog.Drained("Pebbles", 12));
+        Add("recoiled", BattleLog.Recoiled("Pebbles", 6));
+        Add("mended", BattleLog.Mended("Pebbles", 30));
+        Add("mended, short", BattleLog.MendedShort("Pebbles", 4));
+        Add("burned", BattleLog.Burned("Pebbles", 7));
+        Add("recovered", BattleLog.Recovered("Pebbles", 44));
+        Add("attack rose", BattleLog.AttackRose("Pebbles"));
+        Add("defence rose", BattleLog.DefenceRose("Pebbles"));
+        Add("speed rose", BattleLog.SpeedRose("Pebbles"));
+        Add("speed fell", BattleLog.SpeedFell("Wavelet"));
+        Add("too hardheaded", BattleLog.TooHardheaded("Wavelet"));
+        Add("already has a condition", BattleLog.AlreadyHas("Wavelet", EggStatus.Scorched));
+        Add("immune", BattleLog.ImmuneTo(EggType.Frost));
+        Add("shook it off", BattleLog.ShookOff("Pebbles", EggStatus.Chilled));
+        Add("threw a carton", BattleLog.ThrewCarton(3));
+        Add("used a salve", BattleLog.UsedSalve(1));
         foreach (EggStatus cond in System.Enum.GetValues(typeof(EggStatus)))
         {
             if (cond == EggStatus.None) continue;
@@ -241,7 +276,19 @@ static class Prose
             if (!layout.Contains(where))
             {
                 check(t == t.Trim(), "[" + where + "] no leading or trailing space: \"" + Clip(t) + "\"");
-                check(!t.Contains("  "), "[" + where + "] no double space: \"" + Clip(t) + "\"");
+                // A double space before an opening bracket is this game's own typography, not a
+                // slip: "You lobbed an egg carton!  (3 cartons left)" sets the count off from
+                // the sentence the same way "  ·  " sets fields apart everywhere else. The rule
+                // learned it once here rather than five lines being exempted one at a time,
+                // because five exemptions would also excuse a real accident on those lines.
+                string spacing = t.Replace("  (", " (");
+                check(!spacing.Contains("  "), "[" + where + "] no double space: \"" + Clip(t) + "\"");
+
+                // And no space in front of punctuation. Found by planting one and watching this
+                // pass let it through: "Go, Pebbles !" is the kind of slip that survives every
+                // reading because the eye supplies what it expects.
+                check(!System.Text.RegularExpressions.Regex.IsMatch(t, @"\s[.,!?;:]"),
+                      "[" + where + "] no space before punctuation: \"" + Clip(t) + "\"");
                 check(!t.Contains(" ,") && !t.Contains(" ."),
                       "[" + where + "] no space before punctuation: \"" + Clip(t) + "\"");
             }

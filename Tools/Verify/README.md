@@ -301,6 +301,22 @@ left out the only part that matters.
 `Feedback.Toasts` now scans for a quoted sentence passed straight to `Toast(` and fails by file and
 line. Thirty-three toasts, none written where it is raised.
 
+The battle log was the same gap, one level bigger: **thirty-three sentences built inline** from a
+name and a number, and it is the second most-read text in the game after the dialogue box. A
+player who fights two hundred times reads "Pebbles used Shell Bash!" far more often than any
+single line of story. They live in `BattleLog` now and the prose pass reads all of them — the
+authored-string count went from 581 to 612.
+
+Running them through it immediately found two things about the rules themselves. Five lines use
+`"!  ("` — a deliberate double space setting a count off from its sentence, the same idiom as
+`"  ·  "` everywhere else — and the no-double-space rule had simply never met it. The rule learned
+the idiom once rather than five lines being exempted one at a time, because five exemptions would
+also excuse a real accident on those lines.
+
+And planting a space before an exclamation mark went straight through: there was no rule against
+it. `"Go, Pebbles !"` is the kind of slip that survives every reading, because the eye supplies
+what it expects.
+
 ## Which assertions never ran
 
 "Did anything fail" and "did everything get asked" are different questions, and a suite this size

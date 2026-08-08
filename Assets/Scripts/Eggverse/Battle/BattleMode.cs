@@ -281,19 +281,19 @@ namespace Eggverse
         {
             if (IsTrainer)
             {
-                yield return Say(trainerName + " sends out " + Foe.Name + "!  (Lv " + Foe.Level + ")");
+                yield return Say(BattleLog.TrainerSendsOut(trainerName, Foe.Name, Foe.Level));
             }
             else if (Foe.Elder)
             {
-                yield return Say("An <b>Elder " + Foe.Species.Name + "</b> heaves into view.  (Lv " + Foe.Level + ")");
+                yield return Say(BattleLog.ElderAppears(Foe.Species.Name, Foe.Level));
                 yield return Say(UiCopy.ElderWarning);
             }
             else
             {
-                yield return Say("A wild " + Foe.Name + " appeared!  (Lv " + Foe.Level + ")");
+                yield return Say(BattleLog.WildAppears(Foe.Name, Foe.Level));
             }
 
-            yield return Say("Go, " + Mine.Name + "!");
+            yield return Say(BattleLog.GoOut(Mine.Name));
 
             rounds = 0;
             foeWasElder = Foe.Elder;
@@ -320,7 +320,7 @@ namespace Eggverse
                     Mine.HPFraction < SalveHintFraction)
                 {
                     dir.Story.SetFlag("learned_salve");
-                    yield return Say(Mine.Name + " is hurt. A <b>salve</b> mends it - it costs you the turn.");
+                    yield return Say(BattleLog.SalveOffered(Mine.Name));
                 }
 
                 yield return ChooseTurn();
@@ -373,7 +373,7 @@ namespace Eggverse
                     case PlayerAction.Carton:
                         if (IsTrainer)
                         {
-                            yield return Say(trainerName + "'s eggs are not yours to take.");
+                            yield return Say(BattleLog.NoStealing(trainerName));
                             continue;
                         }
                         if (State.Cartons <= 0)
@@ -392,7 +392,7 @@ namespace Eggverse
                         }
                         if (Mine.CurrentHP >= Mine.MaxHP)
                         {
-                            yield return Say(Mine.Name + " has not got a scratch on it.");
+                            yield return Say(BattleLog.SalveNotNeeded(Mine.Name));
                             continue;
                         }
                         chosenAction = PlayerAction.Salve;
@@ -417,7 +417,7 @@ namespace Eggverse
                     case PlayerAction.Run:
                         if (IsTrainer)
                         {
-                            yield return Say("There is no running from " + trainerName + ".");
+                            yield return Say(BattleLog.NoRunning(trainerName));
                             continue;
                         }
                         chosenAction = PlayerAction.Run;
@@ -434,7 +434,7 @@ namespace Eggverse
                     {
                         var incoming = State.Party[chosenParam];
                         Mine.ClearStages();
-                        yield return Say("Come back, " + Mine.Name + "!");
+                        yield return Say(BattleLog.ComeBack(Mine.Name));
                         activeIndex = chosenParam;
                         foughtThisBattle.Add(activeIndex);
                         RefreshCards(true);
@@ -442,7 +442,7 @@ namespace Eggverse
                         // species and the wild one speaks when it arrives; the egg you send in
                         // yourself was the one thing that came on in silence.
                         dir.Audio.PlayCry(incoming.Species, AudioDirector.CrySentOut);
-                        yield return Say("Go, " + incoming.Name + "!");
+                        yield return Say(BattleLog.GoOut(incoming.Name));
                         yield return FoeTurn();
                         yield break;
                     }
@@ -531,7 +531,7 @@ namespace Eggverse
             // Checked before the move is chosen off the slot, so a lost turn costs no PP.
             if (user.Status == EggStatus.Dazed && EggRandom.Value < DazeSkipChance)
             {
-                yield return Say(user.Name + " is too dazed to move!");
+                yield return Say(BattleLog.TooDazed(user.Name));
                 yield break;
             }
 
@@ -539,13 +539,13 @@ namespace Eggverse
             if (slot == null || !slot.Usable)
             {
                 move = Flail;
-                yield return Say(user.Name + " has nothing left and flails!");
+                yield return Say(BattleLog.OutOfMoves(user.Name));
             }
             else
             {
                 move = slot.Move;
                 slot.PP--;
-                yield return Say(user.Name + " used " + move.Name + "!");
+                yield return Say(BattleLog.Used(user.Name, move.Name));
             }
 
             if (!BattleCalc.Hits(move))
@@ -581,7 +581,7 @@ namespace Eggverse
                                         userIsPlayer ? foeHpBar : myHpBar,
                                         target);
                 if (crit) yield return Say(UiCopy.Critical);
-                if (sturdySave) yield return Say(target.Name + " held together on one shard of shell!");
+                if (sturdySave) yield return Say(BattleLog.HeldOn(target.Name));
 
                 // Static punishes whoever threw the punch.
                 if (target.Trait == EggTrait.Static && dealt > 0 && !user.IsFainted)
@@ -590,11 +590,11 @@ namespace Eggverse
                     user.TakeDamage(jolt);
                     SpawnDamageNumber(userIsPlayer ? myEggImage : foeEggImage, jolt, 1f, false);
                     RefreshCards(false);
-                    yield return Say(user.Name + " was jolted for " + jolt + ".");
+                    yield return Say(BattleLog.Jolted(user.Name, jolt));
                 }
             }
 
-            if (hits > 1 && !target.IsFainted) yield return Say("Hit " + hits + " times!");
+            if (hits > 1 && !target.IsFainted) yield return Say(BattleLog.HitTimes(hits));
 
             string line = TypeChart.EffectivenessLine(typeMult);
             if (line != null) yield return Say(line);
@@ -607,7 +607,7 @@ namespace Eggverse
                         user.Heal(healed);
                         SpawnHealNumber(userIsPlayer ? myEggImage : foeEggImage, healed);
                         RefreshCards(false);
-                        yield return Say(user.Name + " drained " + healed + " HP.");
+                        yield return Say(BattleLog.Drained(user.Name, healed));
                         break;
                     }
                 case MoveEffect.Recoil25:
@@ -616,7 +616,7 @@ namespace Eggverse
                         user.TakeDamage(recoil);
                         SpawnDamageNumber(userIsPlayer ? myEggImage : foeEggImage, recoil, 1f, false);
                         RefreshCards(false);
-                        yield return Say(user.Name + " took " + recoil + " in recoil.");
+                        yield return Say(BattleLog.Recoiled(user.Name, recoil));
                         break;
                     }
                 case MoveEffect.SpdDownFoe:
@@ -644,20 +644,20 @@ namespace Eggverse
                         int before = user.CurrentHP;
                         user.Heal(Mathf.RoundToInt(user.MaxHP * MoveDef.SelfHealShare));
                         SpawnHealNumber(ReferenceEquals(user, Mine) ? myEggImage : foeEggImage, user.CurrentHP - before);
-                        yield return Say(user.Name + " mended " + (user.CurrentHP - before) + " HP.");
+                        yield return Say(BattleLog.Mended(user.Name, user.CurrentHP - before));
                         break;
                     }
                 case MoveEffect.AtkUp:
                     user.AtkStage = Mathf.Min(6, user.AtkStage + 1);
-                    yield return Say(user.Name + "'s attack rose!");
+                    yield return Say(BattleLog.AttackRose(user.Name));
                     break;
                 case MoveEffect.DefUp:
                     user.DefStage = Mathf.Min(6, user.DefStage + 1);
-                    yield return Say(user.Name + "'s defence rose!");
+                    yield return Say(BattleLog.DefenceRose(user.Name));
                     break;
                 case MoveEffect.SpdUp:
                     user.SpdStage = Mathf.Min(6, user.SpdStage + 1);
-                    yield return Say(user.Name + "'s speed rose!");
+                    yield return Say(BattleLog.SpeedRose(user.Name));
                     break;
                 case MoveEffect.SpdDownFoe:
                     yield return LowerFoeSpeed(target);
@@ -686,14 +686,14 @@ namespace Eggverse
 
             if (target.Status == status)
             {
-                yield return Say(target.Name + " is already " + status.ToString().ToLowerInvariant() + ".");
+                yield return Say(BattleLog.AlreadyHas(target.Name, status));
                 yield break;
             }
             if (!target.CanCatch(status))
             {
                 // Either it is already carrying something else, or its own element shrugs this off.
                 if (target.Status == EggStatus.None)
-                    yield return Say(TypeChart.Name(target.Type) + " eggs do not take that.");
+                    yield return Say(BattleLog.ImmuneTo(target.Type));
                 yield break;
             }
 
@@ -709,11 +709,11 @@ namespace Eggverse
             if (target.TryLowerStage(ref stage))
             {
                 target.SpdStage = stage;
-                yield return Say(target.Name + "'s speed fell!");
+                yield return Say(BattleLog.SpeedFell(target.Name));
             }
             else
             {
-                yield return Say(target.Name + " is too hardheaded to slow down.");
+                yield return Say(BattleLog.TooHardheaded(target.Name));
             }
         }
 
@@ -726,14 +726,14 @@ namespace Eggverse
             if (mine > 0)
             {
                 RefreshCards(false);
-                yield return Say(Mine.Name + " mended " + mine + ".");
+                yield return Say(BattleLog.MendedShort(Mine.Name, mine));
             }
 
             int theirs = Foe.TickRegen();
             if (theirs > 0)
             {
                 RefreshCards(false);
-                yield return Say(Foe.Name + " mended " + theirs + ".");
+                yield return Say(BattleLog.MendedShort(Foe.Name, theirs));
             }
 
             // Burn ticks after regeneration, so Warm Yolk offsets it rather than racing it.
@@ -745,7 +745,7 @@ namespace Eggverse
                 SpawnDamageNumber(burning == Mine ? myEggImage : foeEggImage, tick, 1f, false);
                 yield return AnimateHit(burning == Mine ? myEggImage : foeEggImage,
                                         burning == Mine ? myHpBar : foeHpBar, burning);
-                yield return Say(burning.Name + " burned for " + tick + ".");
+                yield return Say(BattleLog.Burned(burning.Name, tick));
                 if (burning.IsFainted) break;
             }
 
@@ -756,7 +756,7 @@ namespace Eggverse
                 if (egg.TickStatus())
                 {
                     RefreshCards(false);
-                    yield return Say(egg.Name + " shook off the " + had.ToString().ToLowerInvariant() + ".");
+                    yield return Say(BattleLog.ShookOff(egg.Name, had));
                 }
             }
         }
@@ -770,10 +770,10 @@ namespace Eggverse
             egg.Heal(Mathf.Max(1, Mathf.RoundToInt(egg.MaxHP * SalveFraction)));
             int healed = egg.CurrentHP - before;
             dir.Audio.Play(Sfx.Heal);
-            yield return Say("You rubbed on a yolk salve.  (" + State.Salves + " left)");
+            yield return Say(BattleLog.UsedSalve(State.Salves));
             SpawnHealNumber(myEggImage, healed);
             yield return AnimateHeal(myHpBar, myEggImage, egg);
-            yield return Say(egg.Name + " recovered " + healed + " HP.");
+            yield return Say(BattleLog.Recovered(egg.Name, healed));
             State.RaiseChanged();
         }
 
@@ -782,7 +782,7 @@ namespace Eggverse
             State.Cartons--;
             State.RaiseChanged();
             dir.Audio.Play(Sfx.CartonThrow);
-            yield return Say("You lobbed an egg carton!  (" + State.Cartons + " left)");
+            yield return Say(BattleLog.ThrewCarton(State.Cartons));
 
             int shakes;
             bool caught = BattleCalc.RollCatch(Foe, out shakes);
