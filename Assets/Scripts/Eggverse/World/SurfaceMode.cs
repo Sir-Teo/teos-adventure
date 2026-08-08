@@ -361,8 +361,6 @@ namespace Eggverse
 
         /// <summary>How a world arranges its shell fields. Derived from the planet seed, so
         /// each one is consistent between visits but no two feel like the same walk.</summary>
-        enum FieldLayout { Scattered, Ring, Clustered }
-
         /// <summary>
         /// Relative luminance, for deciding whether something must be lightened or darkened
         /// to stand out against the ground it sits on.
@@ -387,49 +385,15 @@ namespace Eggverse
             Color fieldColor = AgainstGround(TypeChart.ColorOf(planet.Theme), planet.Land, 0.55f, 0.30f);
             fieldColor.a = 0.85f;
 
-            var layout = (FieldLayout)(planet.Seed % 3);
-            int fieldCount = 7 + (planet.Seed / 7) % 5;   // 7..11
-
-            // Clustered worlds seed a few clumps and hang fields off them.
-            int clumps = 2 + (planet.Seed / 13) % 2;
-            var clumpCentres = new Vector2[clumps];
-            for (int c = 0; c < clumps; c++)
+            // From SurfaceLayout, which is where the placement lives now. It used to be
+            // generated here and existed only as GameObjects afterwards — so how much of a world
+            // is shell field, which is what decides how often a player meets anything, could not
+            // be measured at all. Same seed, same stream, one placement.
+            var placed = SurfaceLayout.Fields(planet);
+            for (int i = 0; i < placed.Count; i++)
             {
-                float ca = (float)rng.NextDouble() * Mathf.PI * 2f;
-                float cd = Mathf.Lerp(R * 0.30f, R * 0.70f, (float)rng.NextDouble());
-                clumpCentres[c] = new Vector2(Mathf.Cos(ca), Mathf.Sin(ca)) * cd;
-            }
-
-            for (int i = 0; i < fieldCount; i++)
-            {
-                float a = (float)rng.NextDouble() * Mathf.PI * 2f;
-                Vector2 pos;
-                float radius;
-
-                switch (layout)
-                {
-                    case FieldLayout.Ring:
-                        // A band around the middle distance: long circular walks.
-                        pos = new Vector2(Mathf.Cos(a), Mathf.Sin(a)) *
-                              Mathf.Lerp(R * 0.60f, R * 0.82f, (float)rng.NextDouble());
-                        radius = Mathf.Lerp(4.5f, 6.0f, (float)rng.NextDouble());
-                        break;
-
-                    case FieldLayout.Clustered:
-                        // Dense pockets with empty ground between them.
-                        var centre = clumpCentres[i % clumps];
-                        pos = centre + new Vector2(Mathf.Cos(a), Mathf.Sin(a)) *
-                              Mathf.Lerp(0f, 8f, (float)rng.NextDouble());
-                        pos = Vector2.ClampMagnitude(pos, R * 0.90f);
-                        radius = Mathf.Lerp(3.5f, 5.5f, (float)rng.NextDouble());
-                        break;
-
-                    default:
-                        pos = new Vector2(Mathf.Cos(a), Mathf.Sin(a)) *
-                              Mathf.Lerp(R * 0.28f, R * 0.86f, (float)rng.NextDouble());
-                        radius = Mathf.Lerp(4f, 6.5f, (float)rng.NextDouble());
-                        break;
-                }
+                Vector2 pos = placed[i].At;
+                float radius = placed[i].Radius;
 
                 var sr = Spawn("ShellField", ProcArt.Blob("field", Color.white, i * 31 + 11), pos, radius * 2f, fieldColor, -30);
                 fields.Add(sr.transform);

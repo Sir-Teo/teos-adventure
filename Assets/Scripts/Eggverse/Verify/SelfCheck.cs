@@ -1671,6 +1671,73 @@ namespace Eggverse
                 check(elder.Elder && !ordinary.Elder, "and knows it");
             }
 
+            // ---- how far you walk between fights ----
+            {
+                // Encounters only tick inside a shell field, so how much of a world is field
+                // decides how often a player meets anything. That could not be measured until
+                // now, because the layout existed only as GameObjects - the same reason fight
+                // length went unmeasured until the damage formula was split.
+                //
+                // These are random-walk figures. A player who heads for the pale patches, which
+                // the game teaches in the opening brief, meets things far faster; this is the
+                // slow end of the range rather than the typical one.
+                float busiest = 999f, emptiest = 0f;
+                string busyWorld = "", emptyWorld = "";
+                float inField = (SurfaceMode.EncounterWalkMin + SurfaceMode.EncounterWalkMax) * 0.5f;
+
+                foreach (var w in PlanetDatabase.All)
+                {
+                    var fields = SurfaceLayout.Fields(w);
+                    check(fields.Count >= 5,
+                          w.Name + " has somewhere for eggs to hide (" + fields.Count + " fields)");
+
+                    float area = 0f;
+                    foreach (var f in fields)
+                    {
+                        check(f.Walkable > 0f, w.Name + "'s fields have some inside to them");
+                        check(f.Walkable < f.Radius,
+                              w.Name + "'s fields count as smaller than they look, so an egg never " +
+                              "jumps you from the rim");
+                        check(f.At.magnitude + f.Radius <= w.SurfaceRadius * 1.02f,
+                              w.Name + "'s fields stay on the world");
+                        area += Mathf.PI * f.Walkable * f.Walkable;
+                    }
+
+                    float share = area / (Mathf.PI * w.SurfaceRadius * w.SurfaceRadius);
+                    float seconds = inField / Mathf.Max(0.001f, share) / TeoController.WalkSpeed;
+
+                    if (seconds < busiest) { busiest = seconds; busyWorld = w.Name; }
+                    if (seconds > emptiest) { emptiest = seconds; emptyWorld = w.Name; }
+
+                    // Three seconds is a fight every few steps, which is harassment rather than
+                    // a world. Twenty is a world a player crosses looking for something to do.
+                    check(seconds > 3f,
+                          w.Name + " is not a fight every few steps (" + seconds.ToString("0.0") + "s)");
+                    check(seconds < 20f,
+                          w.Name + " is not empty ground (" + seconds.ToString("0.0") + "s)");
+                }
+
+                // Worlds are allowed to differ - Glacierim's ice sheets and Cairnhold's cairns
+                // are meant to feel emptier than Mosswell's wet ground, and their taglines say
+                // so. Three times is where that stops being character and starts being one of
+                // them being wrong.
+                check(emptiest <= busiest * 3f,
+                      "the quiet worlds are quieter, not deserted (" + busyWorld + " " +
+                      busiest.ToString("0.0") + "s, " + emptyWorld + " " + emptiest.ToString("0.0") + "s)");
+
+                // The builder and the check read one layout. Asking twice has to give the same
+                // answer, or the fields a player walks through are not the ones measured here.
+                foreach (var w in PlanetDatabase.All)
+                {
+                    var a = SurfaceLayout.Fields(w);
+                    var b = SurfaceLayout.Fields(w);
+                    check(a.Count == b.Count, w.Name + "'s fields are the same every time they are asked for");
+                    for (int i = 0; i < a.Count; i++)
+                        check(a[i].At == b[i].At && a[i].Radius == b[i].Radius,
+                              w.Name + "'s field " + i + " is where it was a moment ago");
+                }
+            }
+
             // ---- the sandbox really does contain everything ----
             {
                 // A run with every egg and every world in it, for looking at the game rather

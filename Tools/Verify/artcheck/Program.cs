@@ -399,6 +399,26 @@ static class Program
         }
 
         {
+            // How much of a world is shell field, and so how far a player walks between fights?
+            foreach (var w in Eggverse.PlanetDatabase.All)
+            {
+                var fields = Eggverse.SurfaceLayout.Fields(w);
+                float area = 0f;
+                foreach (var f in fields) area += (float)Math.PI * f.Walkable * f.Walkable;
+                float world = (float)Math.PI * w.SurfaceRadius * w.SurfaceRadius;
+                float share = area / world;
+
+                // Encounters only tick inside a field, so walking distance per fight is the
+                // in-field distance divided by the share of ground that is field.
+                float inField = (Eggverse.SurfaceMode.EncounterWalkMin +
+                                 Eggverse.SurfaceMode.EncounterWalkMax) * 0.5f;
+                float walked = inField / Math.Max(0.001f, share);
+                Console.WriteLine($"  {w.Name,-14} {fields.Count} fields, {share * 100f:0}% of the ground" +
+                                  $"  ->  {walked:0} units between fights, {walked / 13f:0.0}s");
+            }
+        }
+
+        {
             // What does a catch cost, in cartons, at a sensibly worn-down target?
             foreach (var w in Eggverse.PlanetDatabase.All)
             {
