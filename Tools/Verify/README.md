@@ -168,6 +168,16 @@ their closers consumed zero characters and looped forever. The record column car
 It presented as "Out of memory" halfway through a render, which is not what an infinite loop
 usually looks like. The same code had been copied into three files.
 
+One more shape of it, found by looking at a panel that had been rendered a dozen times: the egg
+detail column coloured **a whole line by the first colour tag anywhere in it**. So
+`Frosty <grey>Glacegg</grey>` came out entirely grey, and a nicknamed egg's own name looked dimmer
+than its trait. The panel was right; the picture was not, and I nearly went and brightened a
+correct heading.
+
+Fixing it took three tries, each of which broke the line the previous one fixed. The rule that
+holds: a line is mixed if it **starts in the panel's own ink and changes partway through**, or if
+it **carries more than one colour**. Either condition alone gets one of the two lines wrong.
+
 `artcheck` reimplements the game's *drawing*, not its data. That reimplementation has produced
 false alarms seven times: a font metric that overstated every label by two thirds, sector captions
 placed by an older algorithm than the game's, a truncating text wrap that hid the overflow it

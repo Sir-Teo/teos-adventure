@@ -118,15 +118,60 @@ static class Collection
             Battle.Ellipse(c, ex2 + 75, ey2 - 75, 54, 72, Col.Hex(TypeHex(shown.Type)));
             Battle.Ellipse(c, ex2 + 95, ey2 - 50, 34, 44, new Col(0, 0, 0, 0.20f), 0.9f);
 
+            // Per run, not per line. FirstCol painted a whole line in the first colour tag it
+            // found anywhere in it — so "Frosty <grey>Glacegg</grey>" came out entirely grey and
+            // the egg's own name looked dimmer than its trait. The panel was right; the picture
+            // was not. Every other column on this screen was converted to Runs when it started
+            // drawing the game's own text; these two were missed.
             float tx2 = x0 + 1450, ty2 = ey2;
             foreach (var raw in Eggverse.HudView.EggDetailText(shown).Split('\n'))
             {
-                var plain = Strip(raw);
-                if (plain.Length == 0) { ty2 -= step19; continue; }
-                foreach (var line in WrapLines(plain, 28))
+                if (Strip(raw).Length == 0) { ty2 -= step19; continue; }
+
+                // Per run, and size tags dropped first. FirstCol painted a whole line in the
+                // first colour it found anywhere in it, so "Frosty <grey>Glacegg</grey>" came
+                // out entirely grey and the egg's own name looked dimmer than its trait. Runs
+                // fixes that and then trips over <size=26>, which this render has no notion of -
+                // it draws one size per panel. Both halves had to be right for the line to be.
+                string sized = raw.Replace("<size=26>", "").Replace("<size=17>", "")
+                                  .Replace("</size>", "");
+
+                // A line that changes colour partway through gets drawn run by run and is short
+                // enough not to need wrapping - that is the title, and it is the only one. A
+                // line that is one colour gets wrapped, because the trait blurb under it is the
+                // longest thing on the panel and uGUI wraps it in the game.
+                // Not "more than one colour tag" - the title has exactly one, wrapping its
+                // species suffix, and that rule sent it down the single-colour path and painted
+                // the name grey again. What makes a line mixed is text *before* its first
+                // colour tag: "Frosty <grey>Glacegg</grey>" starts in the panel's own ink and
+                // changes partway through.
+                // A line is mixed if it starts in the panel's own ink and changes partway
+                // through ("Frosty <grey>Glacegg</grey>") *or* if it carries more than one
+                // colour ("<cyan>Frost</cyan> <grey>Lv 24</grey> <amber>ELDER</amber>"). Either
+                // condition alone gets one of those two lines wrong, and I wrote each of them
+                // in turn before noticing there were two shapes to catch.
+                int firstTint = sized.IndexOf("<color=");
+                int tints = System.Text.RegularExpressions.Regex.Matches(sized, "<color=").Count;
+                bool startsPlain = firstTint > 0 &&
+                                   Strip(sized.Substring(0, firstTint)).Trim().Length > 0;
+                if (startsPlain || tints > 1)
                 {
-                    Battle.Text(c, line.ToUpperInvariant(), tx2, ty2, 19, FirstCol(raw, Battle.Ink));
+                    float pen = tx2;
+                    foreach (var r in Runs(sized, Battle.Ink))
+                    {
+                        if (r.text.Trim().Length > 0)
+                            Battle.Text(c, r.text.ToUpperInvariant(), pen, ty2, 19, r.col);
+                        pen += Battle.TextWidth(r.text, 19);
+                    }
                     ty2 -= step19;
+                }
+                else
+                {
+                    foreach (var line in WrapLines(Strip(sized), 28))
+                    {
+                        Battle.Text(c, line.ToUpperInvariant(), tx2, ty2, 19, FirstCol(sized, Battle.Ink));
+                        ty2 -= step19;
+                    }
                 }
             }
 
@@ -135,6 +180,9 @@ static class Collection
             {
                 var plain = Strip(raw);
                 if (plain.Length == 0) { ly3 -= step19; continue; }
+                // These lines are one colour each - a heading in amber, a body in dim ink - so
+                // FirstCol is the right tool and wrapping still has to happen. The title above
+                // is the only line on this panel that changes colour partway through.
                 foreach (var line in WrapLines(plain, 46))
                 {
                     Battle.Text(c, line.ToUpperInvariant(), lx3, ly3, 19, FirstCol(raw, Battle.Ink));
