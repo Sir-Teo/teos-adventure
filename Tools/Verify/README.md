@@ -362,6 +362,22 @@ Every stray it turned up was worth moving for a second reason as well as the fir
 
 620 authored strings before the sweep, 635 after.
 
+## Balance nobody was holding
+
+Measuring how many fights a level costs, at the middle of each world's own band, gave **1.7 at
+Yolkhaven and 1.9 at Amaranth** — flat across the whole run. That is a deliberate curve, and
+nothing was holding it: `XpToNext` and `XpRewardFor` rise together by agreement rather than by
+construction, and one constant in either turns the late game into a grind or the early game into a
+cutscene. A player feels that long before anything fails.
+
+Two checks, because one was not enough. "Every world is between one and four fights a level"
+catches a curve that goes quadratic. It does **not** catch a uniform slope change — 24 + 40·level
+instead of 24 + 24·level keeps every world inside the bound, keeps the run perfectly even, and
+makes the whole game half again as long. So the design gets written down as well: **about two
+fights a level**, asserted on the midpoint. The gentler plant reads 2.9 and fails.
+
+That is the same shape as the trait blurbs. A rebalance should be a decision, not a drift.
+
 ## Which assertions never ran
 
 "Did anything fail" and "did everything get asked" are different questions, and a suite this size

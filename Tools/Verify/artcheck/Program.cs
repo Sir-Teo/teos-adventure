@@ -365,6 +365,21 @@ static class Program
         }
 
         {
+            // How many fights does a level cost, at each stage of the run?
+            foreach (var world in new[] { "yolkhaven", "mosswell", "glacierim", "arcmoor", "cairnhold", "amaranth" })
+            {
+                var w = Eggverse.PlanetDatabase.Get(world);
+                int band = (w.MinLevel + w.MaxLevel) / 2;
+                var mine = Eggverse.EggInstance.Wild("sprouteg", band);
+                var foe = Eggverse.EggInstance.Wild(w.Spawns[0].SpeciesId, band);
+                int reward = foe.XpRewardFor();
+                int need = mine.XpToNext;
+                Console.WriteLine($"  {w.Name,-14} Lv {band,2}  {reward,4} XP a fight, {need,4} to level" +
+                                  $"  = {need / (float)reward:0.0} fights");
+            }
+        }
+
+        {
             // Do any two species fight with the same four moves?
             var sets = new System.Collections.Generic.Dictionary<string, System.Collections.Generic.List<string>>();
             foreach (var sp in Eggverse.SpeciesDatabase.All)

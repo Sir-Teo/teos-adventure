@@ -1671,6 +1671,63 @@ namespace Eggverse
                 check(elder.Elder && !ordinary.Elder, "and knows it");
             }
 
+            // ---- a level costs about the same anywhere in the run ----
+            {
+                // It does, and remarkably so: between 1.7 and 1.9 fights per level from
+                // Yolkhaven to Amaranth. That is a deliberate curve - XpToNext rises linearly
+                // and XpRewardFor rises with it - and nothing was holding the two together. One
+                // constant moved in either and the late game becomes a grind or the early game
+                // becomes a cutscene, and a player would feel it long before anything failed.
+                float fastest = 999f, slowest = 0f;
+                string fastWorld = "", slowWorld = "";
+
+                foreach (var w in PlanetDatabase.All)
+                {
+                    if (w.Spawns == null || w.Spawns.Length == 0) continue;
+                    int band = (w.MinLevel + w.MaxLevel) / 2;
+
+                    // Against the world's own wildlife, at the level its own wildlife is.
+                    var mine = EggInstance.Wild(SpeciesDatabase.All[0].Id, band);
+                    float need = mine.XpToNext;
+                    check(need > 0f, w.Name + "'s band is below the level cap");
+
+                    float total = 0f;
+                    foreach (var sp in w.Spawns)
+                        total += EggInstance.Wild(sp.SpeciesId, band).XpRewardFor();
+                    float reward = total / w.Spawns.Length;
+                    check(reward > 0f, w.Name + "'s wildlife is worth something");
+
+                    float fights = need / reward;
+                    if (fights < fastest) { fastest = fights; fastWorld = w.Name; }
+                    if (fights > slowest) { slowest = fights; slowWorld = w.Name; }
+
+                    // Two fights a level is the shape. One would make levels meaningless; five
+                    // is where a player starts noticing they are farming rather than exploring.
+                    check(fights >= 1f,
+                          w.Name + " does not hand out a level per fight (" + fights.ToString("0.0") + ")");
+                    check(fights <= 4f,
+                          w.Name + " does not turn into a grind (" + fights.ToString("0.0") + " fights a level)");
+                }
+
+                // And the curve stays flat across the run. A late world costing three times
+                // what an early one costs is the shape every game slides into unless somebody
+                // is watching, and it is invisible until a player is forty minutes in.
+                check(slowest <= fastest * 1.8f,
+                      "a level costs about the same everywhere (" + fastWorld + " " +
+                      fastest.ToString("0.0") + ", " + slowWorld + " " + slowest.ToString("0.0") + ")");
+
+                // And the shape itself, not just its flatness. A uniform change to the curve
+                // moves every world together, so "the run is even" stays true while the whole
+                // game gets half again as long - a slope of 40 instead of 24 keeps every world
+                // inside the loose bound and turns two fights a level into three.
+                //
+                // The design is about two fights a level. That is what gets written down, so a
+                // rebalance is a decision rather than a drift.
+                float mid = (fastest + slowest) * 0.5f;
+                check(mid > 1.5f && mid < 2.5f,
+                      "the run is paced at about two fights a level (" + mid.ToString("0.0") + ")");
+            }
+
             // ---- no two unrelated species fight the same way ----
             {
                 // Every other axis of a species is checked for distinctness - its cry, its
