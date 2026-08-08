@@ -40,6 +40,9 @@ namespace Eggverse
         // Battle-only modifiers, cleared on switch-out and at battle end.
         public int AtkStage, DefStage, SpdStage;
 
+        /// <summary>What Featherlight multiplies speed by. Quoted on the record page.</summary>
+        public const float FeatherlightSpeed = 1.15f;
+
         /// <summary>
         /// A condition that lasts the rest of the battle. Every other move effect in the game
         /// resolves the instant it lands, which makes every turn a self-contained trade; these
@@ -111,7 +114,7 @@ namespace Eggverse
             get
             {
                 float speed = RawSpd * StageMul(SpdStage);
-                if (Trait == EggTrait.Featherlight) speed *= 1.15f;
+                if (Trait == EggTrait.Featherlight) speed *= FeatherlightSpeed;
                 if (Status == EggStatus.Chilled) speed *= 0.5f;
                 return Mathf.Max(1, Mathf.RoundToInt(speed));
             }

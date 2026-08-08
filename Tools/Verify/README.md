@@ -323,6 +323,13 @@ The checks assert the *claim*, not the formula: a worn egg is easier to catch **
 rounding difference**, because "kicks straight back out" is a strong thing to promise; a faster egg
 gets away more often; an Elder is harder to keep. Flattening any one of the three factors fails.
 
+The eight trait blurbs were the same fault eight times over. Six of them quote a magnitude — "30%
+harder", "15% faster", "an eighth of the damage back", "a quarter less" — and every one was typed
+*beside* its constant rather than *from* it, on the page a player reads to decide what to raise.
+They are generated now, so retuning `OverheatBoost` to 1.5 makes the record page say "50% harder"
+by itself. The check still pins the current wording, which is the point: a retune should be a
+decision, not a silent consequence.
+
 The last one is the sharpest. `1.2f` and `0.8f` appeared as literals across five concerns: Tough
 Shell's trigger, the screen shake, a damage number's colour and size, the move card's arrow, the
 message box's wording, the swap menu's warning, and the record page's three matchup lists. Every

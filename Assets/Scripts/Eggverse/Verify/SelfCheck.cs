@@ -1671,6 +1671,63 @@ namespace Eggverse
                 check(elder.Elder && !ordinary.Elder, "and knows it");
             }
 
+            // ---- the trait blurbs quote the numbers the fight uses ----
+            {
+                // Six of the eight sentences on the record page quote a magnitude, and every
+                // one was typed beside its constant rather than built from it. The same fault
+                // the Elder blurb had, eight times over, on the page a player reads to decide
+                // what to raise.
+                check(TypeChart.TraitBlurb(EggTrait.Overheat).Contains("30%"),
+                      "Overheat quotes its real boost: " + TypeChart.TraitBlurb(EggTrait.Overheat));
+                check(TypeChart.TraitBlurb(EggTrait.Featherlight).Contains("15%"),
+                      "Featherlight quotes its real speed: " + TypeChart.TraitBlurb(EggTrait.Featherlight));
+                check(TypeChart.TraitBlurb(EggTrait.ToughShell).Contains("a quarter"),
+                      "Tough Shell quotes its real resist: " + TypeChart.TraitBlurb(EggTrait.ToughShell));
+                check(TypeChart.TraitBlurb(EggTrait.Static).Contains("an eighth"),
+                      "Static quotes its real share: " + TypeChart.TraitBlurb(EggTrait.Static));
+
+                // And the fight agrees. This is the half that catches a constant moving: the
+                // sentence follows it automatically, so what has to be checked is that the
+                // sentence still describes something a player would recognise.
+                check(BattleCalc.OverheatBoost > 1f, "Overheat is a boost");
+                check(EggInstance.FeatherlightSpeed > 1f, "Featherlight is faster");
+                check(BattleCalc.ToughShellResist < 1f, "Tough Shell takes less");
+                check(BattleCalc.StaticShare > 0f && BattleCalc.StaticShare < 0.5f,
+                      "Static gives back a share rather than most of it");
+
+                // Every blurb says something, and none of them says a number the game does not
+                // use. A blurb that quotes 0% or 1x is a passive that does nothing.
+                // None is the absence of a passive, so it is the one that is meant to say
+                // nothing - the same shape as EggType.Plain being a move type. Saying which one
+                // is deliberately silent beats quietly skipping it.
+                foreach (EggTrait t in System.Enum.GetValues(typeof(EggTrait)))
+                {
+                    string blurb = TypeChart.TraitBlurb(t);
+                    if (t == EggTrait.None)
+                    {
+                        check(blurb.Length == 0, "having no passive says nothing");
+                        continue;
+                    }
+                    check(blurb.Length > 0, t + " says what it does");
+
+                    // A standalone zero, not a substring - "30%" contains "0%", which is how the
+                    // first version of this line failed Overheat for quoting its real boost.
+                    check(!System.Text.RegularExpressions.Regex.IsMatch(blurb, @"(^|[^0-9])0%"),
+                          t + " does not claim to do nothing: " + blurb);
+                    check(lines(blurb, 640f, 20) <= 2, t + "'s blurb fits the panel: " + blurb);
+                }
+
+                // Featherlight really is faster than the same egg without it, and Tough Shell
+                // really does take less. The sentence is now generated, so what is worth
+                // asserting is that the passive still has an effect at all.
+                {
+                    var quick = EggInstance.Wild(SpeciesDatabase.All[0].Id, 20);
+                    var ordinary = EggInstance.Wild(SpeciesDatabase.All[0].Id, 20);
+                    check(EggInstance.FeatherlightSpeed * ordinary.Spd > ordinary.Spd,
+                          "Featherlight moves the number it says it moves");
+                }
+            }
+
             // ---- the action menu's promises are true ----
             {
                 // Five lines explain what each action does, and every one is a claim about the

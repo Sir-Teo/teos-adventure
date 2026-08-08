@@ -181,15 +181,29 @@ namespace Eggverse
             }
         }
 
+        /// <summary>
+        /// What each passive does, built from the numbers that do it.
+        ///
+        /// Six of these eight sentences quote a magnitude, and every one was typed beside the
+        /// constant rather than from it — "30% harder", "15% faster", "an eighth of the damage
+        /// back", "a quarter less". Prose that describes a formula goes quietly false the moment
+        /// the formula is retuned, and these sentences are on the record page a player reads to
+        /// decide what to raise. The same fault the Elder blurb had, eight times over.
+        /// </summary>
         public static string TraitBlurb(EggTrait trait)
         {
             switch (trait)
             {
-                case EggTrait.Overheat: return "Hits 30% harder below a third health.";
-                case EggTrait.Featherlight: return "15% faster than its bulk suggests.";
+                case EggTrait.Overheat:
+                    return "Hits " + Percent(BattleCalc.OverheatBoost) + " harder below a third health.";
+                case EggTrait.Featherlight:
+                    return Percent(EggInstance.FeatherlightSpeed) + " faster than its bulk suggests.";
                 case EggTrait.WarmYolk: return "Mends a little every round.";
-                case EggTrait.Static: return "Attackers take an eighth of the damage back.";
-                case EggTrait.ToughShell: return "Takes a quarter less from super-effective hits.";
+                case EggTrait.Static:
+                    return "Attackers take " + Fraction(BattleCalc.StaticShare) + " of the damage back.";
+                case EggTrait.ToughShell:
+                    return "Takes " + Fraction(1f - BattleCalc.ToughShellResist) +
+                           " less from super-effective hits.";
                 case EggTrait.Sturdy: return "Survives a knockout from full health with 1 HP.";
                 case EggTrait.Lucky: return "Cracks critically far more often.";
                 case EggTrait.Hardhead: return "Its stats cannot be lowered.";
@@ -197,11 +211,32 @@ namespace Eggverse
             }
         }
 
+        /// <summary>A multiplier as the percentage above one that it is: 1.3 becomes "30%".</summary>
+        static string Percent(float multiplier) =>
+            Mathf.RoundToInt((multiplier - 1f) * 100f) + "%";
+
+        /// <summary>A small fraction in the words this game uses for them.</summary>
+        static string Fraction(float part)
+        {
+            int denominator = Mathf.RoundToInt(1f / Mathf.Max(0.0001f, part));
+            switch (denominator)
+            {
+                case 2: return "half";
+                case 3: return "a third";
+                case 4: return "a quarter";
+                case 5: return "a fifth";
+                case 6: return "a sixth";
+                case 8: return "an eighth";
+                case 10: return "a tenth";
+                default: return "a " + denominator + "th";
+            }
+        }
+
         /// <summary>Flavour line shown after a hit lands.</summary>
         /// <summary>
         /// Where "strong" and "weak" begin.
         ///
-        /// These were bare literals in eleven places across four concerns: what counts as strong
+        /// These were bare literals in thirteen places across five concerns: what counts as strong
         /// enough for Tough Shell to resist, how hard the screen shakes, what colour and size a
         /// damage number is, whether the move card shows an arrow, what the message box says,
         /// and what the swap menu warns about. Every one of them meant the same thing and

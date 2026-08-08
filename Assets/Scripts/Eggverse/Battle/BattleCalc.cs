@@ -12,6 +12,13 @@ namespace Eggverse
         /// Whether Tough Shell has anything to resist. Named because the card's arrow and this
         /// decision are two readings of one number, and they were two separate literals.
         /// </summary>
+        /// <summary>
+        /// The magnitudes the trait blurbs quote. Named so the sentence on the record page is
+        /// built from the number the fight uses, rather than typed beside it and left to drift.
+        /// </summary>
+        public const float OverheatBoost = 1.3f, ToughShellResist = 0.75f;
+        public const float StaticShare = 0.125f;
+
         public static bool ToughShellResists(float typeMultiplier) => TypeChart.IsStrong(typeMultiplier);
 
         public static int Damage(EggInstance attacker, EggInstance defender, MoveDef move,
@@ -29,8 +36,8 @@ namespace Eggverse
             float roll = EggRandom.Range(0.85f, 1.0f);
 
             // Passives: Overheat rewards fighting hurt, Tough Shell blunts type advantage.
-            float traitBoost = attacker.Trait == EggTrait.Overheat && attacker.HPFraction < 0.34f ? 1.3f : 1f;
-            float traitResist = defender.Trait == EggTrait.ToughShell && ToughShellResists(typeMultiplier) ? 0.75f : 1f;
+            float traitBoost = attacker.Trait == EggTrait.Overheat && attacker.HPFraction < 0.34f ? OverheatBoost : 1f;
+            float traitResist = defender.Trait == EggTrait.ToughShell && ToughShellResists(typeMultiplier) ? ToughShellResist : 1f;
 
             float baseDamage = ((2f * attacker.Level / 5f + 2f) * move.Power * attacker.Atk / Mathf.Max(1, defender.Def)) / 28f + 2f;
             return Mathf.Max(1, Mathf.RoundToInt(baseDamage * stab * typeMultiplier * crit * roll * traitBoost * traitResist));
@@ -114,10 +121,10 @@ namespace Eggverse
             float mult = TypeChart.Multiplier(move.Type, target.Type);
 
             // Tough Shell eats a quarter of any super-effective hit, so it is worth less here too.
-            if (target.Trait == EggTrait.ToughShell && ToughShellResists(mult)) mult *= 0.75f;
+            if (target.Trait == EggTrait.ToughShell && ToughShellResists(mult)) mult *= ToughShellResist;
 
             float hits = move.Effect == MoveEffect.MultiHit2 ? 2f : 1f;
-            float boost = user.Trait == EggTrait.Overheat && user.HPFraction < 0.34f ? 1.3f : 1f;
+            float boost = user.Trait == EggTrait.Overheat && user.HPFraction < 0.34f ? OverheatBoost : 1f;
 
             float score = move.Power * stab * mult * hits * (move.Accuracy / 100f) * boost;
 

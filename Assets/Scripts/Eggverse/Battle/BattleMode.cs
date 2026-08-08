@@ -586,7 +586,7 @@ namespace Eggverse
                 // Static punishes whoever threw the punch.
                 if (target.Trait == EggTrait.Static && dealt > 0 && !user.IsFainted)
                 {
-                    int jolt = Mathf.Max(1, dealt / 8);
+                    int jolt = Mathf.Max(1, Mathf.RoundToInt(dealt * BattleCalc.StaticShare));
                     user.TakeDamage(jolt);
                     SpawnDamageNumber(userIsPlayer ? myEggImage : foeEggImage, jolt, 1f, false);
                     RefreshCards(false);
