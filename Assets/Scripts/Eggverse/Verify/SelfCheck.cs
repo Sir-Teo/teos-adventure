@@ -1671,6 +1671,68 @@ namespace Eggverse
                 check(elder.Elder && !ordinary.Elder, "and knows it");
             }
 
+            // ---- the action menu's promises are true ----
+            {
+                // Five lines explain what each action does, and every one is a claim about the
+                // mechanics underneath. Prose that describes a formula is prose that can stop
+                // being true when the formula moves - and this is the screen where the game
+                // teaches its own rules, so a line that goes stale here teaches them wrong.
+                var help = BattleMode.ActionHelp;
+
+                // "Wear the egg down first - a healthy one kicks straight back out."
+                {
+                    check(help[1].Contains("Wear") && help[1].Contains("healthy"),
+                          "the carton line still claims health matters: " + help[1]);
+
+                    var full = EggInstance.Wild(SpeciesDatabase.All[0].Id, 10);
+                    var hurt = EggInstance.Wild(SpeciesDatabase.All[0].Id, 10);
+                    hurt.TakeDamage(hurt.MaxHP - 1);
+
+                    float healthy = BattleCalc.CatchChance(full);
+                    float worn = BattleCalc.CatchChance(hurt);
+                    check(worn > healthy,
+                          "and a worn egg really is easier to catch (" + worn.ToString("0.000") +
+                          " against " + healthy.ToString("0.000") + ")");
+
+                    // "Kicks straight back out" is a strong claim. It has to be worth doing,
+                    // not a rounding difference on a line a player is being told to act on.
+                    check(worn > healthy * 2f,
+                          "and worth doing rather than a rounding difference (" +
+                          (worn / Mathf.Max(0.0001f, healthy)).ToString("0.0") + "x)");
+                }
+
+                // "Get clear. A faster egg gets away more often."
+                {
+                    check(help[4].Contains("faster"), "the run line still claims speed matters: " + help[4]);
+
+                    var quick = EggInstance.Wild(SpeciesDatabase.All[0].Id, 10);
+                    var slow = EggInstance.Wild(SpeciesDatabase.All[0].Id, 10);
+                    var foe = EggInstance.Wild(SpeciesDatabase.All[0].Id, 10);
+                    quick.SpdStage = 2;
+                    slow.SpdStage = -2;
+
+                    check(BattleCalc.FleeChance(quick, foe) > BattleCalc.FleeChance(slow, foe),
+                          "and a faster egg really does get away more often (" +
+                          BattleCalc.FleeChance(quick, foe).ToString("0.00") + " against " +
+                          BattleCalc.FleeChance(slow, foe).ToString("0.00") + ")");
+                }
+
+                // "Mends the egg in front of you. It costs you the turn." and "Bring another
+                // egg out. You take a hit on the way in." Both claim the foe moves afterwards.
+                check(help[2].Contains("costs you the turn"), "the salve line still claims the turn");
+                check(help[3].Contains("take a hit"), "the swap line still claims a free hit");
+
+                // An Elder is harder to catch, which is the other half of what makes finding
+                // one worth the gold word on its panel.
+                {
+                    var ordinary = EggInstance.Wild(SpeciesDatabase.All[0].Id, 10);
+                    var elder = EggInstance.WildElder(SpeciesDatabase.All[0].Id, 10);
+                    elder.TakeDamage(elder.MaxHP - ordinary.MaxHP);   // same absolute health
+                    check(BattleCalc.CatchChance(elder) < BattleCalc.CatchChance(ordinary),
+                          "an Elder is harder to keep hold of than its neighbours");
+                }
+            }
+
             // ---- every reading of 'strong' is the same reading ----
             {
                 // 1.2 and 0.8 were bare literals in thirteen places across five concerns: what

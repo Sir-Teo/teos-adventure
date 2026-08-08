@@ -311,6 +311,17 @@ been a fact the game states twice and holds together nowhere.
 | Vesper's pad after Amy | the ending card, the surface, the chart | the card said it stays dark; the world warmed it |
 | what "comfortable" means | the chart, the descent prompt | two constants that happened to agree |
 | what "strong" means | thirteen places | thirteen bare `1.2f` and `0.8f` |
+| what an action does | the menu's prose, the formula | nothing tied the sentence to the maths |
+
+That last row is a shape worth naming on its own: **prose that describes a formula**. The action
+menu says "Wear the egg down first — a healthy one kicks straight back out" and "A faster egg gets
+away more often". Both are true. Neither was checked, and both would have gone quietly false the
+moment `CatchChance` or `FleeChance` was retuned — on the screen where the game teaches its own
+rules, so a line that goes stale there teaches them wrong.
+
+The checks assert the *claim*, not the formula: a worn egg is easier to catch **and by more than a
+rounding difference**, because "kicks straight back out" is a strong thing to promise; a faster egg
+gets away more often; an Elder is harder to keep. Flattening any one of the three factors fails.
 
 The last one is the sharpest. `1.2f` and `0.8f` appeared as literals across five concerns: Tough
 Shell's trigger, the screen shake, a damage number's colour and size, the move card's arrow, the
