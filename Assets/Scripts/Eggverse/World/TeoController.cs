@@ -187,11 +187,33 @@ namespace Eggverse
             transform.position = new Vector3(flat.x, flat.y, 0f);
         }
 
+        /// <summary>
+        /// How Teo carries himself standing still, walking flat out, and in the air.
+        ///
+        /// Standing and walking used one rate and one amplitude, so a player who let go of the
+        /// keys kept bouncing at footfall pace. A character at rest and a character mid-stride
+        /// looked identical, on the sprite a player looks at more than any other thing in the
+        /// game.
+        /// </summary>
+        public const float IdleBobRate = 1.7f, WalkBobRate = 6.5f, FlyBobRate = 2.2f;
+        public const float IdleBobRise = 0.022f, WalkBobRise = 0.06f, FlyBobRise = 0.10f;
+
+        /// <summary>How much of walking pace counts as walking, for the blend between the two.</summary>
+        public static float Gait(float speed) => Mathf.Clamp01(speed / WalkSpeed);
+
         void TickVisual(float dt)
         {
             if (visual == null) return;
-            bobTimer += dt * (Movement == TeoMovement.Flying ? 2.2f : 6.5f);
-            float bob = Mathf.Sin(bobTimer) * (Movement == TeoMovement.Flying ? 0.10f : 0.06f);
+
+            // Blended by how fast he is actually going, so easing off the keys settles him
+            // rather than switching him between two states.
+            bool flying = Movement == TeoMovement.Flying;
+            float gait = flying ? 1f : Gait(Velocity.magnitude);
+            float rate = flying ? FlyBobRate : Mathf.Lerp(IdleBobRate, WalkBobRate, gait);
+            float rise = flying ? FlyBobRise : Mathf.Lerp(IdleBobRise, WalkBobRise, gait);
+
+            bobTimer += dt * rate;
+            float bob = Mathf.Sin(bobTimer) * rise;
             float bank = Mathf.Clamp(-Velocity.x * 1.1f, -18f, 18f);
             visual.localPosition = new Vector3(0f, bob, 0f);
             visual.localRotation = Quaternion.Euler(0f, 0f, Mathf.LerpAngle(visual.localEulerAngles.z, bank, 1f - Mathf.Exp(-10f * dt)));

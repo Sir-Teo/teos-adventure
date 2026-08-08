@@ -1671,6 +1671,52 @@ namespace Eggverse
                 check(elder.Elder && !ordinary.Elder, "and knows it");
             }
 
+            // ---- standing still does not look like walking ----
+            {
+                // Teo used one bob rate and one amplitude for both, so a player who let go of
+                // the keys kept bouncing at footfall pace. A character at rest and a character
+                // mid-stride looked identical, on the sprite a player looks at more than any
+                // other thing in the game.
+                check(TeoController.IdleBobRate < TeoController.WalkBobRate,
+                      "standing is slower than walking (" + TeoController.IdleBobRate +
+                      " against " + TeoController.WalkBobRate + ")");
+                check(TeoController.IdleBobRise < TeoController.WalkBobRise,
+                      "and shallower");
+
+                // Flying is its own thing: slow and loose, because nothing is pushing off
+                // anything. It should not read as either of the other two.
+                check(TeoController.FlyBobRate < TeoController.WalkBobRate,
+                      "flight is not a walk");
+                check(TeoController.FlyBobRise > TeoController.WalkBobRise,
+                      "and drifts further than one");
+
+                // Breathing, not bouncing, at rest - the same bound the eggs in a fight get.
+                check(TeoController.IdleBobRise > 0f, "a standing Teo is still alive");
+                check(TeoController.IdleBobRise < TeoController.WalkBobRise * 0.6f,
+                      "and is visibly at rest rather than nearly walking");
+
+                // The blend has to actually run from one to the other across the speeds the
+                // game produces, or it is two states with a name in between.
+                check(TeoController.Gait(0f) == 0f, "standing still is nought gait");
+                check(TeoController.Gait(TeoController.WalkSpeed) == 1f, "walking flat out is full");
+                check(TeoController.Gait(TeoController.WalkSpeed * 2f) == 1f,
+                      "and nothing goes past it");
+
+                float last = -1f;
+                for (int i = 0; i <= 20; i++)
+                {
+                    float g = TeoController.Gait(TeoController.WalkSpeed * i / 20f);
+                    check(g >= last, "gait only rises with speed");
+                    last = g;
+                }
+
+                // And a half-speed walk is between the two, not at one end of them.
+                float half = Mathf.Lerp(TeoController.IdleBobRate, TeoController.WalkBobRate,
+                                        TeoController.Gait(TeoController.WalkSpeed * 0.5f));
+                check(half > TeoController.IdleBobRate && half < TeoController.WalkBobRate,
+                      "an amble is an amble (" + half.ToString("0.00") + ")");
+            }
+
             // ---- neither egg sits on top of a card ----
             {
                 // Four things on one screen, and each egg is diagonally opposite its own card:
