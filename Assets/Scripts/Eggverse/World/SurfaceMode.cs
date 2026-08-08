@@ -106,7 +106,14 @@ namespace Eggverse
         const float RoamerSpeed = 3.4f;
 
         /// <summary>How close you get before a roamer takes an interest in you.</summary>
-        const float RoamerNoticeRange = 6.5f;
+        public const float RoamerNoticeRange = 6.5f;
+
+        /// <summary>
+        /// How many wander a world. Public because they are the other half of the encounter rate
+        /// and the check that measured "how far you walk between fights" counted only the shell
+        /// fields — which was about half the story, and the half you cannot see coming.
+        /// </summary>
+        public static int RoamerCount(PlanetDef planet) => 3 + (planet.Seed / 3) % 4;
 
         /// <summary>How strongly a living Nest Station draws the eggs around it, per second.</summary>
         public const float StationPull = 0.22f;
@@ -689,7 +696,7 @@ namespace Eggverse
         void BuildRoamers(PlanetDef planet, System.Random rng, float R)
         {
             // Busier worlds feel different to walk; 3 on a quiet rock, up to 6 on a crowded one.
-            int count = 3 + (planet.Seed / 3) % 4;
+            int count = RoamerCount(planet);
             for (int i = 0; i < count; i++)
             {
                 var r = new Roamer();

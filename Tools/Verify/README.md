@@ -362,6 +362,30 @@ Every stray it turned up was worth moving for a second reason as well as the fir
 
 620 authored strings before the sweep, 635 after.
 
+## A check that overstated what it knew
+
+The encounter check said "how far you walk between fights" and counted only shell fields. Fights
+start two ways: a field you are standing in, and a roamer that notices you at 6.5 units. The
+second is at least as frequent, and it was not in the number.
+
+Correcting it turned up something better than the fix. The two halves **compensate for each
+other**, and nothing arranged that:
+
+| world | field | roamer | together |
+|---|---|---|---|
+| Glacierim | 12.9s | 4.8s | 3.5s |
+| Shimmerfen | 5.2s | 7.2s | 3.0s |
+| Tidewrack | 5.1s | 3.6s | 2.1s |
+
+Every world lands between 2.1 and 3.6 seconds, against 5.1–12.9 for fields alone. But field count
+comes off `(Seed / 7) % 5` and roamer count off `(Seed / 3) % 4` — **independent draws**. The
+evenness is a coincidence of seventeen seeds, not a rule. One reseeded world could take sparse
+fields *and* few roamers together and be dead ground, and **both halves would still pass their own
+check**. The combined figure is what a player feels, so that is what gets asserted.
+
+Planting three roamers on Glacierim does not fail it, and should not: 4.6s is quieter, not dead.
+One roamer reads 8.4s and fails three ways.
+
 ## Balance nobody was holding
 
 Measuring how many fights a level costs, at the middle of each world's own band, gave **1.7 at

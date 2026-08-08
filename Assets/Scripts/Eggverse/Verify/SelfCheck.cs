@@ -1672,6 +1672,11 @@ namespace Eggverse
             }
 
             // ---- how far you walk between fights ----
+            //
+            // Two sources, and this measured one. Shell fields are the half you cannot see
+            // coming; roamers are the half you can, and they are at least as frequent. Saying
+            // "between fights" while counting only fields was the check overstating what it
+            // knew, which is the same fault as prose overstating what the game does.
             {
                 // Encounters only tick inside a shell field, so how much of a world is field
                 // decides how often a player meets anything. That could not be measured until
@@ -1712,9 +1717,9 @@ namespace Eggverse
                     // Three seconds is a fight every few steps, which is harassment rather than
                     // a world. Twenty is a world a player crosses looking for something to do.
                     check(seconds > 3f,
-                          w.Name + " is not a fight every few steps (" + seconds.ToString("0.0") + "s)");
+                          w.Name + "'s fields are not a fight every few steps (" + seconds.ToString("0.0") + "s)");
                     check(seconds < 20f,
-                          w.Name + " is not empty ground (" + seconds.ToString("0.0") + "s)");
+                          w.Name + "'s fields are not empty ground (" + seconds.ToString("0.0") + "s)");
                 }
 
                 // Worlds are allowed to differ - Glacierim's ice sheets and Cairnhold's cairns
@@ -1722,8 +1727,82 @@ namespace Eggverse
                 // so. Three times is where that stops being character and starts being one of
                 // them being wrong.
                 check(emptiest <= busiest * 3f,
-                      "the quiet worlds are quieter, not deserted (" + busyWorld + " " +
+                      "the quiet worlds are quieter, not deserted, in shell field (" + busyWorld + " " +
                       busiest.ToString("0.0") + "s, " + emptyWorld + " " + emptiest.ToString("0.0") + "s)");
+
+                // The other half: roamers, which wander in the open and notice you at 6.5 units.
+                // A mean free path — the ground divided by how much of it a walk sweeps — puts
+                // them at a comparable rate to the fields, which is why counting only fields was
+                // half an answer.
+                float nearestRoam = 999f, farthestRoam = 0f;
+                foreach (var w in PlanetDatabase.All)
+                {
+                    int roamers = SurfaceMode.RoamerCount(w);
+                    check(roamers >= 3, w.Name + " has something wandering on it (" + roamers + ")");
+                    check(roamers <= 8, w.Name + " is not crowded with them (" + roamers + ")");
+
+                    float swept = roamers * 2f * SurfaceMode.RoamerNoticeRange;
+                    float path = Mathf.PI * w.SurfaceRadius * w.SurfaceRadius / Mathf.Max(0.001f, swept);
+                    float seconds = path / TeoController.WalkSpeed;
+
+                    if (seconds < nearestRoam) nearestRoam = seconds;
+                    if (seconds > farthestRoam) farthestRoam = seconds;
+
+                    check(seconds > 2f,
+                          w.Name + " does not have one in your face constantly (" +
+                          seconds.ToString("0.0") + "s)");
+                }
+
+                // They are the visible half, so they are allowed to be the busier one - a player
+                // can walk around a roamer and cannot walk around a shell field they are
+                // standing in. What would be wrong is one of them being irrelevant.
+                check(nearestRoam < emptiest,
+                      "roamers matter on the quiet worlds too (" + nearestRoam.ToString("0.0") +
+                      "s against " + emptiest.ToString("0.0") + "s of field walking)");
+                check(farthestRoam > busiest * 0.3f,
+                      "and fields still matter on the busy ones (" + farthestRoam.ToString("0.0") + "s)");
+
+                // And the number a player actually feels: both together.
+                //
+                // The two halves compensate for each other and nothing arranged that. Glacierim
+                // has the sparsest fields in the game and five roamers; Shimmerfen has dense
+                // fields and only three. Field count comes off (Seed / 7) % 5 and roamer count
+                // off (Seed / 3) % 4 — independent draws — so every world landing between two
+                // and four seconds is a coincidence of seventeen seeds rather than a rule.
+                //
+                // One reseeded world could take sparse fields and few roamers together and be
+                // dead ground, and both halves would still pass their own check. This is the one
+                // that would notice.
+                float busiestBoth = 999f, quietestBoth = 0f;
+                string busiestName = "", quietestName = "";
+                foreach (var w in PlanetDatabase.All)
+                {
+                    var fs = SurfaceLayout.Fields(w);
+                    float a = 0f;
+                    foreach (var f in fs) a += Mathf.PI * f.Walkable * f.Walkable;
+                    float world = Mathf.PI * w.SurfaceRadius * w.SurfaceRadius;
+
+                    float fieldPath = inField / Mathf.Max(0.001f, a / world);
+                    float roamPath = world / Mathf.Max(0.001f,
+                        SurfaceMode.RoamerCount(w) * 2f * SurfaceMode.RoamerNoticeRange);
+
+                    // Two independent chances of meeting something, so the paths combine the way
+                    // parallel resistances do.
+                    float together = 1f / (1f / fieldPath + 1f / roamPath) / TeoController.WalkSpeed;
+
+                    if (together < busiestBoth) { busiestBoth = together; busiestName = w.Name; }
+                    if (together > quietestBoth) { quietestBoth = together; quietestName = w.Name; }
+
+                    check(together > 1.5f,
+                          w.Name + " gives a player room to walk (" + together.ToString("0.0") + "s)");
+                    check(together < 8f,
+                          w.Name + " has something to meet on it (" + together.ToString("0.0") + "s)");
+                }
+
+                check(quietestBoth <= busiestBoth * 2.5f,
+                      "no world is dead ground compared with the rest (" + busiestName + " " +
+                      busiestBoth.ToString("0.0") + "s, " + quietestName + " " +
+                      quietestBoth.ToString("0.0") + "s)");
 
                 // The builder and the check read one layout. Asking twice has to give the same
                 // answer, or the fields a player walks through are not the ones measured here.

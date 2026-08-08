@@ -413,8 +413,14 @@ static class Program
                 float inField = (Eggverse.SurfaceMode.EncounterWalkMin +
                                  Eggverse.SurfaceMode.EncounterWalkMax) * 0.5f;
                 float walked = inField / Math.Max(0.001f, share);
-                Console.WriteLine($"  {w.Name,-14} {fields.Count} fields, {share * 100f:0}% of the ground" +
-                                  $"  ->  {walked:0} units between fights, {walked / 13f:0.0}s");
+                // And the other half: roamers, which you can see coming and walk around.
+                int roamers = Eggverse.SurfaceMode.RoamerCount(w);
+                float roamPath = world / Math.Max(0.001f, roamers * 2f * Eggverse.SurfaceMode.RoamerNoticeRange);
+                float both = 1f / (1f / walked + 1f / roamPath);
+
+                Console.WriteLine($"  {w.Name,-14} {fields.Count} fields ({share * 100f:0}%), {roamers} roamers" +
+                                  $"  ->  field {walked / 13f:0.0}s, roamer {roamPath / 13f:0.0}s," +
+                                  $" together {both / 13f:0.0}s");
             }
         }
 
