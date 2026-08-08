@@ -13,7 +13,7 @@ namespace Eggverse
         Debuff
     }
 
-    public enum MusicTrack { None, Explore, Belt, Battle, Amaranth }
+    public enum MusicTrack { None, Explore, Belt, Battle, Amaranth, Drift }
 
     /// <summary>
     /// Every sound in the game is synthesised here at runtime, so the project needs no audio assets.
@@ -370,6 +370,7 @@ namespace Eggverse
                 case MusicTrack.Battle: return Make(key, BuildBattle());
                 case MusicTrack.Belt: return Make(key, BuildBelt());
                 case MusicTrack.Amaranth: return Make(key, BuildAmaranth());
+                case MusicTrack.Drift: return Make(key, BuildDrift());
                 default: return Make(key, BuildExplore());
             }
         }
@@ -409,6 +410,54 @@ namespace Eggverse
                 if (at > duration - 1.2f) break;
                 AddNote(buf, at, 1.1f, scale[pattern[i]], scale[pattern[i]], 0.055f, 0, 2.6f);
             }
+            return buf;
+        }
+
+        /// <summary>
+        /// Space.
+        ///
+        /// Flying and walking shared one bed, which meant the loudest thing about the sector -
+        /// that everything in it is being pulled one way, and you can watch it happen from the
+        /// first minute - had no sound of its own. The drift is the plot made visible and it was
+        /// scored the same as standing in a field.
+        ///
+        /// So: slower, emptier, and moving. The pad slides a few cents flat and back over
+        /// twenty-eight seconds, which is long enough that a player never hears it happen and
+        /// short enough that they feel the sector is not sitting still. No pulse. Nothing in
+        /// space is keeping time.
+        /// </summary>
+        static float[] BuildDrift()
+        {
+            const float duration = 28f;
+            var buf = Buffer(duration);
+
+            // An octave above Amaranth, and thin. The first version of this used Amaranth's own
+            // root notes - 73.42 and 110, the same two - and fingerprinted 0.195 from it against
+            // a floor of 0.20. Space and the boss world are both slow and sparse, so the only
+            // thing separating them was register, and I had given them the same one. Descending
+            // to Amaranth has to feel like arriving somewhere; it cannot if the sky already
+            // sounds like it.
+            //
+            // The low end is Amaranth's alone now. Space is cold and high and mostly empty.
+            AddPad(buf, duration, 146.83f, 0.055f, 0.035f, 0.45f);
+            AddPad(buf, duration, 220f, 0.038f, 0.045f, 0.6f);
+            AddPad(buf, duration, 587.33f, 0.020f, 0.07f, 0.85f);
+
+            // The slide. A slow bend down and back, so the whole thing breathes once across the
+            // loop rather than repeating a figure.
+            for (int i = 0; i < 3; i++)
+            {
+                float at = 2f + i * 9f;
+                float from = 880f * Mathf.Pow(2f, -i * 0.02f);
+                AddNote(buf, at, 7.5f, from, from * 0.985f, 0.028f, 0, 0.9f);
+            }
+
+            // Four motes, far apart, falling. In sixteen seconds of Explore there are twelve;
+            // here there are four in twenty-eight, and every one of them descends.
+            float[] falling = { 1174.66f, 987.77f, 783.99f, 659.25f };
+            for (int i = 0; i < falling.Length; i++)
+                AddNote(buf, 3.5f + i * 6.4f, 2.4f, falling[i], falling[i] * 0.94f, 0.040f, 0, 2.0f);
+
             return buf;
         }
 

@@ -129,6 +129,10 @@ namespace Eggverse
         {
             MusicTrack want;
             if (Mode == GameMode.Battle) want = MusicTrack.Battle;
+            // Space has its own bed. It shared the surface's, which left the loudest thing about
+            // the sector - that everything in it is being pulled one way - scored the same as
+            // standing in a field.
+            else if (Mode == GameMode.Space) want = MusicTrack.Drift;
             else if (CurrentPlanet == null) want = MusicTrack.Explore;
             else if (CurrentPlanet.IsBossWorld) want = MusicTrack.Amaranth;
             // The Belt gets its own bed, so crossing into Sector III is audible.
@@ -144,6 +148,10 @@ namespace Eggverse
                 want == MusicTrack.Battle ? 0.45f :
                 Audio.CurrentTrack == MusicTrack.Battle ? 1.8f :
                 want == MusicTrack.Amaranth ? 3.0f :
+                // Lifting off and landing are the two slowest transitions after Amaranth. You
+                // are leaving a place, and a bed that changes the instant the ground does makes
+                // the ground feel like a menu.
+                want == MusicTrack.Drift || Audio.CurrentTrack == MusicTrack.Drift ? 2.2f :
                 1.1f;
 
             Audio.SetMusic(want, seconds);

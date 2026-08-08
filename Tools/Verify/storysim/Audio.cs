@@ -17,7 +17,7 @@ static class AudioCheck
     {
         System.IO.Directory.CreateDirectory(outDir);
         var t = typeof(ProcAudio);
-        string[] builders = { "BuildExplore", "BuildBelt", "BuildBattle", "BuildAmaranth" };
+        string[] builders = { "BuildExplore", "BuildBelt", "BuildBattle", "BuildAmaranth", "BuildDrift" };
 
         foreach (var name in builders)
         {
@@ -53,6 +53,55 @@ static class AudioCheck
             WriteWav(Path.Combine(outDir, name.Replace("Build", "").ToLower() + ".wav"), buf);
         }
 
+
+        // No two beds sound the same.
+        //
+        // The effects have been fingerprinted against each other since the day two of them turned
+        // out to be one sound. The music never was — and space shared the surface's bed for the
+        // whole of the game's life, which is the same fault at four times the length. A player
+        // lifts off, the ground falls away, and nothing they hear changes.
+        {
+            var beds = new List<(string name, float[] fp)>();
+            foreach (var name in builders)
+            {
+                var m = t.GetMethod(name, BindingFlags.NonPublic | BindingFlags.Static);
+                if (m == null) continue;
+                var buf = (float[])m.Invoke(null, null);
+                if (buf == null || buf.Length == 0) continue;
+                beds.Add((name.Replace("Build", ""), Fingerprint(buf)));
+            }
+
+            float nearest = 999f; string a = "", b = "";
+            for (int i = 0; i < beds.Count; i++)
+                for (int j = i + 1; j < beds.Count; j++)
+                {
+                    float d = Apart(beds[i].fp, beds[j].fp);
+                    if (d < nearest) { nearest = d; a = beds[i].name; b = beds[j].name; }
+                }
+            Console.WriteLine($"  closest pair of beds: {a} and {b} at {nearest:0.000}");
+            check(beds.Count >= 5, $"every bed was fingerprinted ({beds.Count})");
+            check(nearest > 0.20f, $"no two music beds sound the same ({a}/{b} at {nearest:0.000})");
+
+            // The two a player crosses between most - lifting off and landing - have to be the
+            // furthest apart of any pair that meets, not merely distinct. It is the one music
+            // change that happens dozens of times a run.
+            float explore = 0f;
+            foreach (var bed in beds)
+                if (bed.name == "Drift")
+                    foreach (var other in beds)
+                        if (other.name == "Explore") explore = Apart(bed.fp, other.fp);
+            Console.WriteLine($"    ground against space: {explore:0.000}");
+
+            // Explore and Drift being the nearest pair is correct - they are meant to be the
+            // same world, and the comment in BuildDrift says so. What matters is the margin, and
+            // "not the closest pair" was a circular way of asking for it: when they are the
+            // closest pair, explore > nearest * 0.9 reduces to x > 0.9x.
+            //
+            // Half again the general floor, because this is the one music change a player hears
+            // dozens of times a run rather than once.
+            check(explore > 0.20f * 1.5f,
+                  $"the change a player hears most is a clear one ({explore:0.000} against 0.300)");
+        }
 
         // Every sound effect must actually make a sound, and none may clip.
         var sfxMethod = t.GetMethod("BuildSfx", BindingFlags.NonPublic | BindingFlags.Static);
