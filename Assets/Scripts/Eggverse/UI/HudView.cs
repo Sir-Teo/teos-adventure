@@ -128,6 +128,17 @@ namespace Eggverse
             return rows;
         }
 
+        // Where the four panels sit. Public because the render measures the real placement
+        // rather than its own reading of it, and because this - the screen a player spends most
+        // of the game looking at - had never been drawn at all.
+        public static readonly Vector2 PartyAt = new Vector2(28f, -28f), PartySize = new Vector2(420f, 380f);
+        public static readonly Vector2 ObjectiveAt = new Vector2(-28f, -28f), ObjectiveSize = new Vector2(560f, 268f);
+        public const float PartyTitleY = -12f, PartyRowY = -44f, PartyRowStep = 54f, PartyRowHeight = 50f;
+        public const float PlanetY = -14f, ObjectiveY = -50f, SuppliesY = 12f;
+        public const int PlanetFont = 24, ObjectiveFont = 20, SuppliesFont = 19, PartyRowFont = 20;
+        public static readonly Vector2 PromptAt = new Vector2(0f, 40f), PromptSize = new Vector2(1200f, 60f);
+        public static readonly Vector2 ToastAt = new Vector2(0f, -308f), ToastSize = new Vector2(1000f, 76f);
+
         public const int NestWindowSize = 20;
         const int NestWindow = NestWindowSize;
 
@@ -226,7 +237,7 @@ namespace Eggverse
             // font 4% wider than the model the checks use, all thirty-eight of them wrapped and
             // nothing else in the game did. The real metric has never been measured in the
             // editor, and this panel is over empty screen - the width was free.
-            UIKit.Place(panel, new Vector2(0f, 1f), new Vector2(0f, 1f), new Vector2(28f, -28f), new Vector2(420f, 380f));
+            UIKit.Place(panel, new Vector2(0f, 1f), new Vector2(0f, 1f), PartyAt, PartySize);
 
             var bg = UIKit.Panel(panel, "Bg", UIKit.PanelDark);
             UIKit.Stretch(bg.rectTransform, 0, 0, 0, 0);
@@ -256,7 +267,7 @@ namespace Eggverse
         {
             var panel = UIKit.Node(root, "Objective");
             objectivePanel = panel;
-            UIKit.Place(panel, new Vector2(1f, 1f), new Vector2(1f, 1f), new Vector2(-28f, -28f), new Vector2(560f, 268f));
+            UIKit.Place(panel, new Vector2(1f, 1f), new Vector2(1f, 1f), ObjectiveAt, ObjectiveSize);
 
             var bg = UIKit.Panel(panel, "Bg", UIKit.PanelDark);
             UIKit.Stretch(bg.rectTransform, 0, 0, 0, 0);
@@ -297,7 +308,7 @@ namespace Eggverse
         void BuildPrompt(RectTransform root)
         {
             promptPanel = UIKit.Node(root, "Prompt");
-            UIKit.Place(promptPanel, new Vector2(0.5f, 0f), new Vector2(0.5f, 0f), new Vector2(0f, 40f), new Vector2(1200f, 60f));
+            UIKit.Place(promptPanel, new Vector2(0.5f, 0f), new Vector2(0.5f, 0f), PromptAt, PromptSize);
             var bg = UIKit.Panel(promptPanel, "Bg", UIKit.PanelDark);
             UIKit.Stretch(bg.rectTransform, 0, 0, 0, 0);
             promptText = UIKit.Label(promptPanel, "Text", "", 24, UIKit.Ink, TextAnchor.MiddleCenter);
@@ -316,7 +327,7 @@ namespace Eggverse
             // about 1170px in a 960px bar, so it wraps to two lines - 55.7px of a 56px box.
             // It fitted, with no margin at all and nothing measuring it, which is a bad way to
             // fit. Kept at 1000 wide because 1200 would reach the party strip.
-            UIKit.Place(toastPanel, new Vector2(0.5f, 1f), new Vector2(0.5f, 1f), new Vector2(0f, -308f), new Vector2(1000f, 76f));
+            UIKit.Place(toastPanel, new Vector2(0.5f, 1f), new Vector2(0.5f, 1f), ToastAt, ToastSize);
             var bg = UIKit.Panel(toastPanel, "Bg", new Color32(0x1E, 0x22, 0x38, 0xF0));
             UIKit.Stretch(bg.rectTransform, 0, 0, 0, 0);
             toastText = UIKit.Label(toastPanel, "Text", "", 24, UIKit.Accent, TextAnchor.MiddleCenter, FontStyle.Bold);
@@ -549,6 +560,53 @@ namespace Eggverse
         /// identically empty and full. Running out now says so in words rather than in a zero,
         /// because a word is legible to somebody the colour is not.
         /// </summary>
+        /// <summary>
+        /// The objective panel's text, with the blocker line dropped when it only restates the
+        /// objective.
+        ///
+        /// "Still needed" exists for a beat that wants two things: it is the moment a player
+        /// most wants to be told which one is left. On a beat that wants one thing, it comes out
+        /// directly under the objective saying the same words back — "Take your three eggs back
+        /// to Ori. / Still needed: your three eggs, back to Ori" — which teaches a player that
+        /// the second line is never worth reading, on the panel where it sometimes is.
+        /// </summary>
+        public static string ObjectiveText(string chapter, string objective, string blocker)
+        {
+            string head = "<color=#FFC24D><b>" + chapter + "</b></color>\n" + objective;
+            if (blocker == null || Restates(objective, blocker)) return head;
+            return head + "\n<color=#A8B2C4>Still needed: " + blocker + "</color>";
+        }
+
+        /// <summary>
+        /// Whether the blocker says nothing the objective has not. Word by word, ignoring the
+        /// small joining ones, so "your three eggs, back to Ori" counts as a restatement of
+        /// "Take your three eggs back to Ori." and "Marn on Voltacrest" does not.
+        /// </summary>
+        static bool Restates(string objective, string blocker)
+        {
+            var have = new HashSet<string>();
+            foreach (var w in Significant(objective)) have.Add(w);
+            foreach (var w in Significant(blocker))
+                if (!have.Contains(w)) return false;
+            return true;
+        }
+
+        static readonly HashSet<string> Joining = new HashSet<string>
+        {
+            "a", "an", "and", "at", "back", "for", "from", "in", "of", "on", "or",
+            "so", "the", "to", "with", "your", "you", "can", "show", "until",
+        };
+
+        static IEnumerable<string> Significant(string text)
+        {
+            foreach (var raw in System.Text.RegularExpressions.Regex.Split(
+                         (text ?? "").ToLowerInvariant(), "[^a-z0-9]+"))
+            {
+                if (raw.Length == 0 || Joining.Contains(raw)) continue;
+                yield return raw;
+            }
+        }
+
         public static string SuppliesLine(GameState state)
         {
             return Supply("Cartons", state.Cartons, state.MaxCartons) +
@@ -615,10 +673,7 @@ namespace Eggverse
 
             var beat = dir.Story.Current;
             string blocker = dir.Story.CurrentBlockerText(state);
-            objectiveText.text =
-                "<color=#FFC24D><b>" + beat.Chapter + "</b></color>\n" +
-                beat.Objective +
-                (blocker != null ? "\n<color=#A8B2C4>Still needed: " + blocker + "</color>" : "");
+            objectiveText.text = ObjectiveText(beat.Chapter, beat.Objective, blocker);
 
             cartonText.text = SuppliesLine(state);
 

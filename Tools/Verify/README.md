@@ -377,6 +377,11 @@ Rendering has now found, in things that had passed every assertion:
 | Pause menu | every row laid out from its own width; the caret slid sideways down the list |
 | Portraits | `ProcArt.Portrait` took a name, used it to key the cache, and drew one face for everybody |
 | Dialogue box | 300px tall over a two-row worst case — every line in the game floated above 110px of nothing |
+| Surface HUD | "Take your three eggs back to Ori." with "Still needed: your three eggs, back to Ori" directly under it |
+
+The surface HUD was the last screen nobody had drawn — the party strip, the objective panel, the
+supplies, the prompt. It is what is on screen for the whole of every walk between fights, and it
+took until every menu in the game had been rendered twice to get to it.
 
 Drawing the dialogue box also turned up something no render could see: the fit check walked
 `StoryDatabase.Npcs`, and **Amy is not an NPC**. The boss's dialogue — the climax of the game —

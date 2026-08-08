@@ -365,6 +365,13 @@ static class Program
         }
 
         {
+            // The plain surface HUD - the screen a player spends most of the game looking at,
+            // and the last one nobody had drawn.
+            WriteBmpRect(Hud.Render(false), Battle.W, Battle.H, "hud.bmp");
+            Console.WriteLine("  surface HUD rendered");
+        }
+
+        {
             // The naming prompt, mid-type and at the cap. It had never been drawn.
             WriteBmpRect(Naming.Render("Pebbles", true, false), Battle.W, Battle.H, "naming.bmp");
             WriteBmpRect(Naming.Render(new string('W', Eggverse.NameEntryView.MaxLength), true, true),

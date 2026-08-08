@@ -1671,6 +1671,64 @@ namespace Eggverse
                 check(elder.Elder && !ordinary.Elder, "and knows it");
             }
 
+            // ---- the 'still needed' line earns its place or is not there ----
+            {
+                // It exists for a beat that wants two things: the moment a player most wants
+                // to be told which one is left. On a beat that wants one thing it came out
+                // directly under the objective saying the same words back - "Take your three
+                // eggs back to Ori." over "Still needed: your three eggs, back to Ori" - which
+                // teaches a player the second line is never worth reading, on the panel where
+                // it sometimes is.
+                check(HudView.ObjectiveText("Ch", "Take your three eggs back to Ori.",
+                                            "your three eggs, back to Ori").IndexOf("Still needed") < 0,
+                      "a blocker that restates the objective is dropped");
+                check(HudView.ObjectiveText("Ch", "Find the two keepers.",
+                                            "Marn on Voltacrest").Contains("Still needed"),
+                      "a blocker that names something new is kept");
+                check(HudView.ObjectiveText("Ch", "Find the two keepers.", null)
+                          .IndexOf("Still needed") < 0,
+                      "and no blocker means no line");
+
+                // Every beat, walked with nothing done, and again with everything but one flag.
+                // Wherever the line survives it has to be telling the player something the
+                // objective above it does not.
+                int kept = 0, dropped = 0;
+                for (int b = 0; b < StoryDatabase.Beats.Length; b++)
+                {
+                    var probe = new StoryState();
+                    probe.RestoreFrom(new string[0], b);
+                    var beat = probe.Current;
+                    var st = new GameState(false);
+
+                    string blocker = probe.CurrentBlockerText(st);
+                    string panel = HudView.ObjectiveText(beat.Chapter, beat.Objective, blocker);
+
+                    check(panel.Contains(beat.Objective),
+                          beat.Id + " still says what it wants");
+                    check(panel.Contains(beat.Chapter), beat.Id + " still says which chapter");
+
+                    if (panel.Contains("Still needed"))
+                    {
+                        kept++;
+                        // The whole point: what survives has to add a word.
+                        check(blocker != null && !HudView.ObjectiveText(beat.Chapter, beat.Objective, blocker)
+                                  .Equals(HudView.ObjectiveText(beat.Chapter, beat.Objective, null)),
+                              beat.Id + "'s still-needed line adds something: " + blocker);
+                    }
+                    else dropped++;
+
+                    // And the panel is 524px at font 20 in a box 150 tall.
+                    check(lines(panel, 524f, 20) <= capacity(150f, 20),
+                          beat.Id + "'s objective panel fits (" + lines(panel, 524f, 20) +
+                          " of " + capacity(150f, 20) + ")");
+                }
+
+                // Both outcomes have to happen on the real story, or the rule is decoration one
+                // way or the other.
+                check(kept > 0, "some beat genuinely needs the line (" + kept + ")");
+                check(dropped > 0, "and some beat is better without it (" + dropped + ")");
+            }
+
             // ---- standing still does not look like walking ----
             {
                 // Teo used one bob rate and one amplitude for both, so a player who let go of
