@@ -250,6 +250,13 @@ namespace Eggverse
             return top;
         }
 
+        /// <summary>
+        /// Everybody who fights you with a team. Exposed because four species in the game are
+        /// only ever met on one - they are Vess's and Amy's eggs - and a check that asked only
+        /// about wild spawns concluded they existed nowhere.
+        /// </summary>
+        public static System.Collections.Generic.IEnumerable<TrainerDef> AllTrainers => trainers.Values;
+
         public static TrainerDef GetTrainer(string id)
         {
             TrainerDef t;

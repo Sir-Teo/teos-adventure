@@ -393,6 +393,28 @@ Measuring it needed one correction: the first pass used a Sprouteg against every
 a player brings something suited to where they are. The median across all twenty-eight species as
 attacker is the number that means something.
 
+## Being wrong three times about one thing
+
+Guarding the catch curve — 1.1 cartons on the first world, 4.0 on the last — led to three
+consecutive wrong premises, and the content was right every time.
+
+1. **"The rarest egg should be catchable with a full carton supply."** Obsidyolk takes 89 throws
+   worn to a shard. Not a defect: its catch rate is 3, and the threshold constant is explicitly
+   the line below which a species is not caught at all.
+2. **"Then something must evolve into it."** Nothing does — for any of the four below the line.
+   But the record has always read *"N of 24 caught, N of 28 seen"* and the ending tally counts the
+   twenty-four, so every system already agreed these four are met and not kept. Only the
+   *comment* on the constant said "exists only by evolving one", describing a different game in
+   the one place somebody would look to find out which game this is.
+3. **"Then they must at least spawn somewhere."** They don't. All four are on trainer teams —
+   *"Vess found it in the Belt and never explained how"*, *"Amy's furnace"*, *"Amy's ace, and the
+   only egg on record that chose its own trainer"*. Which is why they cannot be taken, and the
+   game says so out loud when you try.
+
+The check that survives asks the question all three were circling: **an uncatchable species has to
+be met somewhere** — in the wild or on somebody's team. Dropping Reginova from Amy's roster fails
+it. The comment on `CatchableThreshold` now says what the game does.
+
 ## Which assertions never ran
 
 "Did anything fail" and "did everything get asked" are different questions, and a suite this size

@@ -113,7 +113,19 @@ namespace Eggverse
             return sp != null && sp.BaseSpd > MedianBaseSpeed;
         }
 
-        /// <summary>Below this a species exists only by evolving one.</summary>
+        /// <summary>
+        /// Below this a species is met and not kept.
+        ///
+        /// The comment here used to say "exists only by evolving one", and nothing evolves into
+        /// any of the four that sit below it — Vesperling, Solyolk, Obsidyolk, Reginova. The
+        /// systems have always agreed with what is actually true: the record reads "N of 24
+        /// caught, N of 28 seen", and the ending tally counts the twenty-four. Only the comment
+        /// described a different game, in the one place somebody would look to find out which
+        /// game this is.
+        ///
+        /// Four things you can meet and cannot take is a better design than four you have to
+        /// grind an evolution for, and it is the one Amy makes a speech about.
+        /// </summary>
         public const int CatchableThreshold = 20;
 
         public static int CatchableCount

@@ -399,6 +399,27 @@ static class Program
         }
 
         {
+            // What does a catch cost, in cartons, at a sensibly worn-down target?
+            foreach (var w in Eggverse.PlanetDatabase.All)
+            {
+                if (w.Spawns == null || w.Spawns.Length == 0) continue;
+                int band = (w.MinLevel + w.MaxLevel) / 2;
+                float worst = 0f, best = 99f; string worstName = "";
+                foreach (var sp in w.Spawns)
+                {
+                    var foe = Eggverse.EggInstance.Wild(sp.SpeciesId, band);
+                    foe.TakeDamage(foe.MaxHP - Math.Max(1, foe.MaxHP / 4));   // a quarter left
+                    float p = Eggverse.BattleCalc.CatchChance(foe);
+                    float cartons = 1f / Math.Max(0.0001f, p);
+                    if (cartons > worst) { worst = cartons; worstName = foe.Species.Name; }
+                    if (cartons < best) best = cartons;
+                }
+                Console.WriteLine($"  {w.Name,-14} Lv {band,2}  {best:0.0}-{worst:0.0} cartons a catch" +
+                                  $"  (hardest {worstName})");
+            }
+        }
+
+        {
             // How many fights does a level cost, at each stage of the run?
             foreach (var world in new[] { "yolkhaven", "mosswell", "glacierim", "arcmoor", "cairnhold", "amaranth" })
             {

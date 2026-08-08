@@ -1671,6 +1671,111 @@ namespace Eggverse
                 check(elder.Elder && !ordinary.Elder, "and knows it");
             }
 
+            // ---- a catch costs more the deeper you go, and never costs the run ----
+            {
+                // The third pillar of the loop, after how long a fight lasts and how many
+                // fights a level costs. Cartons a catch runs from 1.1 on Yolkhaven to 4.0 on
+                // Amaranth - early catches near-free so a new player does not fail their first
+                // one three times, late ones costing real supplies. Another good curve nobody
+                // was holding.
+                //
+                // Measured at a quarter health, which is where a player throws: the action menu
+                // tells them to wear it down first and the catch formula rewards it.
+                Func<PlanetDef, float> cost = w =>
+                {
+                    float total = 0f; int n = 0;
+                    foreach (var sp in w.Spawns)
+                    {
+                        var foe = EggInstance.Wild(sp.SpeciesId, (w.MinLevel + w.MaxLevel) / 2);
+                        foe.TakeDamage(foe.MaxHP - Mathf.Max(1, foe.MaxHP / 4));
+                        total += 1f / Mathf.Max(0.0001f, BattleCalc.CatchChance(foe));
+                        n++;
+                    }
+                    return n == 0 ? 0f : total / n;
+                };
+
+                var home = PlanetDatabase.Home;
+                check(cost(home) <= 1.5f,
+                      "a first catch on " + home.Name + " nearly always works (" +
+                      cost(home).ToString("0.0") + " cartons)");
+
+                float dearest = 0f; string dearWorld = "";
+                foreach (var w in PlanetDatabase.All)
+                {
+                    if (w.Spawns == null || w.Spawns.Length == 0) continue;
+                    float c = cost(w);
+                    if (c > dearest) { dearest = c; dearWorld = w.Name; }
+
+                    check(c >= 1f, w.Name + " costs at least a carton (" + c.ToString("0.0") + ")");
+
+                    // You can fill a nest between rests. A catch costing a third of everything
+                    // you can carry means resting after every second egg, which turns
+                    // collecting into commuting.
+                    check(c <= GameState.BaseMaxCartons / 3f,
+                          w.Name + " leaves room to catch more than one before resting (" +
+                          c.ToString("0.0") + " of " + GameState.BaseMaxCartons + ")");
+                }
+
+                // And the ramp is real. If the last world costs what the first does, the
+                // carton is a formality and the supply line the HUD keeps warning about is
+                // about nothing.
+                check(dearest > cost(home) * 2f,
+                      "catching gets harder as you go deeper (" + home.Name + " " +
+                      cost(home).ToString("0.0") + ", " + dearWorld + " " + dearest.ToString("0.0") + ")");
+
+                // A species below the catchable threshold "exists only by evolving one", which
+                // is what the constant's own comment says. So it had better be possible to
+                // evolve one - an uncatchable species that nothing evolves into is a species no
+                // player will ever hold, sitting in the record as a permanent blank.
+                //
+                // The first version of this asked whether the rarest egg could be caught with a
+                // full carton supply. It cannot: worn to a shard, Obsidyolk takes eighty-nine
+                // throws. That is not a defect, it is the design, and the check had not read the
+                // design. What is worth asking is the question underneath it.
+                int unholdable = 0;
+                foreach (var sp in SpeciesDatabase.All)
+                {
+                    if (sp.CatchRate >= SpeciesDatabase.CatchableThreshold) continue;
+                    unholdable++;
+
+                    // Nothing evolves into any of them, and they are not in the tally a player is
+                    // asked to complete - the record reads "N of 24 caught, N of 28 seen". So
+                    // these four are met and not kept, which is a design rather than a gap, and
+                    // it is a good one: some things you find are not yours to take. Amy says
+                    // very nearly that on Amaranth.
+                    //
+                    // What matters is that they can be met at all. An uncatchable species that
+                    // also never spawns exists only in the code, and would sit in the record as
+                    // a blank no play could ever fill.
+                    // In the wild, or on somebody's team. All four of these are trainer eggs -
+                    // "Vess found it in the Belt and never explained how", "Amy's furnace",
+                    // "Amy's ace, and the only egg on record that chose its own trainer" - which
+                    // is why they cannot be taken: the game says so out loud when you try, in
+                    // Marn's voice and then in Amy's. Asking only about wild spawns failed all
+                    // four and the design was right the whole time.
+                    bool findable = false;
+                    foreach (var w in PlanetDatabase.All)
+                    {
+                        if (w.Spawns == null) continue;
+                        foreach (var entry in w.Spawns)
+                            if (entry.SpeciesId == sp.Id) findable = true;
+                    }
+                    foreach (var trainer in StoryDatabase.AllTrainers)
+                        if (trainer.SpeciesIds != null)
+                            foreach (var id in trainer.SpeciesIds)
+                                if (id == sp.Id) findable = true;
+
+                    check(findable,
+                          sp.Name + " cannot be kept, so it had better be met somewhere");
+                }
+
+                // Four of twenty-eight, and the counts a player reads agree with it.
+                check(unholdable > 0, "some species are met rather than kept (" + unholdable + ")");
+                check(SpeciesDatabase.CatchableCount == SpeciesDatabase.Count - unholdable,
+                      "the record's total counts exactly the ones you can keep (" +
+                      SpeciesDatabase.CatchableCount + " of " + SpeciesDatabase.Count + ")");
+            }
+
             // ---- a fight lasts about four turns, anywhere in the run ----
             {
                 // The single most important number in a battle game, and it had never been
