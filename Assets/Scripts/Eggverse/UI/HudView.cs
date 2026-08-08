@@ -754,6 +754,28 @@ namespace Eggverse
         /// it. Static so the checks can measure it and the renderer can draw it - the render had
         /// simply never drawn this panel, which made the column look 500px emptier than it is.
         /// </summary>
+        /// <summary>
+        /// Whose egg this is, if it is anybody's.
+        ///
+        /// Four species spawn on no world and are evolved into by nothing: they are on trainer
+        /// teams, which is why a carton bounces off them. The record had no idea, and told a
+        /// player they grew from something and to go and catch one.
+        /// </summary>
+        public static string OwnerOf(string speciesId)
+        {
+            if (PlanetDatabase.WorldsSpawning(speciesId).Count > 0) return null;
+            foreach (var sp in SpeciesDatabase.All)
+                if (sp.EvolvesIntoId == speciesId) return null;
+
+            foreach (var trainer in StoryDatabase.AllTrainers)
+            {
+                if (trainer.SpeciesIds == null) continue;
+                foreach (var id in trainer.SpeciesIds)
+                    if (id == speciesId) return trainer.Name;
+            }
+            return null;
+        }
+
         public static string DexLoreText(SpeciesDef species, GameState state, bool caught)
         {
             var lore = new System.Text.StringBuilder();
@@ -816,10 +838,24 @@ namespace Eggverse
             }
             else
             {
-                lore.Append("<color=#5A6072>Not found in the wild. It grows into this.</color>\n\n");
+                // Somebody's, or something's. The branch used to say "It grows into this" for
+                // everything that spawns nowhere - which is true of the evolved forms and flatly
+                // false of the four that belong to a trainer. Vesperling answers to Vess;
+                // Solyolk, Obsidyolk and Reginova are Amy's. The record was telling a player to
+                // go and find something that was standing in front of them and not for sale.
+                string owner = OwnerOf(species.Id);
+                lore.Append(owner != null
+                    ? "<color=#5A6072>" + owner + "'s. Not one you will find in a field.</color>\n\n"
+                    : "<color=#5A6072>Not found in the wild. It grows into this.</color>\n\n");
             }
 
             if (caught) lore.Append("<i><color=#D2D8E4>").Append(species.Blurb).Append("</color></i>");
+            else if (OwnerOf(species.Id) != null)
+                // Not "catch one to record its notes". Four species in the game can never be
+                // caught, and telling a completionist otherwise sends them hunting for something
+                // that does not exist. The battle already says this in the moment; the record is
+                // where they go afterwards to work out what they missed.
+                lore.Append("<color=#5A6072>Seen, and not yours to take. Some of them belong to somebody.</color>");
             else lore.Append("<color=#5A6072>Seen, but not yet collected. Catch one to record its notes.</color>");
 
             return lore.ToString();

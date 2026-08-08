@@ -234,6 +234,16 @@ static class Prose
         Add("rest mended", UiCopy.RestMended);
         Add("rest restocked", UiCopy.RestRestocked);
         Add("nothing owed", UiCopy.NothingOwed);
+
+        // The record's line for an egg that belongs to somebody. Four species reach it and it
+        // had never been read here, because it did not exist.
+        {
+            var everywhere = new GameState(false);
+            foreach (var w in PlanetDatabase.All) everywhere.Visited.Add(w.Id);
+            foreach (var sp in SpeciesDatabase.All)
+                if (HudView.OwnerOf(sp.Id) != null)
+                    AddLayout("record for " + sp.Name, HudView.DexLoreText(sp, everywhere, false));
+        }
         foreach (EggStatus cond in System.Enum.GetValues(typeof(EggStatus)))
         {
             if (cond == EggStatus.None) continue;

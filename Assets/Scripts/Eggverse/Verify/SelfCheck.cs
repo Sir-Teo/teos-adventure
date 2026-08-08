@@ -1671,6 +1671,75 @@ namespace Eggverse
                 check(elder.Elder && !ordinary.Elder, "and knows it");
             }
 
+            // ---- the record says whose egg it is ----
+            {
+                // Four species spawn nowhere and are evolved into by nothing, because they
+                // belong to Vess and to Amy. The record did not know that. It said "Not found
+                // in the wild. It grows into this." - true of the evolved forms, flatly false
+                // of these - and then "Catch one to record its notes", which sends a
+                // completionist hunting for something that was standing in front of them and
+                // not for sale.
+                var st = new GameState(false);
+                foreach (var w in PlanetDatabase.All) st.Visited.Add(w.Id);
+
+                int owned = 0, wild = 0, evolved = 0;
+                foreach (var sp in SpeciesDatabase.All)
+                {
+                    string owner = HudView.OwnerOf(sp.Id);
+                    string seen = HudView.DexLoreText(sp, st, false);
+                    string held = HudView.DexLoreText(sp, st, true);
+
+                    if (owner != null)
+                    {
+                        owned++;
+                        check(seen.Contains(owner), sp.Name + "'s record names who it belongs to");
+                        check(!seen.Contains("Catch one"),
+                              sp.Name + " is not offered as something to go and catch");
+                        check(!seen.Contains("grows into this"),
+                              sp.Name + " is not claimed to evolve from something");
+
+                        // And it really is uncatchable, or the record is refusing something a
+                        // player could actually do.
+                        check(sp.CatchRate < SpeciesDatabase.CatchableThreshold,
+                              sp.Name + " is genuinely not takeable");
+                    }
+                    else
+                    {
+                        if (PlanetDatabase.WorldsSpawning(sp.Id).Count > 0) wild++; else evolved++;
+                        check(!seen.Contains("belong to somebody"),
+                              sp.Name + " is not called somebody's when it is not");
+                    }
+
+                    check(seen.Length > 0 && held.Length > 0, sp.Name + "'s record says something");
+                    check(lines(seen, 640f, 19) <= capacity(700f, 19),
+                          sp.Name + "'s record fits its panel (" + lines(seen, 640f, 19) + ")");
+                }
+
+                // Two of the three kinds exist. Nothing in the roster is evolution-only: every
+                // evolved form also spawns somewhere, which means the "It grows into this" line
+                // has only ever been reached by the four it described wrongly. The branch stays
+                // because a future species could need it, and the count says out loud that
+                // nothing reaches it today rather than leaving that to be discovered again.
+                check(owned > 0, "some eggs belong to somebody (" + owned + ")");
+                check(wild > 0, "most are found in the wild (" + wild + ")");
+                check(evolved == 0,
+                      "nothing is evolution-only, so that line is a fallback nobody reaches (" +
+                      evolved + ")");
+
+                // The owner named is the one who actually fights you with it.
+                foreach (var trainer in StoryDatabase.AllTrainers)
+                {
+                    if (trainer.SpeciesIds == null) continue;
+                    foreach (var id in trainer.SpeciesIds)
+                    {
+                        string owner = HudView.OwnerOf(id);
+                        if (owner != null)
+                            check(owner == trainer.Name,
+                                  id + " is credited to whoever brings it (" + owner + ")");
+                    }
+                }
+            }
+
             // ---- a catch costs more the deeper you go, and never costs the run ----
             {
                 // The third pillar of the loop, after how long a fight lasts and how many
@@ -4875,8 +4944,16 @@ namespace Eggverse
                     string lore = HudView.DexLoreText(sp, everywhere, true);
                     check(lore.Contains("FOUND ON"), sp.Name + "'s entry says where it is found");
                     if (worlds.Count == 0)
-                        check(lore.Contains("It grows into this"),
-                              sp.Name + " is only reachable by evolution, and says so");
+                    {
+                        // This asserted "It grows into this" for anything that spawns nowhere,
+                        // which is the same wrong belief the CatchableThreshold comment held:
+                        // the four that spawn nowhere are on trainer teams and nothing evolves
+                        // into any of them. So the line was wrong every time it was shown, and
+                        // this check was holding it there.
+                        string owner = HudView.OwnerOf(sp.Id);
+                        check(lore.Contains(owner != null ? owner + "'s" : "It grows into this"),
+                              sp.Name + " says why it is not in a field");
+                    }
                     else
                         check(lore.Contains(worlds[0].Name),
                               sp.Name + "'s entry names " + worlds[0].Name);
