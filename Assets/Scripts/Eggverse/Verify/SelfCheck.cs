@@ -1671,6 +1671,70 @@ namespace Eggverse
                 check(elder.Elder && !ordinary.Elder, "and knows it");
             }
 
+            // ---- the ending card and the world it hands back agree ----
+            {
+                // The card says "Vesper stays dark a while longer. Vess says she can wait, now
+                // that it means something." Every cold pad in the sector warmed the moment Amy
+                // stopped pulling on them, Vesper with them - so the last thing the game says
+                // was contradicted by the first screen a player opens afterwards.
+                //
+                // The prose is the better version. Vesper staying dark is the only note in the
+                // ending that is not a tidy resolution, and Vess waiting for it is the point
+                // of her.
+                var beaten = new StoryState();
+                beaten.SetFlag("beat_amy");
+                var before = new StoryState();
+
+                string card = UiCopy.VictoryBody;
+
+                // Any world the card says stays dark has to actually stay dark, and any world
+                // it does not mention that was cold has to actually come back. This reads the
+                // card rather than a list beside it, so rewriting the card without moving the
+                // data fails here.
+                int staysDark = 0, comesBack = 0;
+                foreach (var w in PlanetDatabase.All)
+                {
+                    if (!PlanetDatabase.StationCold(w.Id)) continue;
+
+                    bool cardSaysDark = card.Contains(w.Name + " stays dark");
+                    bool actuallyDark = PlanetDatabase.StationColdNow(w.Id, true);
+
+                    check(cardSaysDark == actuallyDark,
+                          w.Name + ": the ending card and the world agree about the pad (card " +
+                          (cardSaysDark ? "dark" : "silent") + ", world " +
+                          (actuallyDark ? "dark" : "warm") + ")");
+
+                    // And it was cold to begin with, or the card is describing a recovery from
+                    // nothing.
+                    check(PlanetDatabase.StationColdNow(w.Id, false),
+                          w.Name + "'s pad is cold before Amy is beaten");
+
+                    if (actuallyDark) staysDark++; else comesBack++;
+                }
+
+                check(comesBack > 0, "beating Amy warms something (" + comesBack + " pads)");
+                check(staysDark > 0,
+                      "and the ending's one unresolved note is still unresolved (" + staysDark + ")");
+
+                // The chart says the same thing the ending does, in its own words.
+                foreach (var w in PlanetDatabase.All)
+                {
+                    var been = new GameState(false);
+                    been.Visited.Add(w.Id);
+                    string after = GalaxyMapView.StationLine(w, been, beaten);
+                    bool dark = PlanetDatabase.StationColdNow(w.Id, true);
+
+                    check(after.Length > 0, w.Name + "'s pad still says something after Amy");
+                    check(after.Contains("warm") != dark,
+                          w.Name + "'s chart line matches its pad after Amy: " + after);
+
+                    // Before she is beaten, every cold pad reads as a warning and no warm one does.
+                    string early = GalaxyMapView.StationLine(w, been, before);
+                    check(early.Contains("E55555") == PlanetDatabase.StationCold(w.Id),
+                          w.Name + "'s chart line warns exactly when its pad is dead");
+                }
+            }
+
             // ---- an Elder says what an Elder is ----
             {
                 // The panel printed the word ELDER and stopped, directly above a trait that

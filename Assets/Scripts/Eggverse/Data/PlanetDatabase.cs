@@ -145,7 +145,28 @@ namespace Eggverse
             "yolkhaven", "brineholt", "mosswell", "vesper",
         };
 
+        /// <summary>
+        /// The one that does not come back.
+        ///
+        /// The ending card says "Vesper stays dark a while longer. Vess says she can wait, now
+        /// that it means something." Every other cold pad in the sector warms the moment Amy
+        /// stops pulling on them, and the surface and the chart both lit Vesper along with them
+        /// — so the closing card of the game said one thing and the world said another.
+        ///
+        /// The prose is the better version. Vesper staying dark is the only note in the ending
+        /// that is not a tidy resolution, and Vess waiting for it is the point of her.
+        /// </summary>
+        static readonly HashSet<string> staysColdAfterAmy = new HashSet<string> { "vesper" };
+
         public static bool StationCold(string planetId) => coldStations.Contains(planetId);
+
+        /// <summary>Whether beating Amy is enough to warm this pad.</summary>
+        public static bool StationWarmsAfterAmy(string planetId) =>
+            coldStations.Contains(planetId) && !staysColdAfterAmy.Contains(planetId);
+
+        /// <summary>Whether this pad is cold right now, given what the player has done.</summary>
+        public static bool StationColdNow(string planetId, bool amyBeaten) =>
+            coldStations.Contains(planetId) && (!amyBeaten || staysColdAfterAmy.Contains(planetId));
         public static IEnumerable<string> ColdStations => coldStations;
 
         public static bool HasCache(string planetId) => CacheWorlds.ContainsKey(planetId);

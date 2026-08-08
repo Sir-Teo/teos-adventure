@@ -361,10 +361,16 @@ namespace Eggverse
             if (!state.Visited.Contains(def.Id)) return "";
 
             bool everCold = PlanetDatabase.StationCold(def.Id);
-            bool warmBack = story != null && story.HasFlag("beat_amy");
+            bool amyBeaten = story != null && story.HasFlag("beat_amy");
 
             if (!everCold) return "<color=#A8B2C4>The nest station here runs warm.</color>";
-            if (warmBack) return "<color=#5FD068>The nest station here is warm again.</color>";
+            if (!PlanetDatabase.StationColdNow(def.Id, amyBeaten))
+                return "<color=#5FD068>The nest station here is warm again.</color>";
+            // Vesper. The ending card promises it stays dark a while longer, and a chart that
+            // said otherwise would be the last thing the game says contradicted by the screen a
+            // player opens straight afterwards.
+            if (amyBeaten)
+                return "<color=#E5A055>Still dark. Vess says she can wait.</color>";
             return "<color=#E55555>The nest station here has gone cold.</color>";
         }
 

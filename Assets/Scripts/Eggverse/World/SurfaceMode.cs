@@ -460,7 +460,9 @@ namespace Eggverse
             // walk ten paces to a pad glowing exactly as warm as every other pad in the game.
             // Vesper was worse: its own landmark is two dark pads with the straw still in them,
             // twenty paces from a third one blazing away.
-            bool cold = PlanetDatabase.StationCold(planet.Id) && !dir.Story.HasFlag("beat_amy");
+            // Through StationColdNow, because one pad does not come back: the ending card says
+            // Vesper stays dark, and this lit it along with the others.
+            bool cold = PlanetDatabase.StationColdNow(planet.Id, dir.Story.HasFlag("beat_amy"));
             stationWarm = !cold;
 
             float halo = cold ? 0.13f : 0.45f;
